@@ -1,0 +1,41 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Compilación
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.cache
+*.log
+*.bak
+
+# Resultados de pruebas
+TestResults/
+coverage/
+coverage.*
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Publicación
+publish/
+artifacts/
+
+# Sistema operativo
+Thumbs.db
+Desktop.ini
+.DS_Store
