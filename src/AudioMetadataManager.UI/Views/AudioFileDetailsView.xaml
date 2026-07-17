@@ -356,84 +356,178 @@
                 </TabItem>
 
                 <!-- ================================================== -->
-                <!-- PESTAÑA DE SIMULACIÓN                              -->
+                <!-- PESTAÑA DE SIMULACIÓN Y CHANGE MANAGER             -->
                 <!-- ================================================== -->
                 <TabItem Header="Simulación">
 
+                    <!--
+        Todo el contenido de esta pestaña puede desplazarse
+        verticalmente si la ventana no tiene suficiente espacio.
+    -->
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  Padding="8">
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="8">
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <StackPanel>
 
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                            <!-- ========================================== -->
+                            <!-- RESUMEN DE LA SIMULACIÓN                   -->
+                            <!-- ========================================== -->
+                            <GroupBox Header="Resumen de la simulación"
+                      Padding="8"
+                      Margin="0,0,0,10">
 
-                            <!-- Nombre propuesto -->
-                            <TextBlock Grid.Row="0"
-                                       Grid.Column="0"
-                                       Text="Nombre propuesto:"
-                                       FontWeight="SemiBold"
-                                       VerticalAlignment="Top"
-                                       Margin="0,0,12,8"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Row="0"
-                                       Grid.Column="1"
-                                       Text="{Binding ProposedFileNameDisplay,
-                                                      Mode=OneWay}"
-                                       TextWrapping="Wrap"
-                                       ToolTip="{Binding ProposedFileNameDisplay,
-                                                         Mode=OneWay}"
-                                       Margin="0,0,0,8"/>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                            <!-- Cambios detectados -->
-                            <TextBlock Grid.Row="1"
-                                       Grid.Column="0"
-                                       Text="Cambios detectados:"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,12,8"/>
+                                    <!-- Nombre propuesto -->
+                                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Text="Nombre propuesto:"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Top"
+                               Margin="0,0,12,5"/>
 
-                            <TextBlock Grid.Row="1"
-                                       Grid.Column="1"
-                                       Text="{Binding SimulationStatusDisplay,
-                                                      Mode=OneWay}"
-                                       Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="0"
+                               Grid.Column="1"
+                               Text="{Binding ProposedFileNameDisplay,
+                                              Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               ToolTip="{Binding ProposedFileNameDisplay,
+                                                 Mode=OneWay}"
+                               Margin="0,0,0,5"/>
 
-                            <!-- Aplicación automática -->
-                            <TextBlock Grid.Row="2"
-                                       Grid.Column="0"
-                                       Text="Aplicación automática:"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,12,8"/>
+                                    <!-- Cambios detectados -->
+                                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Text="Cambios detectados:"
+                               FontWeight="SemiBold"
+                               Margin="0,0,12,5"/>
 
-                            <TextBlock Grid.Row="2"
-                                       Grid.Column="1"
-                                       Text="{Binding CanApplyAutomaticallyDisplay,
-                                                      Mode=OneWay}"
-                                       Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="1"
+                               Grid.Column="1"
+                               Text="{Binding SimulationStatusDisplay,
+                                              Mode=OneWay}"
+                               Margin="0,0,0,5"/>
 
-                            <!-- Resumen -->
-                            <TextBlock Grid.Row="3"
-                                       Grid.Column="0"
-                                       Text="Resumen:"
-                                       FontWeight="SemiBold"
-                                       VerticalAlignment="Top"
-                                       Margin="0,0,12,0"/>
+                                    <!-- Aplicación automática -->
+                                    <TextBlock Grid.Row="2"
+                               Grid.Column="0"
+                               Text="Aplicación automática:"
+                               FontWeight="SemiBold"
+                               Margin="0,0,12,5"/>
 
-                            <TextBlock Grid.Row="3"
-                                       Grid.Column="1"
-                                       Text="{Binding Simulation.Summary,
-                                                      Mode=OneWay}"
-                                       TextWrapping="Wrap"/>
-                        </Grid>
+                                    <TextBlock Grid.Row="2"
+                               Grid.Column="1"
+                               Text="{Binding CanApplyAutomaticallyDisplay,
+                                              Mode=OneWay}"
+                               Margin="0,0,0,5"/>
+
+                                    <!-- Resumen -->
+                                    <TextBlock Grid.Row="3"
+                               Grid.Column="0"
+                               Text="Resumen:"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Top"
+                               Margin="0,0,12,0"/>
+
+                                    <TextBlock Grid.Row="3"
+                               Grid.Column="1"
+                               Text="{Binding Simulation.Summary,
+                                              Mode=OneWay}"
+                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </GroupBox>
+
+                            <!-- ========================================== -->
+                            <!-- TABLA DETALLADA DE CAMBIOS                 -->
+                            <!-- ========================================== -->
+                            <GroupBox Header="Cambios propuestos"
+                      Padding="8">
+
+                                <!--
+                    Se asigna una altura explícita para evitar que
+                    el DataGrid quede comprimido a cero píxeles.
+                -->
+                                <DataGrid ItemsSource="{Binding Simulation.Changes,
+                                                Mode=OneWay}"
+                          Height="155"
+                          MinHeight="120"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          CanUserResizeColumns="True"
+                          CanUserReorderColumns="True"
+                          IsReadOnly="False"
+                          SelectionMode="Single"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+
+                                    <DataGrid.Columns>
+
+                                        <!-- Selección individual del cambio -->
+                                        <DataGridTemplateColumn Header="Aplicar"
+                                                Width="70">
+
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelected,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Campo que se propone modificar -->
+                                        <DataGridTextColumn Header="Campo"
+                                            Binding="{Binding PropertyName,
+                                                              Mode=OneWay}"
+                                            IsReadOnly="True"
+                                            Width="140"/>
+
+                                        <!-- Valor presente actualmente -->
+                                        <DataGridTextColumn Header="Valor actual"
+                                            Binding="{Binding CurrentValue,
+                                                              Mode=OneWay}"
+                                            IsReadOnly="True"
+                                            Width="*"
+                                            MinWidth="220"/>
+
+                                        <!-- Valor generado por la simulación -->
+                                        <DataGridTextColumn Header="Valor propuesto"
+                                            Binding="{Binding ProposedValue,
+                                                              Mode=OneWay}"
+                                            IsReadOnly="True"
+                                            Width="*"
+                                            MinWidth="220"/>
+
+                                        <!-- Explicación del cambio -->
+                                        <DataGridTextColumn Header="Descripción"
+                                            Binding="{Binding Description,
+                                                              Mode=OneWay}"
+                                            IsReadOnly="True"
+                                            Width="*"
+                                            MinWidth="190"/>
+
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </GroupBox>
+
+                        </StackPanel>
                     </ScrollViewer>
                 </TabItem>
 

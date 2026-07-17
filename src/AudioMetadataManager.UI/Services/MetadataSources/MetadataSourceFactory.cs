@@ -1,0 +1,29 @@
+﻿using AudioMetadataManager.UI.Services.MetadataSources.Interfaces;
+using AudioMetadataManager.UI.Services.MetadataSources.Providers;
+
+namespace AudioMetadataManager.UI.Services.MetadataSources;
+
+/// <summary>
+/// Crea y registra las fuentes externas disponibles
+/// en Audio Metadata Manager.
+/// </summary>
+public static class MetadataSourceFactory
+{
+    /// <summary>
+    /// Construye el administrador con todas las plataformas
+    /// conocidas por la aplicación.
+    /// </summary>
+    public static MetadataSourceManager CreateDefault()
+    {
+        IReadOnlyList<IMetadataSource> sources =
+            new List<IMetadataSource>
+            {
+                new DiscogsMetadataSource(),
+                new BeatportMetadataSource(),
+                new SpotifyMetadataSource(),
+                new SoundCloudMetadataSource()
+            };
+
+        return new MetadataSourceManager(sources);
+    }
+}
