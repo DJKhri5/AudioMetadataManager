@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection.Metadata;
 using AudioMetadataManager.UI.Services.Quality;
+using AudioMetadataManager.UI.Services.Simulation;
 
 namespace AudioMetadataManager.UI.Services;
 
@@ -26,6 +27,7 @@ public class FileScannerService
     private readonly MetadataComparerService _metadataComparer = new();
     private readonly MusicAnalysisEngine _analysisEngine = new();
     private readonly AudioQualityAnalyzerService _qualityAnalyzer = new();
+    private readonly FileSimulationService _simulationService = new();
     public List<AudioFile> ScanFolder(string folderPath)
     {
         List<AudioFile> result = new();
@@ -67,6 +69,9 @@ public class FileScannerService
 
             audioFile.Analysis =
                 _analysisEngine.Analyze(audioFile);
+
+            audioFile.Simulation =
+                _simulationService.Build(audioFile);
 
             result.Add(audioFile);
         }

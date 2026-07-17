@@ -1,7 +1,7 @@
 ﻿<UserControl x:Class="AudioMetadataManager.UI.Views.AudioFileDetailsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             MinHeight="190">
+             MinHeight="220">
 
     <Border BorderBrush="#D5D9DE"
             BorderThickness="1"
@@ -10,173 +10,441 @@
 
         <Grid>
             <Grid.RowDefinitions>
+                <!-- Encabezado fijo -->
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+
+                <!-- Pestañas -->
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
+            <!-- Encabezado -->
             <TextBlock Grid.Row="0"
                        Text="Detalles del archivo seleccionado"
                        FontSize="16"
                        FontWeight="SemiBold"
-                       Margin="0,0,0,12"/>
+                       Margin="0,0,0,10"/>
 
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <!-- Contenido dividido en pestañas -->
+            <TabControl Grid.Row="1">
 
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+                <!-- ================================================== -->
+                <!-- PESTAÑA GENERAL                                    -->
+                <!-- ================================================== -->
+                <TabItem Header="General">
 
-                <TextBlock Grid.Row="0"
-                           Grid.Column="0"
-                           Text="Archivo:"
-                           FontWeight="SemiBold"
-                           Margin="0,0,8,6"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Padding="8">
 
-                <TextBlock Grid.Row="0"
-                           Grid.Column="1"
-                           Text="{Binding FileName}"
-                           TextTrimming="CharacterEllipsis"
-                           Margin="0,0,20,6"/>
+                        <StackPanel>
 
-                <TextBlock Grid.Row="0"
-                           Grid.Column="2"
-                           Text="Estado:"
-                           FontWeight="SemiBold"
-                           Margin="0,0,8,6"/>
+                            <!-- Información principal -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Row="0"
-                           Grid.Column="3"
-                           Text="{Binding Status}"
-                           Margin="0,0,0,6"/>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="1"
-                           Grid.Column="0"
-                           Text="Artista etiqueta:"
-                           FontWeight="SemiBold"
-                           Margin="0,0,8,6"/>
+                                <!-- Archivo -->
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="0"
+                                           Text="Archivo:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,6"/>
 
-                <TextBlock Grid.Row="1"
-                           Grid.Column="1"
-                           Text="{Binding Artist}"
-                           Margin="0,0,20,6"/>
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="1"
+                                           Text="{Binding FileName, Mode=OneWay}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding FileName, Mode=OneWay}"
+                                           Margin="0,0,0,6"/>
 
-                <TextBlock Grid.Row="1"
-                           Grid.Column="2"
-                           Text="Artista nombre:"
-                           FontWeight="SemiBold"
-                           Margin="0,0,8,6"/>
+                                <!-- Estado -->
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="3"
+                                           Text="Estado:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,6"/>
 
-                <TextBlock Grid.Row="1"
-                           Grid.Column="3"
-                           Text="{Binding ParsedArtistDisplay}"
-                           Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="4"
+                                           Text="{Binding Status, Mode=OneWay}"
+                                           Margin="0,0,0,6"/>
 
-                <TextBlock Grid.Row="2"
-                           Grid.Column="0"
-                           Text="Título etiqueta:"
-                           FontWeight="SemiBold"
-                           Margin="0,0,8,6"/>
+                                <!-- Artista de etiqueta -->
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="0"
+                                           Text="Artista etiqueta:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,6"/>
 
-                <TextBlock Grid.Row="2"
-                           Grid.Column="1"
-                           Text="{Binding Title}"
-                           Margin="0,0,20,6"/>
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="1"
+                                           Text="{Binding Artist, Mode=OneWay}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Artist, Mode=OneWay}"
+                                           Margin="0,0,0,6"/>
 
-                <TextBlock Grid.Row="2"
-                           Grid.Column="2"
-                           Text="Título nombre:"
-                           FontWeight="SemiBold"
-                           Margin="0,0,8,6"/>
+                                <!-- Artista desde nombre -->
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="3"
+                                           Text="Artista nombre:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,6"/>
 
-                <TextBlock Grid.Row="2"
-                           Grid.Column="3"
-                           Text="{Binding ParsedTitleDisplay}"
-                           Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="4"
+                                           Text="{Binding ParsedArtistDisplay, Mode=OneWay}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding ParsedArtistDisplay, Mode=OneWay}"
+                                           Margin="0,0,0,6"/>
 
-                <TextBlock Grid.Row="3"
-                           Grid.Column="0"
-                           Text="Versión:"
-                           FontWeight="SemiBold"
-                           Margin="0,0,8,6"/>
+                                <!-- Título de etiqueta -->
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="0"
+                                           Text="Título etiqueta:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,6"/>
 
-                <TextBlock Grid.Row="3"
-                           Grid.Column="1"
-                           Text="{Binding ParsedVersionDisplay}"
-                           Margin="0,0,20,6"/>
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="1"
+                                           Text="{Binding Title, Mode=OneWay}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Title, Mode=OneWay}"
+                                           Margin="0,0,0,6"/>
 
-                <TextBlock Grid.Row="3"
-                           Grid.Column="2"
-                           Text="Formato:"
-                           FontWeight="SemiBold"
-                           Margin="0,0,8,6"/>
+                                <!-- Título desde nombre -->
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="3"
+                                           Text="Título nombre:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,6"/>
 
-                <TextBlock Grid.Row="3"
-                           Grid.Column="3"
-                           Text="{Binding Extension}"
-                           Margin="0,0,0,6"/>
-            </Grid>
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="4"
+                                           Text="{Binding ParsedTitleDisplay, Mode=OneWay}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding ParsedTitleDisplay, Mode=OneWay}"
+                                           Margin="0,0,0,6"/>
 
-            <Grid Grid.Row="2"
-                  Margin="0,12,0,0">
+                                <!-- Versión -->
+                                <TextBlock Grid.Row="3"
+                                           Grid.Column="0"
+                                           Text="Versión:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,6"/>
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Row="3"
+                                           Grid.Column="1"
+                                           Text="{Binding ParsedVersionDisplay, Mode=OneWay}"
+                                           Margin="0,0,0,6"/>
 
-                <GroupBox Grid.Column="0"
-                          Header="Confianza del análisis"
-                          Padding="8">
+                                <!-- Formato -->
+                                <TextBlock Grid.Row="3"
+                                           Grid.Column="3"
+                                           Text="Formato:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,6"/>
 
-                    <StackPanel>
-                        <TextBlock>
-                            <Run Text="Puntuación: " FontWeight="SemiBold"/>
-                            <Run Text="{Binding ConfidenceScoreDisplay, Mode=OneWay}"/>
-                        </TextBlock>
+                                <TextBlock Grid.Row="3"
+                                           Grid.Column="4"
+                                           Text="{Binding Extension, Mode=OneWay}"
+                                           Margin="0,0,0,6"/>
+                            </Grid>
 
-                        <TextBlock Margin="0,4,0,0">
-                            <Run Text="Nivel: " FontWeight="SemiBold"/>
-                            <Run Text="{Binding ConfidenceLevelDisplay, Mode=OneWay}"/>
-                        </TextBlock>
+                            <!-- Confianza -->
+                            <GroupBox Header="Confianza del análisis"
+                                      Padding="8"
+                                      Margin="0,10,0,0">
 
-                        <TextBlock Margin="0,4,0,0"
-                            Text="{Binding AnalysisSummaryDisplay, Mode=OneWay}"
-                            TextWrapping="Wrap"/>
-                    </StackPanel>
-                </GroupBox>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                <GroupBox Grid.Column="2"
-                          Header="Calidad técnica"
-                          Padding="8">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                    <StackPanel>
-                        <TextBlock>
-                            <Run Text="Puntuación: " FontWeight="SemiBold"/>
-                            <Run Text="{Binding QualityScoreDisplay, Mode=OneWay}"/>
-                        </TextBlock>
+                                    <TextBlock Grid.Row="0"
+                                               Grid.Column="0"
+                                               Text="Puntuación:"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,10,5"/>
 
-                        <TextBlock Margin="0,4,0,0">
-                            <Run Text="Nivel: " FontWeight="SemiBold"/>
-                            <Run Text="{Binding QualityLevelDisplay, Mode=OneWay}"/>
-                        </TextBlock>
+                                    <TextBlock Grid.Row="0"
+                                               Grid.Column="1"
+                                               Text="{Binding ConfidenceScoreDisplay,
+                                                              Mode=OneWay}"
+                                               Margin="0,0,0,5"/>
 
-                        <TextBlock Margin="0,4,0,0"
-                            Text="{Binding QualitySummaryDisplay, Mode=OneWay}"
-                            TextWrapping="Wrap"/>
-                    </StackPanel>
-                </GroupBox>
-            </Grid>
+                                    <TextBlock Grid.Row="1"
+                                               Grid.Column="0"
+                                               Text="Nivel:"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,10,5"/>
+
+                                    <TextBlock Grid.Row="1"
+                                               Grid.Column="1"
+                                               Text="{Binding ConfidenceLevelDisplay,
+                                                              Mode=OneWay}"
+                                               Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="2"
+                                               Grid.Column="0"
+                                               Text="Resumen:"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,10,0"/>
+
+                                    <TextBlock Grid.Row="2"
+                                               Grid.Column="1"
+                                               Text="{Binding AnalysisSummaryDisplay,
+                                                              Mode=OneWay}"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </GroupBox>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- ================================================== -->
+                <!-- PESTAÑA DE CALIDAD TÉCNICA                         -->
+                <!-- ================================================== -->
+                <TabItem Header="Calidad técnica">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Padding="8">
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Puntuación -->
+                            <TextBlock Grid.Row="0"
+                                       Grid.Column="0"
+                                       Text="Puntuación:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,6"/>
+
+                            <TextBlock Grid.Row="0"
+                                       Grid.Column="1"
+                                       Text="{Binding QualityScoreDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,6"/>
+
+                            <!-- Nivel -->
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="0"
+                                       Text="Nivel:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,6"/>
+
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="1"
+                                       Text="{Binding QualityLevelDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,6"/>
+
+                            <!-- Codec -->
+                            <TextBlock Grid.Row="2"
+                                       Grid.Column="0"
+                                       Text="Codec:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,6"/>
+
+                            <TextBlock Grid.Row="2"
+                                       Grid.Column="1"
+                                       Text="{Binding CodecDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,6"/>
+
+                            <!-- Compresión -->
+                            <TextBlock Grid.Row="3"
+                                       Grid.Column="0"
+                                       Text="Compresión:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,6"/>
+
+                            <TextBlock Grid.Row="3"
+                                       Grid.Column="1"
+                                       Text="{Binding CompressionTypeDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,6"/>
+
+                            <!-- Sin pérdida -->
+                            <TextBlock Grid.Row="4"
+                                       Grid.Column="0"
+                                       Text="Sin pérdida:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,6"/>
+
+                            <TextBlock Grid.Row="4"
+                                       Grid.Column="1"
+                                       Text="{Binding LosslessDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,6"/>
+
+                            <!-- Modo bitrate -->
+                            <TextBlock Grid.Row="5"
+                                       Grid.Column="0"
+                                       Text="Modo bitrate:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,6"/>
+
+                            <TextBlock Grid.Row="5"
+                                       Grid.Column="1"
+                                       Text="{Binding BitrateModeDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,6"/>
+
+                            <!-- Profundidad -->
+                            <TextBlock Grid.Row="6"
+                                       Grid.Column="0"
+                                       Text="Profundidad:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,6"/>
+
+                            <TextBlock Grid.Row="6"
+                                       Grid.Column="1"
+                                       Text="{Binding BitsPerSampleDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,6"/>
+
+                            <!-- Resumen técnico -->
+                            <TextBlock Grid.Row="7"
+                                       Grid.Column="0"
+                                       Text="Resumen:"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Top"
+                                       Margin="0,0,12,0"/>
+
+                            <TextBlock Grid.Row="7"
+                                       Grid.Column="1"
+                                       Text="{Binding QualitySummaryDisplay,
+                                                      Mode=OneWay}"
+                                       TextWrapping="Wrap"/>
+                        </Grid>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- ================================================== -->
+                <!-- PESTAÑA DE SIMULACIÓN                              -->
+                <!-- ================================================== -->
+                <TabItem Header="Simulación">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Padding="8">
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Nombre propuesto -->
+                            <TextBlock Grid.Row="0"
+                                       Grid.Column="0"
+                                       Text="Nombre propuesto:"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Top"
+                                       Margin="0,0,12,8"/>
+
+                            <TextBlock Grid.Row="0"
+                                       Grid.Column="1"
+                                       Text="{Binding ProposedFileNameDisplay,
+                                                      Mode=OneWay}"
+                                       TextWrapping="Wrap"
+                                       ToolTip="{Binding ProposedFileNameDisplay,
+                                                         Mode=OneWay}"
+                                       Margin="0,0,0,8"/>
+
+                            <!-- Cambios detectados -->
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="0"
+                                       Text="Cambios detectados:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,8"/>
+
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="1"
+                                       Text="{Binding SimulationStatusDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,8"/>
+
+                            <!-- Aplicación automática -->
+                            <TextBlock Grid.Row="2"
+                                       Grid.Column="0"
+                                       Text="Aplicación automática:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,12,8"/>
+
+                            <TextBlock Grid.Row="2"
+                                       Grid.Column="1"
+                                       Text="{Binding CanApplyAutomaticallyDisplay,
+                                                      Mode=OneWay}"
+                                       Margin="0,0,0,8"/>
+
+                            <!-- Resumen -->
+                            <TextBlock Grid.Row="3"
+                                       Grid.Column="0"
+                                       Text="Resumen:"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Top"
+                                       Margin="0,0,12,0"/>
+
+                            <TextBlock Grid.Row="3"
+                                       Grid.Column="1"
+                                       Text="{Binding Simulation.Summary,
+                                                      Mode=OneWay}"
+                                       TextWrapping="Wrap"/>
+                        </Grid>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- Pestañas reservadas para fases posteriores -->
+                <TabItem Header="Duplicados"
+                         IsEnabled="False"/>
+
+                <TabItem Header="Etiquetas"
+                         IsEnabled="False"/>
+
+            </TabControl>
         </Grid>
     </Border>
 </UserControl>

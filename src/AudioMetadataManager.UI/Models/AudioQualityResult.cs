@@ -18,5 +18,20 @@ public class AudioQualityResult
 
     public bool SpectralAnalysisCompleted { get; set; }
 
+    // Información técnica avanzada
+    public string CodecName { get; set; } = string.Empty;
+
+    public string CompressionType { get; set; } = "Desconocida";
+
+    public bool IsLossless { get; set; }
+
+    public int BitsPerSample { get; set; }
+
+    public string BitrateMode { get; set; } = "Sin determinar";
+
+    public bool HasTechnicalWarnings { get; set; }
+
+    public List<string> TechnicalWarnings { get; set; } = new();
+
     public string Summary { get; set; } = string.Empty;
 }

@@ -37,11 +37,33 @@ public class MetadataReaderService
             audioFile.Channels =
                 file.Properties.AudioChannels;
 
+            audioFile.BitsPerSample =
+                file.Properties.BitsPerSample;
+
+            audioFile.CodecName =
+                GetCodecName(audioFile.Extension);
+
             audioFile.Status = "Analizado";
         }
         catch
         {
             audioFile.Status = "Error";
         }
+    }
+    private static string GetCodecName(string extension)
+    {
+        return extension.Trim().ToLowerInvariant() switch
+        {
+            ".mp3" => "MPEG Layer III",
+            ".wav" => "PCM / WAV",
+            ".flac" => "FLAC",
+            ".aif" => "AIFF",
+            ".aiff" => "AIFF",
+            ".m4a" => "AAC / ALAC",
+            ".aac" => "AAC",
+            ".ogg" => "Ogg Vorbis",
+            ".opus" => "Opus",
+            _ => "Desconocido"
+        };
     }
 }

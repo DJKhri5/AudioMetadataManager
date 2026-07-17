@@ -20,6 +20,8 @@ public class AudioFile
     public int Bitrate { get; set; }
     public int SampleRate { get; set; }
     public int Channels { get; set; }
+    public int BitsPerSample { get; set; }
+    public string CodecName { get; set; } = string.Empty;
 
     public string DurationDisplay =>
     Duration.TotalHours >= 1
@@ -47,6 +49,9 @@ public class AudioFile
     // Resultado del análisis técnico de calidad
     public AudioQualityResult? QualityAnalysis { get; set; }
 
+    // Resultado de la simulación de cambios
+    public FileSimulationResult? Simulation { get; set; }
+
     // Valores para la interfaz
     public string ConfidenceScoreDisplay =>
     Analysis == null
@@ -65,6 +70,23 @@ public class AudioFile
 
     public string AnalysisSummaryDisplay =>
         Analysis?.Summary ?? string.Empty;
+
+    public string SimulationStatusDisplay =>
+    Simulation == null
+        ? "Sin simulación"
+        : Simulation.HasChanges
+            ? $"{Simulation.ChangeCount} cambio(s)"
+            : "Sin cambios";
+
+    public string ProposedFileNameDisplay =>
+        Simulation?.ProposedFileName ?? string.Empty;
+
+    public string CanApplyAutomaticallyDisplay =>
+        Simulation == null
+            ? "—"
+            : Simulation.CanApplyAutomatically
+                ? "Sí"
+                : "No";
 
     // Valores de calidad para la interfaz
     public string QualityScoreDisplay =>
@@ -104,6 +126,28 @@ public class AudioFile
             ? "—"
             : Comparison.TitleMatches ? "Sí" : "No";
 
+    public string CodecDisplay =>
+    string.IsNullOrWhiteSpace(QualityAnalysis?.CodecName)
+        ? "Sin determinar"
+        : QualityAnalysis.CodecName;
+
+    public string CompressionTypeDisplay =>
+        QualityAnalysis?.CompressionType ?? "Desconocida";
+
+    public string BitrateModeDisplay =>
+        QualityAnalysis?.BitrateMode ?? "Sin determinar";
+
+    public string BitsPerSampleDisplay =>
+        QualityAnalysis == null || QualityAnalysis.BitsPerSample <= 0
+            ? "—"
+            : $"{QualityAnalysis.BitsPerSample} bits";
+
+    public string LosslessDisplay =>
+        QualityAnalysis == null
+            ? "—"
+            : QualityAnalysis.IsLossless
+                ? "Sí"
+                : "No";
 
     // Estado
     public string Status { get; set; } = "Pendiente";

@@ -54,14 +54,14 @@
 
                 <!-- Tabla de archivos -->
                 <RowDefinition Height="2*"
-                               MinHeight="180"/>
+                               MinHeight="160"/>
 
                 <!-- Panel de detalles -->
                 <RowDefinition Height="2*"
-                               MinHeight="230"/>
+                               MinHeight="260"/>
 
                 <!-- Registro -->
-                <RowDefinition Height="120"/>
+                <RowDefinition Height="110"/>
 
                 <!-- Botones -->
                 <RowDefinition Height="Auto"/>
