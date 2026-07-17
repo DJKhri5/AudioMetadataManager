@@ -57,4 +57,5 @@ public partial class MainWindow : Window
 
         LogTextBox.ScrollToEnd();
     }
+    
 }
