@@ -1,6 +1,7 @@
 ﻿<Window x:Class="AudioMetadataManager.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:AudioMetadataManager.UI.Views"
         Title="Audio Metadata Manager"
         Width="1200"
         Height="760"
@@ -37,16 +38,32 @@
             <Separator/>
 
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="Versión 0.2"/>
+                <TextBlock Text="Versión 0.4"/>
             </StatusBarItem>
         </StatusBar>
 
+        <!-- Contenido principal -->
         <Grid Margin="16">
+
             <Grid.RowDefinitions>
+                <!-- Encabezado -->
                 <RowDefinition Height="Auto"/>
+
+                <!-- Selección de biblioteca -->
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="150"/>
+
+                <!-- Tabla de archivos -->
+                <RowDefinition Height="2*"
+                               MinHeight="180"/>
+
+                <!-- Panel de detalles -->
+                <RowDefinition Height="2*"
+                               MinHeight="230"/>
+
+                <!-- Registro -->
+                <RowDefinition Height="120"/>
+
+                <!-- Botones -->
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
@@ -106,11 +123,12 @@
                 </Grid>
             </GroupBox>
 
-            <!-- Tabla principal -->
+            <!-- Tabla principal resumida -->
             <GroupBox Grid.Row="2"
                       Header="Archivos encontrados"
                       Padding="8"
-                      Margin="0,0,0,12">
+                      Margin="0,0,0,12"
+                      MinHeight="180">
 
                 <DataGrid x:Name="AudioFilesDataGrid"
                           AutoGenerateColumns="False"
@@ -118,140 +136,63 @@
                           CanUserAddRows="False"
                           CanUserResizeColumns="True"
                           CanUserReorderColumns="True"
-                          SelectionMode="Extended"
+                          SelectionMode="Single"
+                          SelectionUnit="FullRow"
                           GridLinesVisibility="Horizontal"
                           HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto">
+                          VerticalScrollBarVisibility="Auto"
+                          MinHeight="140">
 
                     <DataGrid.Columns>
 
                         <DataGridCheckBoxColumn Header="Aplicar"
-                            Width="65"/>
+                                                Width="65"/>
 
                         <DataGridTextColumn Header="Archivo"
-                        Binding="{Binding FileName}"
-                        Width="SizeToCells"
-                        MinWidth="220"/>
+                                            Binding="{Binding FileName}"
+                                            Width="SizeToCells"
+                                            MinWidth="240"/>
 
-                        <DataGridTextColumn Header="Artista etiqueta"
-                        Binding="{Binding Artist}"
-                        Width="SizeToCells"
-                        MinWidth="160"/>
+                        <DataGridTextColumn Header="Artista"
+                                            Binding="{Binding ParsedArtistDisplay}"
+                                            Width="SizeToCells"
+                                            MinWidth="170"/>
 
-                        <DataGridTextColumn Header="Artista nombre"
-                        Binding="{Binding ParsedArtistDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="160"/>
-
-                        <DataGridTextColumn Header="Coincide artista"
-                        Binding="{Binding ArtistMatchDisplay}"
-                        Width="SizeToHeader"
-                        MinWidth="105"/>
-
-                        <DataGridTextColumn Header="Título etiqueta"
-                        Binding="{Binding Title}"
-                        Width="SizeToCells"
-                        MinWidth="200"/>
-
-                        <DataGridTextColumn Header="Título nombre"
-                        Binding="{Binding ParsedTitleDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="200"/>
+                        <DataGridTextColumn Header="Título"
+                                            Binding="{Binding ParsedTitleDisplay}"
+                                            Width="SizeToCells"
+                                            MinWidth="220"/>
 
                         <DataGridTextColumn Header="Versión"
-                        Binding="{Binding ParsedVersionDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="150"/>
+                                            Binding="{Binding ParsedVersionDisplay}"
+                                            Width="SizeToCells"
+                                            MinWidth="160"/>
 
-                        <!-- Motor de confianza -->
                         <DataGridTextColumn Header="Confianza"
-                        Binding="{Binding ConfidenceScoreDisplay}"
-                        Width="SizeToHeader"
-                        MinWidth="85"/>
+                                            Binding="{Binding ConfidenceScoreDisplay}"
+                                            Width="90"/>
 
-                        <DataGridTextColumn Header="Nivel"
-                        Binding="{Binding ConfidenceLevelDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="90"/>
-
-                        <DataGridTextColumn Header="Revisión"
-                        Binding="{Binding ManualReviewDisplay}"
-                        Width="SizeToHeader"
-                        MinWidth="80"/>
-
-                        <DataGridTextColumn Header="Resumen"
-                        Binding="{Binding AnalysisSummaryDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="320"/>
-
-                        <!-- Motor de calidad musical -->
                         <DataGridTextColumn Header="Calidad"
-                        Binding="{Binding QualityScoreDisplay}"
-                        Width="SizeToHeader"
-                        MinWidth="80"/>
-
-                        <DataGridTextColumn Header="Nivel técnico"
-                        Binding="{Binding QualityLevelDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="155"/>
-
-                        <DataGridTextColumn Header="Revisión técnica"
-                        Binding="{Binding QualityReviewDisplay}"
-                        Width="SizeToHeader"
-                        MinWidth="115"/>
-
-                        <DataGridTextColumn Header="Resumen técnico"
-                        Binding="{Binding QualitySummaryDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="360"/>
-
-                        <DataGridTextColumn Header="Coincide título"
-                        Binding="{Binding TitleMatchDisplay}"
-                        Width="SizeToHeader"
-                        MinWidth="105"/>
-
-                        <!-- Información técnica -->
-                        <DataGridTextColumn Header="Formato"
-                        Binding="{Binding Extension}"
-                        Width="SizeToHeader"
-                        MinWidth="75"/>
-
-                        <DataGridTextColumn Header="Duración"
-                        Binding="{Binding DurationDisplay}"
-                        Width="SizeToHeader"
-                        MinWidth="85"/>
-
-                        <DataGridTextColumn Header="Bitrate"
-                        Binding="{Binding BitrateDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="90"/>
-
-                        <DataGridTextColumn Header="Muestreo"
-                        Binding="{Binding SampleRateDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="90"/>
-
-                        <DataGridTextColumn Header="Canales"
-                        Binding="{Binding Channels}"
-                        Width="SizeToHeader"
-                        MinWidth="70"/>
-
-                        <DataGridTextColumn Header="Tamaño"
-                        Binding="{Binding FileSizeDisplay}"
-                        Width="SizeToCells"
-                        MinWidth="90"/>
+                                            Binding="{Binding QualityScoreDisplay}"
+                                            Width="85"/>
 
                         <DataGridTextColumn Header="Estado"
-                        Binding="{Binding Status}"
-                        Width="SizeToCells"
-                        MinWidth="100"/>
+                                            Binding="{Binding Status}"
+                                            Width="110"/>
 
                     </DataGrid.Columns>
                 </DataGrid>
             </GroupBox>
 
-            <!-- Registro -->
-            <GroupBox Grid.Row="3"
+            <!-- Panel de detalles -->
+            <views:AudioFileDetailsView
+                Grid.Row="3"
+                DataContext="{Binding ElementName=AudioFilesDataGrid,
+                                      Path=SelectedItem}"
+                Margin="0,0,0,12"/>
+
+            <!-- Registro de actividad -->
+            <GroupBox Grid.Row="4"
                       Header="Registro de actividad"
                       Padding="8"
                       Margin="0,0,0,12">
@@ -260,11 +201,12 @@
                          IsReadOnly="True"
                          AcceptsReturn="True"
                          VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
                          Text="Aplicación iniciada. Esperando selección de una biblioteca musical."/>
             </GroupBox>
 
             <!-- Acciones inferiores -->
-            <StackPanel Grid.Row="4"
+            <StackPanel Grid.Row="5"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right">
 
@@ -289,6 +231,7 @@
                         IsEnabled="False"/>
 
             </StackPanel>
+
         </Grid>
     </DockPanel>
 </Window>
