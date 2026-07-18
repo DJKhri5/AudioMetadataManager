@@ -97,6 +97,16 @@ public class AudioAnalysisContext
             StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Almacena datos compartidos identificados por su tipo.
+    ///
+    /// Permite que un procesador publique información y que
+    /// otros módulos la reutilicen sin depender de claves
+    /// de texto ni conocer la implementación del productor.
+    /// </summary>
+    private IDictionary<Type, object> TypedData { get; } =
+        new Dictionary<Type, object>();
+
+    /// <summary>
     /// Guarda o reemplaza un valor auxiliar.
     /// </summary>
     public void SetItem<T>(
@@ -112,6 +122,21 @@ public class AudioAnalysisContext
 
         Items[key.Trim()] =
             value!;
+    }
+
+    /// <summary>
+    /// Guarda o reemplaza un dato compartido utilizando
+    /// su tipo como identificador.
+    /// </summary>
+    public void SetData<T>(
+        T value)
+        where T : class
+    {
+        ArgumentNullException.ThrowIfNull(
+            value);
+
+        TypedData[typeof(T)] =
+            value;
     }
 
     /// <summary>
@@ -145,5 +170,75 @@ public class AudioAnalysisContext
             typedValue;
 
         return true;
+    }
+
+    /// <summary>
+    /// Intenta recuperar un dato compartido utilizando
+    /// su tipo como identificador.
+    /// </summary>
+    public bool TryGetData<T>(
+        out T? value)
+        where T : class
+    {
+        value =
+            default;
+
+        if (!TypedData.TryGetValue(
+                typeof(T),
+                out object? storedValue))
+        {
+            return false;
+        }
+
+        if (storedValue is not T typedValue)
+        {
+            return false;
+        }
+
+        value =
+            typedValue;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Indica si existe un dato compartido del tipo solicitado.
+    /// </summary>
+    public bool HasData<T>()
+        where T : class
+    {
+        return TypedData.ContainsKey(
+            typeof(T));
+    }
+
+    /// <summary>
+    /// Recupera un dato compartido obligatorio.
+    ///
+    /// Genera una excepción clara cuando el dato aún no fue
+    /// publicado por una etapa anterior del pipeline.
+    /// </summary>
+    public T GetRequiredData<T>()
+        where T : class
+    {
+        if (TryGetData<T>(
+                out T? value) &&
+            value is not null)
+        {
+            return value;
+        }
+
+        throw new InvalidOperationException(
+            $"No existe información compartida del tipo " +
+            $"\"{typeof(T).Name}\" dentro del contexto.");
+    }
+
+    /// <summary>
+    /// Elimina un dato compartido del tipo solicitado.
+    /// </summary>
+    public bool RemoveData<T>()
+        where T : class
+    {
+        return TypedData.Remove(
+            typeof(T));
     }
 }

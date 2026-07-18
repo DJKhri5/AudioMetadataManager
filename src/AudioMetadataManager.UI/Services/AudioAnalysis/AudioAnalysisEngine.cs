@@ -155,33 +155,37 @@ public class AudioAnalysisEngine
         AudioSilenceAnalysisOptions silenceOptions =
             new();
 
-        IAudioAnalyzer<AudioSilenceAnalysisResult>
-            silenceAnalyzer =
-                new AudioSilenceAnalyzer(
-                    sampleReader,
-                    silenceOptions);
-
-        IAudioAnalysisStage silenceStage =
-            new SilenceAnalysisStage(
-                silenceAnalyzer);
-
         AudioEnvelopeAnalysisOptions envelopeOptions =
             new();
 
-        IAudioAnalyzer<AudioEnvelopeAnalysisResult>
-            envelopeAnalyzer =
-                new AudioEnvelopeAnalyzer(
-                    sampleReader,
-                    envelopeOptions);
+        IAudioPcmAnalysisProcessor silenceProcessor =
+            new AudioSilencePcmProcessor(
+                silenceOptions);
 
-        IAudioAnalysisStage envelopeStage =
-            new EnvelopeAnalysisStage(
-                envelopeAnalyzer);
+        IAudioPcmAnalysisProcessor envelopeProcessor =
+            new AudioEnvelopePcmProcessor(
+                envelopeOptions);
+
+        IReadOnlyList<IAudioPcmAnalysisProcessor>
+            processors =
+                new List<IAudioPcmAnalysisProcessor>
+                {
+                silenceProcessor,
+                envelopeProcessor
+                };
+
+        AudioPcmAnalysisCoordinator coordinator =
+            new(
+                sampleReader,
+                processors);
+
+        IAudioAnalysisStage pcmAnalysisStage =
+            new PcmAnalysisStage(
+                coordinator);
 
         return new List<IAudioAnalysisStage>
         {
-            silenceStage,
-            envelopeStage
+        pcmAnalysisStage
         };
     }
 
