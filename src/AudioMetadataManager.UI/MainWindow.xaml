@@ -80,13 +80,18 @@
                            Foreground="DimGray"/>
             </StackPanel>
 
-            <!-- Selección de carpeta -->
+            <!-- Selección de carpeta y análisis -->
             <GroupBox Grid.Row="1"
-                      Header="Biblioteca musical"
-                      Padding="12"
-                      Margin="0,0,0,12">
+            Header="Biblioteca musical"
+            Padding="12"
+            Margin="0,0,0,12">
 
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
@@ -94,32 +99,61 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="Carpeta:"
-                               VerticalAlignment="Center"
-                               Margin="0,0,10,0"/>
+                    <TextBlock Grid.Row="0"
+                    Grid.Column="0"
+                    Text="Carpeta:"
+                    VerticalAlignment="Center"
+                    Margin="0,0,10,0"/>
 
-                    <TextBox Grid.Column="1"
-                             x:Name="LibraryPathTextBox"
-                             IsReadOnly="True"
-                             VerticalContentAlignment="Center"
-                             Margin="0,0,10,0"/>
+                    <TextBox Grid.Row="0"
+                    Grid.Column="1"
+                    x:Name="LibraryPathTextBox"
+                    IsReadOnly="True"
+                    VerticalContentAlignment="Center"
+                    Margin="0,0,10,0"/>
 
-                    <Button Grid.Column="2"
-                            x:Name="BrowseButton"
-                            Content="Examinar..."
-                            MinWidth="110"
-                            Padding="12,6"
-                            Margin="0,0,10,0"
-                            Click="BrowseButton_Click"/>
+                    <Button Grid.Row="0"
+                    Grid.Column="2"
+                    x:Name="BrowseButton"
+                    Content="Examinar..."
+                    MinWidth="110"
+                    Padding="12,6"
+                    Margin="0,0,10,0"
+                    Click="BrowseButton_Click"/>
 
-                    <Button Grid.Column="3"
-                            x:Name="ScanButton"
-                            Content="Analizar biblioteca"
-                            MinWidth="150"
-                            Padding="12,6"
-                            IsEnabled="False"
-                            Click="ScanButton_Click"/>
+                    <Button Grid.Row="0"
+                    Grid.Column="3"
+                    x:Name="ScanButton"
+                    Content="Analizar biblioteca"
+                    MinWidth="150"
+                    Padding="12,6"
+                    IsEnabled="False"
+                    Click="ScanButton_Click"/>
+
+                        <!-- Acciones sobre el archivo seleccionado -->
+                        <StackPanel Grid.Row="1"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="4"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,10,0,0">
+
+                        <Button x:Name="AnalyzeSelectedFileButton"
+                        Content="Analizar archivo"
+                        MinWidth="145"
+                        Padding="12,6"
+                        Margin="0,0,10,0"
+                        IsEnabled="False"
+                        Click="AnalyzeSelectedFileButton_Click"/>
+
+                        <Button x:Name="RunAudioDiagnosticButton"
+                        Content="Diagnóstico técnico"
+                        MinWidth="155"
+                        Padding="12,6"
+                        IsEnabled="False"
+                        Click="RunAudioDiagnosticButton_Click"/>
+
+                    </StackPanel>
                 </Grid>
             </GroupBox>
 
@@ -138,6 +172,7 @@
                           CanUserReorderColumns="True"
                           SelectionMode="Single"
                           SelectionUnit="FullRow"
+                          SelectionChanged="AudioFilesDataGrid_SelectionChanged"
                           GridLinesVisibility="Horizontal"
                           HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Auto"
