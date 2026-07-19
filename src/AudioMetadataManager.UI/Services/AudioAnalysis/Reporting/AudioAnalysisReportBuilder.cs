@@ -42,6 +42,10 @@ public class AudioAnalysisReportBuilder
             lines,
             analysisResult.Spectrum);
 
+        AddToneProfileSection(
+            lines,
+            analysisResult.ToneProfile);
+
         AddWarningsSection(
             lines,
             analysisResult.Warnings);
@@ -387,6 +391,93 @@ public class AudioAnalysisReportBuilder
             lines.Add(
                 $"Error: " +
                 $"{DisplayValue(spectrum.ErrorMessage)}");
+        }
+    }
+
+    /// <summary>
+    /// Agrega el perfil tonal derivado del espectro FFT.
+    /// </summary>
+    private static void AddToneProfileSection(
+        List<string> lines,
+        AudioToneProfile toneProfile)
+    {
+        lines.Add(string.Empty);
+        lines.Add("--- Perfil tonal por bandas ---");
+        lines.Add(string.Empty);
+
+        lines.Add(
+            $"Perfil válido: " +
+            $"{ToSpanish(toneProfile.IsValid)}");
+
+        lines.Add(
+            $"Bandas disponibles: " +
+            $"{toneProfile.BandCount}");
+
+        lines.Add(
+            $"Distribución energética normalizada: " +
+            $"{ToSpanish(
+                toneProfile.HasNormalizedEnergyDistribution)}");
+
+        lines.Add(
+            $"Suma de participación energética: " +
+            $"{toneProfile.TotalEnergyRatioSumDisplay}");
+
+        lines.Add(
+            $"Banda dominante por energía: " +
+            $"{toneProfile.DominantEnergyBandDisplay}");
+
+        lines.Add(
+            $"Banda más persistente: " +
+            $"{toneProfile.MostPersistentBandDisplay}");
+
+        if (!toneProfile.IsValid)
+        {
+            lines.Add(
+                "No existen mediciones tonales válidas.");
+
+            return;
+        }
+
+        foreach (
+            AudioFrequencyBandMeasurement measurement
+            in toneProfile.Measurements)
+        {
+            lines.Add(string.Empty);
+
+            lines.Add(
+                $"[{measurement.DisplayName}]");
+
+            lines.Add(
+                $"Rango: " +
+                $"{measurement.FrequencyRangeDisplay}");
+
+            lines.Add(
+                $"Bins FFT utilizados: " +
+                $"{measurement.BinCount}");
+
+            lines.Add(
+                $"Magnitud media: " +
+                $"{measurement.AverageMagnitudeDisplay}");
+
+            lines.Add(
+                $"Magnitud máxima: " +
+                $"{measurement.PeakMagnitudeDisplay}");
+
+            lines.Add(
+                $"Frecuencia dominante: " +
+                $"{measurement.DominantFrequencyDisplay}");
+
+            lines.Add(
+                $"Persistencia media: " +
+                $"{measurement.AveragePersistenceDisplay}");
+
+            lines.Add(
+                $"Persistencia máxima: " +
+                $"{measurement.PeakPersistenceDisplay}");
+
+            lines.Add(
+                $"Participación energética: " +
+                $"{measurement.TotalEnergyRatioDisplay}");
         }
     }
 

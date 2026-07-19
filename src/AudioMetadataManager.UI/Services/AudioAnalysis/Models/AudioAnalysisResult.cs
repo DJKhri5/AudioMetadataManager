@@ -51,6 +51,15 @@ public class AudioAnalysisResult
         new();
 
     /// <summary>
+    /// Perfil tonal derivado del perfil espectral.
+    ///
+    /// Este objeto reutiliza los bins FFT ya calculados.
+    /// No implica otra lectura del archivo ni una segunda FFT.
+    /// </summary>
+    public AudioToneProfile ToneProfile { get; set; } =
+        new();
+
+    /// <summary>
     /// Indica si el motor terminó de ejecutar todos los
     /// analizadores habilitados.
     /// </summary>

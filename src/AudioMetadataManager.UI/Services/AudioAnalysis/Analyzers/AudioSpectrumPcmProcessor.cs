@@ -16,6 +16,8 @@ public class AudioSpectrumPcmProcessor :
     IAudioPcmAnalysisProcessor
 {
     private readonly AudioSpectrumAlgorithm _algorithm;
+    private readonly AudioToneProfileCalculator
+        _toneProfileCalculator;
 
     /// <summary>
     /// Nombre legible del procesador.
@@ -33,11 +35,14 @@ public class AudioSpectrumPcmProcessor :
     /// Crea el procesador con la configuración indicada.
     /// </summary>
     public AudioSpectrumPcmProcessor(
-        AudioSpectrumAnalysisOptions? options = null)
+    AudioSpectrumAnalysisOptions? options = null)
     {
         _algorithm =
             new AudioSpectrumAlgorithm(
                 options);
+
+        _toneProfileCalculator =
+            new AudioToneProfileCalculator();
     }
 
     /// <summary>
@@ -93,14 +98,24 @@ public class AudioSpectrumPcmProcessor :
         AudioSpectrumProfile profile =
             _algorithm.Profile;
 
+        AudioToneProfile toneProfile =
+            _toneProfileCalculator.Calculate(
+            profile);
+
         context.AnalysisResult.Spectrum =
             result;
+
+        context.AnalysisResult.ToneProfile =
+            toneProfile;
 
         context.SetData(
             result);
 
         context.SetData(
             profile);
+
+        context.SetData(
+            toneProfile);
     }
 
     /// <summary>
@@ -108,8 +123,8 @@ public class AudioSpectrumPcmProcessor :
     /// resultante para que otros módulos puedan consultarlo.
     /// </summary>
     public void Fail(
-        AudioAnalysisContext context,
-        string? errorMessage)
+    AudioAnalysisContext context,
+    string? errorMessage)
     {
         ArgumentNullException.ThrowIfNull(
             context);
