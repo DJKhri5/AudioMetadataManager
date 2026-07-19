@@ -1,4 +1,5 @@
-﻿using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
+﻿using AudioMetadataManager.UI.Services.AudioAnalysis.Algorithms;
+using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
 
 namespace AudioMetadataManager.UI.Services.AudioAnalysis.Reporting;
 
@@ -49,6 +50,10 @@ public class AudioAnalysisReportBuilder
         AddToneBalanceSection(
             lines,
             analysisResult.ToneBalanceProfile);
+
+        AddToneCharacterSection(
+            lines,
+            analysisResult.ToneCharacterResult);
 
         AddWarningsSection(
             lines,
@@ -532,6 +537,45 @@ public class AudioAnalysisReportBuilder
         lines.Add(
             $"Relación bajas/altas: " +
             $"{toneBalanceProfile.LowToHighEnergyRatioDisplay}");
+    }
+
+    /// <summary>
+    /// Agrega la caracterización tonal simplificada.
+    /// </summary>
+    private static void AddToneCharacterSection(
+        List<string> lines,
+        AudioToneCharacterResult toneCharacterResult)
+    {
+        lines.Add(string.Empty);
+        lines.Add("--- Caracterización tonal ---");
+        lines.Add(string.Empty);
+
+        lines.Add(
+            $"Caracterización disponible: " +
+            $"{ToSpanish(toneCharacterResult.IsValid)}");
+
+        lines.Add(
+            $"Carácter principal: " +
+            $"{AudioToneCharacterCalculator.GetDisplayName(
+                toneCharacterResult.PrimaryCharacter)}");
+
+        if (!toneCharacterResult.HasSecondaryCharacters)
+        {
+            lines.Add(
+                "Caracteres secundarios: Ninguno");
+
+            return;
+        }
+
+        string secondaryCharacters =
+            string.Join(
+                ", ",
+                toneCharacterResult.SecondaryCharacters.Select(
+                    AudioToneCharacterCalculator.GetDisplayName));
+
+        lines.Add(
+            $"Caracteres secundarios: " +
+            $"{secondaryCharacters}");
     }
 
     /// <summary>

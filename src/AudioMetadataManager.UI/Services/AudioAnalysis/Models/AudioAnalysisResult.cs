@@ -69,6 +69,12 @@ public class AudioAnalysisResult
         new();
 
     /// <summary>
+    /// Caracterización tonal simplificada del archivo.
+    /// </summary>
+    public AudioToneCharacterResult ToneCharacterResult { get; set; } =
+        new();
+
+    /// <summary>
     /// Indica si el motor terminó de ejecutar todos los
     /// analizadores habilitados.
     /// </summary>

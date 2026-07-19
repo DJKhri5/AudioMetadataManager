@@ -24,6 +24,10 @@ public class AudioSpectrumPcmProcessor :
         _toneBalanceCalculator =
             new();
 
+    private readonly AudioToneCharacterCalculator
+        _toneCharacterCalculator =
+            new();
+
     /// <summary>
     /// Nombre legible del procesador.
     /// </summary>
@@ -111,6 +115,11 @@ public class AudioSpectrumPcmProcessor :
             _toneBalanceCalculator.Calculate(
             toneProfile);
 
+        AudioToneCharacterResult toneCharacterResult =
+            _toneCharacterCalculator.Calculate(
+                toneProfile,
+                toneBalanceProfile);
+
         context.AnalysisResult.Spectrum =
             result;
 
@@ -119,6 +128,9 @@ public class AudioSpectrumPcmProcessor :
 
         context.AnalysisResult.ToneBalanceProfile =
             toneBalanceProfile;
+
+        context.AnalysisResult.ToneCharacterResult =
+            toneCharacterResult;
 
         context.SetData(
             result);
@@ -131,6 +143,9 @@ public class AudioSpectrumPcmProcessor :
 
         context.SetData(
             toneBalanceProfile);
+
+        context.SetData(
+            toneCharacterResult);
     }
 
     /// <summary>
