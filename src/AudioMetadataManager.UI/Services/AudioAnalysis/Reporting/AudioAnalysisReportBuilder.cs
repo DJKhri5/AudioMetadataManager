@@ -38,6 +38,10 @@ public class AudioAnalysisReportBuilder
             lines,
             analysisResult.Envelope);
 
+        AddSpectrumSection(
+            lines,
+            analysisResult.Spectrum);
+
         AddWarningsSection(
             lines,
             analysisResult.Warnings);
@@ -292,6 +296,97 @@ public class AudioAnalysisReportBuilder
             lines.Add(
                 $"Error: " +
                 $"{DisplayValue(envelope.ErrorMessage)}");
+        }
+    }
+
+    /// <summary>
+    /// Agrega la sección del análisis espectral.
+    /// </summary>
+    private static void AddSpectrumSection(
+        List<string> lines,
+        AudioSpectrumAnalysisResult spectrum)
+    {
+        lines.Add(string.Empty);
+        lines.Add("--- Análisis espectral FFT ---");
+        lines.Add(string.Empty);
+
+        lines.Add(
+            $"Estado: " +
+            $"{spectrum.StatusDisplay}");
+
+        lines.Add(
+            $"Análisis completado: " +
+            $"{ToSpanish(spectrum.AnalysisCompleted)}");
+
+        lines.Add(
+            $"Resultado confiable: " +
+            $"{ToSpanish(spectrum.IsReliable)}");
+
+        lines.Add(
+            $"Duración técnica: " +
+            $"{spectrum.TechnicalDurationDisplay}");
+
+        lines.Add(
+            $"Frecuencia de muestreo: " +
+            $"{spectrum.SampleRate} Hz");
+
+        lines.Add(
+            $"Frecuencia de Nyquist: " +
+            $"{spectrum.NyquistFrequencyDisplay}");
+
+        lines.Add(
+            $"Tamaño FFT: " +
+            $"{spectrum.FftSize}");
+
+        lines.Add(
+            $"Duración de ventana FFT: " +
+            $"{FormatDuration(spectrum.WindowDuration)}");
+
+        lines.Add(
+            $"Resolución frecuencial: " +
+            $"{spectrum.FrequencyResolutionDisplay}");
+
+        lines.Add(
+            $"Ventanas FFT procesadas: " +
+            $"{spectrum.ProcessedWindowCount}");
+
+        lines.Add(
+            $"Frecuencia significativa más alta: " +
+            $"{spectrum.HighestSignificantFrequencyDisplay}");
+
+        lines.Add(
+            $"Frecuencia persistente más alta: " +
+            $"{spectrum.HighestPersistentFrequencyDisplay}");
+
+        lines.Add(
+            $"Frecuencia con persistencia fuerte: " +
+            $"{spectrum.HighestStrongPersistentFrequencyDisplay}");
+
+        lines.Add(
+            $"Caída superior estimada: " +
+            $"{spectrum.EstimatedHighFrequencyRolloffDisplay}");
+
+        lines.Add(
+            $"Energía espectral media: " +
+            $"{spectrum.AverageSpectrumEnergyDisplay}");
+
+        lines.Add(
+            $"Energía espectral máxima: " +
+            $"{spectrum.PeakSpectrumEnergyDisplay}");
+
+        lines.Add(
+            $"Datos disponibles para comparación: " +
+            $"{ToSpanish(spectrum.HasComparisonData)}");
+
+        lines.Add(
+            $"Resumen: " +
+            $"{DisplayValue(spectrum.Summary)}");
+
+        if (spectrum.HasError)
+        {
+            lines.Add(
+                $"Error: " +
+                $"{DisplayValue(spectrum.ErrorMessage)}");
         }
     }
 

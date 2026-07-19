@@ -41,6 +41,35 @@ public class AudioSpectrumAnalysisResult
     public double HighestSignificantFrequencyHz { get; set; }
 
     /// <summary>
+    /// Frecuencia más alta cuyo contenido significativo aparece
+    /// en una proporción mínima de las ventanas procesadas.
+    ///
+    /// Es más robusta frente a ruido y artefactos aislados que
+    /// HighestSignificantFrequencyHz.
+    /// </summary>
+    public double HighestPersistentFrequencyHz { get; set; }
+
+    /// <summary>
+    /// Frecuencia más alta presente de forma significativa
+    /// en una proporción elevada de las ventanas procesadas.
+    /// </summary>
+    public double HighestStrongPersistentFrequencyHz { get; set; }
+
+    /// <summary>
+    /// Frecuencia de persistencia fuerte en formato legible.
+    /// </summary>
+    public string HighestStrongPersistentFrequencyDisplay =>
+        FormatFrequency(
+            HighestStrongPersistentFrequencyHz);
+
+    /// <summary>
+    /// Frecuencia significativa persistente en formato legible.
+    /// </summary>
+    public string HighestPersistentFrequencyDisplay =>
+        FormatFrequency(
+            HighestPersistentFrequencyHz);
+
+    /// <summary>
     /// Frecuencia aproximada donde comienza una disminución
     /// persistente de energía en la zona superior del espectro.
     /// </summary>

@@ -45,6 +45,12 @@ public class AudioAnalysisResult
         new();
 
     /// <summary>
+    /// Resultado resumido del análisis espectral.
+    /// </summary>
+    public AudioSpectrumAnalysisResult Spectrum { get; set; } =
+        new();
+
+    /// <summary>
     /// Indica si el motor terminó de ejecutar todos los
     /// analizadores habilitados.
     /// </summary>

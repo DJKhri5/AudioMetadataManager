@@ -158,6 +158,9 @@ public class AudioAnalysisEngine
         AudioEnvelopeAnalysisOptions envelopeOptions =
             new();
 
+        AudioSpectrumAnalysisOptions spectrumOptions =
+            new();
+
         IAudioPcmAnalysisProcessor silenceProcessor =
             new AudioSilencePcmProcessor(
                 silenceOptions);
@@ -166,12 +169,17 @@ public class AudioAnalysisEngine
             new AudioEnvelopePcmProcessor(
                 envelopeOptions);
 
+        IAudioPcmAnalysisProcessor spectrumProcessor =
+            new AudioSpectrumPcmProcessor(
+                spectrumOptions);
+
         IReadOnlyList<IAudioPcmAnalysisProcessor>
             processors =
                 new List<IAudioPcmAnalysisProcessor>
                 {
                 silenceProcessor,
-                envelopeProcessor
+                envelopeProcessor,
+                spectrumProcessor
                 };
 
         AudioPcmAnalysisCoordinator coordinator =

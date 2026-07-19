@@ -104,5 +104,27 @@ public class PcmAnalysisStage : IAudioAnalysisStage
             analysisResult.AddWarning(
                 "Las mediciones de envolvente energética no son suficientemente confiables para realizar comparaciones.");
         }
+
+        AudioSpectrumAnalysisResult spectrum =
+            analysisResult.Spectrum;
+
+        if (spectrum.HasError)
+        {
+            analysisResult.AddWarning(
+                "El análisis espectral no pudo " +
+                "completarse correctamente.");
+        }
+        else if (!spectrum.AnalysisCompleted)
+        {
+            analysisResult.AddWarning(
+                "El análisis espectral quedó incompleto.");
+        }
+        else if (!spectrum.IsReliable)
+        {
+            analysisResult.AddWarning(
+                "Las mediciones espectrales no son " +
+                "suficientemente confiables para " +
+                "realizar comparaciones.");
+        }
     }
 }
