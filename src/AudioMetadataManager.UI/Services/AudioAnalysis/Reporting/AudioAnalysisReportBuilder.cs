@@ -46,6 +46,10 @@ public class AudioAnalysisReportBuilder
             lines,
             analysisResult.ToneProfile);
 
+        AddToneBalanceSection(
+            lines,
+            analysisResult.ToneBalanceProfile);
+
         AddWarningsSection(
             lines,
             analysisResult.Warnings);
@@ -479,6 +483,55 @@ public class AudioAnalysisReportBuilder
                 $"Participación energética: " +
                 $"{measurement.TotalEnergyRatioDisplay}");
         }
+    }
+
+    /// <summary>
+    /// Agrega el balance tonal general derivado del perfil
+    /// energético por bandas.
+    /// </summary>
+    private static void AddToneBalanceSection(
+        List<string> lines,
+        AudioToneBalanceProfile toneBalanceProfile)
+    {
+        lines.Add(string.Empty);
+        lines.Add("--- Balance tonal general ---");
+        lines.Add(string.Empty);
+
+        lines.Add(
+            $"Perfil válido: " +
+            $"{ToSpanish(toneBalanceProfile.IsValid)}");
+
+        lines.Add(
+            $"Región baja: " +
+            $"{toneBalanceProfile.LowFrequencyEnergyDisplay}");
+
+        lines.Add(
+            $"Región media: " +
+            $"{toneBalanceProfile.MidFrequencyEnergyDisplay}");
+
+        lines.Add(
+            $"Región alta: " +
+            $"{toneBalanceProfile.HighFrequencyEnergyDisplay}");
+
+        lines.Add(
+            $"Suma energética: " +
+            $"{toneBalanceProfile.TotalEnergyRatioDisplay}");
+
+        lines.Add(
+            $"Región dominante: " +
+            $"{toneBalanceProfile.DominantRegionDisplay}");
+
+        lines.Add(
+            $"Relación bajas/medias: " +
+            $"{toneBalanceProfile.LowToMidEnergyRatioDisplay}");
+
+        lines.Add(
+            $"Relación altas/medias: " +
+            $"{toneBalanceProfile.HighToMidEnergyRatioDisplay}");
+
+        lines.Add(
+            $"Relación bajas/altas: " +
+            $"{toneBalanceProfile.LowToHighEnergyRatioDisplay}");
     }
 
     /// <summary>

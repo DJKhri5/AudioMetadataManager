@@ -60,6 +60,15 @@ public class AudioAnalysisResult
         new();
 
     /// <summary>
+    /// Perfil de balance tonal derivado del perfil tonal.
+    ///
+    /// Agrupa la energía en regiones bajas, medias y altas
+    /// sin volver a leer el archivo ni ejecutar otra FFT.
+    /// </summary>
+    public AudioToneBalanceProfile ToneBalanceProfile { get; set; } =
+        new();
+
+    /// <summary>
     /// Indica si el motor terminó de ejecutar todos los
     /// analizadores habilitados.
     /// </summary>
