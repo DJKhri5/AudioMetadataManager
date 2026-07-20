@@ -1,8 +1,11 @@
 ﻿using AudioMetadataManager.UI.Models;
 using AudioMetadataManager.UI.Services;
+using AudioMetadataManager.UI.Services.Parsing;
 using AudioMetadataManager.UI.Services.AudioAnalysis;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Diagnostics;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Matching.Comparison.Diagnostics;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
@@ -14,6 +17,10 @@ public partial class MainWindow : Window
 {
     private readonly FileScannerService _fileScannerService =
         new();
+
+    private readonly FileNameParserService
+        _fileNameParserService =
+            new();
 
     private readonly AudioAnalysisEngine _audioAnalysisEngine;
 
@@ -208,6 +215,40 @@ public partial class MainWindow : Window
                         $"- {warning}");
                 }
             }
+            ParsedFileName parsedFileName =
+                _fileNameParserService.Parse(
+                    audioFile);
+
+            AppendLog(
+                $"Nombre interpretado: " +
+                $"{parsedFileName.CleanName}");
+
+            AppendLog(
+                $"Parser completado correctamente: " +
+                $"{ToSpanish(parsedFileName.WasParsedSuccessfully)}");
+
+            if (!string.IsNullOrWhiteSpace(
+                    parsedFileName.Notes))
+            {
+                AppendLog(
+                    $"Observación del parser: " +
+                    $"{parsedFileName.Notes}");
+            }
+
+            MetadataComparisonDiagnostics metadataDiagnostics =
+                new();
+
+            string metadataReport =
+                metadataDiagnostics.Run(
+                    audioFile,
+                    parsedFileName);
+
+            LogTextBox.AppendText(
+                Environment.NewLine +
+                metadataReport +
+                Environment.NewLine);
+
+            LogTextBox.ScrollToEnd();
         }
         catch (Exception exception)
         {
@@ -392,5 +433,17 @@ public partial class MainWindow : Window
             message.Trim());
 
         LogTextBox.ScrollToEnd();
+    }
+
+    /// <summary>
+    /// Convierte un valor lógico a texto en español
+    /// para el registro de actividad.
+    /// </summary>
+    private static string ToSpanish(
+        bool value)
+    {
+        return value
+            ? "Sí"
+            : "No";
     }
 }

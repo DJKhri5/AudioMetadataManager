@@ -1,4 +1,5 @@
 ﻿using AudioMetadataManager.UI.Services.AudioAnalysis.Algorithms;
+using AudioMetadataManager.UI.Services.AudioAnalysis.Analyzers;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
 
 namespace AudioMetadataManager.UI.Services.AudioAnalysis.Reporting;
@@ -31,6 +32,10 @@ public class AudioAnalysisReportBuilder
             lines,
             analysisResult);
 
+        AddTechnicalFormatSection(
+            lines,
+            analysisResult.TechnicalFormat);
+
         AddSilenceSection(
             lines,
             analysisResult.Silence);
@@ -43,6 +48,10 @@ public class AudioAnalysisReportBuilder
             lines,
             analysisResult.Spectrum);
 
+        AddSpectrumCutoffSection(
+            lines,
+            analysisResult.SpectrumCutoff);
+
         AddToneProfileSection(
             lines,
             analysisResult.ToneProfile);
@@ -54,6 +63,10 @@ public class AudioAnalysisReportBuilder
         AddToneCharacterSection(
             lines,
             analysisResult.ToneCharacterResult);
+
+        AddQualitySection(
+            lines,
+            analysisResult.Quality);
 
         AddWarningsSection(
             lines,
@@ -145,6 +158,73 @@ public class AudioAnalysisReportBuilder
                 $"Detalle del error: " +
                 $"{DisplayValue(analysisResult.ErrorMessage)}");
         }
+    }
+
+    /// <summary>
+    /// Agrega las propiedades técnicas declaradas o identificadas
+    /// desde el archivo y su contenedor.
+    /// </summary>
+    private static void AddTechnicalFormatSection(
+        List<string> lines,
+        AudioTechnicalFormatInfo technicalFormat)
+    {
+        lines.Add(string.Empty);
+        lines.Add("--- Información técnica del archivo ---");
+        lines.Add(string.Empty);
+
+        lines.Add(
+            "Información disponible: " +
+            $"{ToSpanish(technicalFormat.IsValid)}");
+
+        lines.Add(
+            "Extensión: " +
+            $"{DisplayValue(technicalFormat.FileExtension)}");
+
+        lines.Add(
+            "Contenedor: " +
+            $"{DisplayValue(technicalFormat.ContainerName)}");
+
+        lines.Add(
+            "Códec: " +
+            $"{DisplayValue(technicalFormat.CodecName)}");
+
+        lines.Add(
+            "Bitrate declarado: " +
+            $"{technicalFormat.DeclaredBitrateDisplay}");
+
+        lines.Add(
+            "Bitrate medio estimado: " +
+            $"{technicalFormat.EstimatedAverageBitrateDisplay}");
+
+        lines.Add(
+            "Frecuencia de muestreo declarada: " +
+            $"{FormatIntegerValue(
+                technicalFormat.DeclaredSampleRate,
+                "Hz")}");
+
+        lines.Add(
+            "Canales declarados: " +
+            $"{FormatIntegerValue(
+                technicalFormat.DeclaredChannels,
+                "canal(es)")}");
+
+        lines.Add(
+            "Profundidad de bits: " +
+            $"{FormatIntegerValue(
+                technicalFormat.BitsPerSample,
+                "bits")}");
+
+        lines.Add(
+            "Formato con pérdida: " +
+            $"{ToSpanish(technicalFormat.IsLossy)}");
+
+        lines.Add(
+            "Formato sin pérdida: " +
+            $"{ToSpanish(technicalFormat.IsLossless)}");
+
+        lines.Add(
+            "Resumen: " +
+            $"{DisplayValue(technicalFormat.Summary)}");
     }
 
     /// <summary>
@@ -404,6 +484,91 @@ public class AudioAnalysisReportBuilder
     }
 
     /// <summary>
+    /// Formatea una frecuencia para mostrarla en Hz o kHz.
+    /// </summary>
+    private static string FormatFrequencyValue(
+        double frequencyHz)
+    {
+        if (frequencyHz <= 0 ||
+            double.IsNaN(
+                frequencyHz) ||
+            double.IsInfinity(
+                frequencyHz))
+        {
+            return "Sin información";
+        }
+
+        if (frequencyHz >= 1000)
+        {
+            return
+                $"{frequencyHz / 1000.0:0.00} kHz";
+        }
+
+        return
+            $"{frequencyHz:0.00} Hz";
+    }
+
+    /// <summary>
+    /// Agrega la medición objetiva de extensión y caída
+    /// superior del espectro.
+    /// </summary>
+    private static void AddSpectrumCutoffSection(
+        List<string> lines,
+        AudioSpectrumCutoffMeasurement cutoffMeasurement)
+    {
+        lines.Add(string.Empty);
+        lines.Add(
+            "--- Medición de corte espectral ---");
+        lines.Add(string.Empty);
+
+        lines.Add(
+            "Medición completada: " +
+            $"{ToSpanish(
+                cutoffMeasurement.MeasurementCompleted)}");
+
+        lines.Add(
+            "Resultado confiable: " +
+            $"{ToSpanish(
+                cutoffMeasurement.IsReliable)}");
+
+        lines.Add(
+            "Frecuencia de Nyquist: " +
+            $"{FormatFrequencyValue(
+                cutoffMeasurement.NyquistFrequencyHz)}");
+
+        lines.Add(
+            "Frecuencia significativa más alta: " +
+            $"{FormatFrequencyValue(
+                cutoffMeasurement.HighestSignificantFrequencyHz)}");
+
+        lines.Add(
+            "Frecuencia persistente más alta: " +
+            $"{cutoffMeasurement.HighestPersistentFrequencyDisplay}");
+
+        lines.Add(
+            "Frecuencia con persistencia fuerte: " +
+            $"{cutoffMeasurement.HighestStrongPersistentFrequencyDisplay}");
+
+        lines.Add(
+            "Caída superior estimada: " +
+            $"{cutoffMeasurement.EstimatedCutoffFrequencyDisplay}");
+
+        lines.Add(
+            "Distancia respecto de Nyquist: " +
+            $"{FormatFrequencyValue(
+                cutoffMeasurement.CutoffDistanceFromNyquistHz)}");
+
+        lines.Add(
+            "Cobertura de Nyquist: " +
+            $"{cutoffMeasurement.NyquistCoverageDisplay}");
+
+        lines.Add(
+            "Datos disponibles para comparación: " +
+            $"{ToSpanish(
+                cutoffMeasurement.HasComparisonData)}");
+    }
+
+    /// <summary>
     /// Agrega el perfil tonal derivado del espectro FFT.
     /// </summary>
     private static void AddToneProfileSection(
@@ -579,6 +744,65 @@ public class AudioAnalysisReportBuilder
     }
 
     /// <summary>
+    /// Agrega la evaluación técnica producida por el motor
+    /// de reglas de calidad.
+    /// </summary>
+    private static void AddQualitySection(
+        List<string> lines,
+        AudioQualityAnalysisResult quality)
+    {
+        lines.Add(string.Empty);
+        lines.Add("--- Evaluación técnica de calidad ---");
+        lines.Add(string.Empty);
+
+        lines.Add(
+            "Evaluación completada: " +
+            $"{ToSpanish(quality.AnalysisCompleted)}");
+
+        lines.Add(
+            "Evaluación aplicable: " +
+            $"{ToSpanish(quality.IsApplicable)}");
+
+        lines.Add(
+            "Estado técnico: " +
+            $"{AudioQualityAnalyzer.GetStatusDisplayName(
+                quality.Status)}");
+
+        lines.Add(
+            "Incoherencias detectadas: " +
+            $"{quality.IssueCount}");
+
+        if (!quality.HasIssues)
+        {
+            lines.Add(
+                "Tipos de incoherencia: Ninguna");
+        }
+        else
+        {
+            string issues =
+                string.Join(
+                    ", ",
+                    quality.Issues.Select(
+                        GetQualityIssueDisplayName));
+
+            lines.Add(
+                "Tipos de incoherencia: " +
+                $"{issues}");
+        }
+
+        lines.Add(
+            "Resumen: " +
+            $"{DisplayValue(quality.Summary)}");
+
+        if (quality.HasError)
+        {
+            lines.Add(
+                "Error: " +
+                $"{DisplayValue(quality.ErrorMessage)}");
+        }
+    }
+
+    /// <summary>
     /// Agrega las advertencias generales registradas
     /// por AudioAnalysisEngine.
     /// </summary>
@@ -608,6 +832,41 @@ public class AudioAnalysisReportBuilder
             lines.Add(
                 $"- {warning.Trim()}");
         }
+    }
+
+    /// <summary>
+    /// Convierte un tipo de incoherencia técnica en un texto
+    /// legible para el informe.
+    /// </summary>
+    private static string GetQualityIssueDisplayName(
+        AudioQualityIssueType issue)
+    {
+        return issue switch
+        {
+            AudioQualityIssueType.DeclaredBitrateMismatch =>
+                "Bitrate declarado poco coherente",
+
+            AudioQualityIssueType.LimitedSpectralExtension =>
+                "Extensión espectral limitada",
+
+            AudioQualityIssueType.PossibleLossySource =>
+                "Posible fuente con pérdida",
+
+            AudioQualityIssueType.PossibleRecompression =>
+                "Posible recompresión",
+
+            AudioQualityIssueType.TechnicalMetadataMismatch =>
+                "Incoherencia entre mediciones técnicas",
+
+            AudioQualityIssueType.SuspiciousHighFrequencyCutoff =>
+                "Corte superior potencialmente artificial",
+
+            AudioQualityIssueType.InsufficientEvidence =>
+                "Evidencia insuficiente",
+
+            _ =>
+                "Sin incoherencias"
+        };
     }
 
     /// <summary>
@@ -667,6 +926,21 @@ public class AudioAnalysisReportBuilder
 
         return value.ToString(
             @"m\:ss\.fff");
+    }
+
+    /// <summary>
+    /// Formatea un valor entero positivo con su unidad.
+    /// </summary>
+    private static string FormatIntegerValue(
+        int value,
+        string unit)
+    {
+        if (value <= 0)
+        {
+            return "Sin información";
+        }
+
+        return $"{value} {unit}";
     }
 
     /// <summary>

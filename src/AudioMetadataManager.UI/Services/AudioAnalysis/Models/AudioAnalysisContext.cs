@@ -73,11 +73,28 @@ public class AudioAnalysisContext
     public AudioStreamInfo? StreamInfo { get; set; }
 
     /// <summary>
+    /// Información técnica declarada o identificada desde
+    /// el archivo, su contenedor y su códec.
+    ///
+    /// Este objeto es independiente de AudioStreamInfo, que
+    /// representa el flujo realmente decodificado.
+    /// </summary>
+    public AudioTechnicalFormatInfo? TechnicalFormatInfo { get; set; }
+
+    /// <summary>
     /// Indica si existe información válida del flujo PCM.
     /// </summary>
     public bool HasValidStreamInfo =>
         StreamInfo is not null &&
         StreamInfo.IsValid;
+
+    /// <summary>
+    /// Indica si existe información técnica declarada o
+    /// identificada utilizable.
+    /// </summary>
+    public bool HasValidTechnicalFormatInfo =>
+        TechnicalFormatInfo is not null &&
+        TechnicalFormatInfo.IsValid;
 
     /// <summary>
     /// Fecha y hora en que se creó el contexto.

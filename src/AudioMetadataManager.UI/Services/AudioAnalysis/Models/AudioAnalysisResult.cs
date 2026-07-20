@@ -51,6 +51,13 @@ public class AudioAnalysisResult
         new();
 
     /// <summary>
+    /// Medición objetiva de la extensión y caída superior
+    /// del espectro ya analizado.
+    /// </summary>
+    public AudioSpectrumCutoffMeasurement SpectrumCutoff { get; set; } =
+        new();
+
+    /// <summary>
     /// Perfil tonal derivado del perfil espectral.
     ///
     /// Este objeto reutiliza los bins FFT ya calculados.
@@ -72,6 +79,26 @@ public class AudioAnalysisResult
     /// Caracterización tonal simplificada del archivo.
     /// </summary>
     public AudioToneCharacterResult ToneCharacterResult { get; set; } =
+        new();
+
+    /// <summary>
+    /// Información técnica declarada o identificada desde
+    /// el archivo, su contenedor y su códec.
+    ///
+    /// Incluye datos como extensión, bitrate informado,
+    /// frecuencia de muestreo, canales y profundidad de bits.
+    /// </summary>
+    public AudioTechnicalFormatInfo TechnicalFormat { get; set; } =
+        new();
+
+    /// <summary>
+    /// Resultado general producido por el motor de evaluación
+    /// técnica de calidad.
+    ///
+    /// Este objeto reúne las conclusiones de las reglas
+    /// aplicables sin volver a leer ni procesar el archivo.
+    /// </summary>
+    public AudioQualityAnalysisResult Quality { get; set; } =
         new();
 
     /// <summary>

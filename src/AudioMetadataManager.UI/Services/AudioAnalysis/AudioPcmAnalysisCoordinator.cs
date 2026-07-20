@@ -1,5 +1,7 @@
 ﻿using AudioMetadataManager.UI.Services.AudioAnalysis.Interfaces;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
+using AudioMetadataManager.UI.Services.AudioAnalysis.Readers;
+using System.IO;
 
 namespace AudioMetadataManager.UI.Services.AudioAnalysis;
 
@@ -14,6 +16,7 @@ namespace AudioMetadataManager.UI.Services.AudioAnalysis;
 public class AudioPcmAnalysisCoordinator
 {
     private readonly IAudioSampleReader _sampleReader;
+    private readonly TechnicalFormatReader _technicalFormatReader;
     private readonly IReadOnlyList<IAudioPcmAnalysisProcessor>
         _processors;
     private readonly int _framesPerBlock;
@@ -30,6 +33,9 @@ public class AudioPcmAnalysisCoordinator
             sampleReader ??
             throw new ArgumentNullException(
                 nameof(sampleReader));
+
+        _technicalFormatReader =
+            new TechnicalFormatReader();
 
         ArgumentNullException.ThrowIfNull(
             processors);
@@ -92,6 +98,35 @@ public class AudioPcmAnalysisCoordinator
 
         context.StreamInfo =
             streamInfo;
+
+        AudioTechnicalFormatInfo technicalFormat;
+
+        try
+        {
+            technicalFormat =
+                _technicalFormatReader.Read(
+                    context.FilePath);
+        }
+        catch (Exception exception)
+        {
+            context.AnalysisResult.AddWarning(
+                "No fue posible leer todas las propiedades " +
+                $"técnicas declaradas: {exception.Message}");
+
+            technicalFormat =
+                BuildTechnicalFormatInfo(
+                    context.FilePath,
+                    streamInfo);
+        }
+
+        context.TechnicalFormatInfo =
+            technicalFormat;
+
+        context.AnalysisResult.TechnicalFormat =
+            technicalFormat;
+
+        context.SetData(
+            technicalFormat);
 
         List<IAudioPcmAnalysisProcessor> activeProcessors =
             InitializeProcessors(
@@ -238,6 +273,84 @@ public class AudioPcmAnalysisCoordinator
                     $"{exception.Message}");
             }
         }
+    }
+
+    /// <summary>
+    /// Construye la información técnica declarada del archivo.
+    ///
+    /// Esta información proviene del archivo y del contenedor.
+    /// No representa necesariamente el audio realmente
+    /// decodificado.
+    /// </summary>
+    private static AudioTechnicalFormatInfo BuildTechnicalFormatInfo(
+        string filePath,
+        AudioStreamInfo streamInfo)
+    {
+        FileInfo file =
+            new(filePath);
+
+        long fileSizeBytes =
+            file.Exists
+                ? file.Length
+                : 0;
+
+        int bitrate = 0;
+
+        if (fileSizeBytes > 0 &&
+            streamInfo.DecodedDuration.TotalSeconds > 0)
+        {
+            bitrate =
+                (int)Math.Round(
+                    fileSizeBytes * 8.0 /
+                    streamInfo.DecodedDuration.TotalSeconds);
+        }
+
+        string extension =
+            Path.GetExtension(filePath)
+                .ToLowerInvariant();
+
+        bool isLossless =
+            extension is ".flac" or
+            ".wav" or
+            ".aif" or
+            ".aiff";
+
+        return new AudioTechnicalFormatInfo
+        {
+            FilePath =
+                filePath,
+
+            FileExtension =
+                extension,
+
+            ContainerName =
+                extension.TrimStart('.')
+                    .ToUpperInvariant(),
+
+            CodecName =
+                streamInfo.CodecName,
+
+            DeclaredBitrateBitsPerSecond =
+                0,
+
+            EstimatedAverageBitrateBitsPerSecond =
+                bitrate,
+
+            DeclaredSampleRate =
+                streamInfo.SampleRate,
+
+            DeclaredChannels =
+                streamInfo.Channels,
+
+            BitsPerSample =
+                0,
+
+            IsLossless =
+                isLossless,
+
+            IsLossy =
+                !isLossless
+        };
     }
 
     /// <summary>

@@ -107,6 +107,31 @@ public class AudioSpectrumPcmProcessor :
         AudioSpectrumProfile profile =
             _algorithm.Profile;
 
+        AudioSpectrumCutoffMeasurement cutoffMeasurement =
+            new()
+            {
+                MeasurementCompleted =
+                    result.AnalysisCompleted,
+
+                IsReliable =
+                    result.IsReliable,
+
+                NyquistFrequencyHz =
+                    result.NyquistFrequencyHz,
+
+                HighestSignificantFrequencyHz =
+                    result.HighestSignificantFrequencyHz,
+
+                HighestPersistentFrequencyHz =
+                    result.HighestPersistentFrequencyHz,
+
+                HighestStrongPersistentFrequencyHz =
+                    result.HighestStrongPersistentFrequencyHz,
+
+                EstimatedCutoffFrequencyHz =
+                    result.EstimatedHighFrequencyRolloffHz
+            };
+
         AudioToneProfile toneProfile =
             _toneProfileCalculator.Calculate(
             profile);
@@ -123,6 +148,9 @@ public class AudioSpectrumPcmProcessor :
         context.AnalysisResult.Spectrum =
             result;
 
+        context.AnalysisResult.SpectrumCutoff =
+            cutoffMeasurement;
+
         context.AnalysisResult.ToneProfile =
             toneProfile;
 
@@ -137,6 +165,9 @@ public class AudioSpectrumPcmProcessor :
 
         context.SetData(
             profile);
+
+        context.SetData(
+            cutoffMeasurement);
 
         context.SetData(
             toneProfile);

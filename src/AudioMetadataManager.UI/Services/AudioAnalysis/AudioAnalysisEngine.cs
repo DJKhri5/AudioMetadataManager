@@ -2,6 +2,7 @@
 using AudioMetadataManager.UI.Services.AudioAnalysis.Interfaces;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Readers;
+using AudioMetadataManager.UI.Services.AudioAnalysis.Quality;
 using System.IO;
 
 namespace AudioMetadataManager.UI.Services.AudioAnalysis;
@@ -18,6 +19,10 @@ public class AudioAnalysisEngine
     private readonly
         IReadOnlyList<IAudioAnalysisStage>
         _stages;
+
+    private readonly
+        AudioQualityAnalyzer
+        _qualityAnalyzer;
 
     /// <summary>
     /// Crea el motor con el pipeline predeterminado.
@@ -46,6 +51,13 @@ public class AudioAnalysisEngine
     {
         ArgumentNullException.ThrowIfNull(
             stages);
+
+        AudioQualityRuleRegistry qualityRuleRegistry =
+            AudioQualityRuleRegistry.CreateDefault();
+
+        _qualityAnalyzer =
+            new AudioQualityAnalyzer(
+                qualityRuleRegistry.Rules);
 
         List<IAudioAnalysisStage> orderedStages =
             stages
@@ -113,6 +125,10 @@ public class AudioAnalysisEngine
                         $"con un error: {exception.Message}");
                 }
             }
+
+            result.Quality =
+                _qualityAnalyzer.Analyze(
+                    context);
 
             result.Summary =
                 BuildSummary(result);
