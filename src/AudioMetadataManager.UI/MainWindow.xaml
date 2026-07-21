@@ -21,6 +21,12 @@
             </MenuItem>
 
             <MenuItem Header="_Herramientas">
+                <MenuItem
+            Header="Fuentes de metadatos..."
+            Click="OpenMetadataSourcesSettings_Click"/>
+
+                <Separator/>
+
                 <MenuItem Header="Configuración"/>
             </MenuItem>
 

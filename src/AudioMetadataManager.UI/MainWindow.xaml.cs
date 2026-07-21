@@ -6,6 +6,7 @@ using AudioMetadataManager.UI.Services.AudioAnalysis.Diagnostics;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Matching.Comparison.Diagnostics;
+using AudioMetadataManager.UI.Views;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
@@ -26,6 +27,23 @@ public partial class MainWindow : Window
 
     private readonly AudioAnalysisTestRunner
         _audioAnalysisTestRunner;
+
+    /// <summary>
+    /// Abre la ventana de configuración de las fuentes externas
+    /// de metadatos.
+    /// </summary>
+    private void OpenMetadataSourcesSettings_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        MetadataSourcesSettingsWindow settingsWindow =
+            new()
+            {
+                Owner = this
+            };
+
+        settingsWindow.ShowDialog();
+    }
 
     public MainWindow()
     {

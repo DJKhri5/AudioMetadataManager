@@ -128,13 +128,27 @@ public class MetadataSourceManager
 
             return new MetadataSearchResult
             {
-                SourceName = source.Name,
-                QueryUsed = request.PrimaryQuery,
-                WasSuccessful = false,
+                SourceName =
+                    source.Name,
+
+                Status =
+                    MetadataSourceStatus.UnexpectedError,
+
+                QueryUsed =
+                    request.PrimaryQuery,
+
+                WasSuccessful =
+                    false,
+
                 ErrorMessage =
                     $"Error al consultar {source.Name}: " +
                     exception.Message,
-                ElapsedTime = stopwatch.Elapsed
+
+                ElapsedTime =
+                    stopwatch.Elapsed,
+
+                RequiresManualApproval =
+                    source.RequiresManualApproval
             };
         }
     }
@@ -149,12 +163,26 @@ public class MetadataSourceManager
     {
         return new MetadataSearchResult
         {
-            SourceName = source.Name,
-            QueryUsed = request.PrimaryQuery,
-            WasSuccessful = false,
+            SourceName =
+                source.Name,
+
+            Status =
+                MetadataSourceStatus.InvalidConfiguration,
+
+            QueryUsed =
+                request.PrimaryQuery,
+
+            WasSuccessful =
+                false,
+
             ErrorMessage =
                 $"{source.Name} no está disponible o configurado.",
-            ElapsedTime = TimeSpan.Zero
+
+            ElapsedTime =
+                TimeSpan.Zero,
+
+            RequiresManualApproval =
+                source.RequiresManualApproval
         };
     }
 }

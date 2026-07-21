@@ -13,6 +13,13 @@ public class MetadataSearchResult
     public string SourceName { get; set; } = string.Empty;
 
     /// <summary>
+    /// Estado normalizado de la operación, independiente de la
+    /// plataforma que realizó la búsqueda.
+    /// </summary>
+    public MetadataSourceStatus Status { get; set; } =
+        MetadataSourceStatus.Unknown;
+
+    /// <summary>
     /// Consulta exacta enviada a la plataforma.
     /// Se conserva para auditoría y diagnóstico.
     /// </summary>
@@ -35,6 +42,37 @@ public class MetadataSearchResult
     /// Permitirá medir rendimiento y detectar fuentes lentas.
     /// </summary>
     public TimeSpan ElapsedTime { get; set; }
+
+    /// <summary>
+    /// Indica si los candidatos de esta fuente deben ser
+    /// confirmados manualmente antes de utilizarse.
+    ///
+    /// SoundCloud utilizará siempre true.
+    /// </summary>
+    public bool RequiresManualApproval { get; set; }
+
+    /// <summary>
+    /// Código HTTP recibido desde la plataforma, cuando exista.
+    /// </summary>
+    public int? HttpStatusCode { get; set; }
+
+    /// <summary>
+    /// Cantidad de solicitudes restantes informada por el servicio,
+    /// cuando ese dato esté disponible.
+    /// </summary>
+    public int? RemainingRequests { get; set; }
+
+    /// <summary>
+    /// Cantidad total de resultados comunicada por la plataforma,
+    /// aunque sólo se haya descargado una página.
+    /// </summary>
+    public int ExternalTotalResults { get; set; }
+
+    /// <summary>
+    /// Momento UTC en que se obtuvo la respuesta externa.
+    /// </summary>
+    public DateTimeOffset RetrievedAtUtc { get; set; } =
+        DateTimeOffset.UtcNow;
 
     /// <summary>
     /// Candidatos devueltos por la plataforma.
@@ -66,6 +104,15 @@ public class MetadataSearchResult
     /// Indica si la búsqueda terminó con un error.
     /// </summary>
     public bool HasError =>
+        Status is
+            MetadataSourceStatus.InvalidRequest or
+            MetadataSourceStatus.InvalidConfiguration or
+            MetadataSourceStatus.AuthenticationRequired or
+            MetadataSourceStatus.AuthenticationFailed or
+            MetadataSourceStatus.RateLimited or
+            MetadataSourceStatus.NetworkError or
+            MetadataSourceStatus.InvalidResponse or
+            MetadataSourceStatus.UnexpectedError ||
         !WasSuccessful ||
         !string.IsNullOrWhiteSpace(ErrorMessage);
 
