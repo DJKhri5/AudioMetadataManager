@@ -2,6 +2,8 @@
 using AudioMetadataManager.UI.Models;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Matching.Comparison.Adapters;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Matching.Confidence.Diagnostics;
 
 namespace AudioMetadataManager.UI.Services.MetadataSources
     .Matching.Comparison.Diagnostics;
@@ -24,24 +26,46 @@ public sealed class MetadataComparisonDiagnostics
     private readonly ParsedFileNameMetadataComparisonAdapter
         _parsedFileNameAdapter;
 
+    private readonly MetadataConfidenceDiagnostics
+        _confidenceDiagnostics;
+
     /// <summary>
-    /// Crea el diagnóstico con el motor predeterminado.
+    /// Crea el diagnóstico con los componentes predeterminados.
     /// </summary>
     public MetadataComparisonDiagnostics()
         : this(
             new MetadataComparisonEngine(),
             new AudioFileMetadataComparisonAdapter(),
-            new ParsedFileNameMetadataComparisonAdapter())
+            new ParsedFileNameMetadataComparisonAdapter(),
+            new MetadataConfidenceDiagnostics())
     {
     }
 
     /// <summary>
-    /// Crea el diagnóstico con un motor personalizado.
+    /// Crea el diagnóstico con componentes personalizados,
+    /// utilizando el diagnóstico de confianza predeterminado.
     /// </summary>
     public MetadataComparisonDiagnostics(
         MetadataComparisonEngine comparisonEngine,
         AudioFileMetadataComparisonAdapter audioFileAdapter,
         ParsedFileNameMetadataComparisonAdapter parsedFileNameAdapter)
+        : this(
+            comparisonEngine,
+            audioFileAdapter,
+            parsedFileNameAdapter,
+            new MetadataConfidenceDiagnostics())
+    {
+    }
+
+    /// <summary>
+    /// Crea el diagnóstico con todos sus componentes
+    /// personalizados.
+    /// </summary>
+    public MetadataComparisonDiagnostics(
+        MetadataComparisonEngine comparisonEngine,
+        AudioFileMetadataComparisonAdapter audioFileAdapter,
+        ParsedFileNameMetadataComparisonAdapter parsedFileNameAdapter,
+        MetadataConfidenceDiagnostics confidenceDiagnostics)
     {
         _comparisonEngine =
             comparisonEngine ??
@@ -57,6 +81,11 @@ public sealed class MetadataComparisonDiagnostics
             parsedFileNameAdapter ??
             throw new ArgumentNullException(
                 nameof(parsedFileNameAdapter));
+
+        _confidenceDiagnostics =
+            confidenceDiagnostics ??
+            throw new ArgumentNullException(
+                nameof(confidenceDiagnostics));
     }
 
     /// <summary>
@@ -120,7 +149,7 @@ public sealed class MetadataComparisonDiagnostics
                 localMetadata,
                 referenceMetadata);
 
-        return BuildReport(
+        return BuildCombinedReport(
             result);
     }
 
@@ -153,8 +182,32 @@ public sealed class MetadataComparisonDiagnostics
                 localMetadata,
                 parsedMetadata);
 
-        return BuildReport(
+        return BuildCombinedReport(
             result);
+    }
+
+    /// <summary>
+    /// Combina el diagnóstico técnico de comparación con la
+    /// evaluación global de confianza.
+    /// </summary>
+    private string BuildCombinedReport(
+        MetadataComparisonResult result)
+    {
+        ArgumentNullException.ThrowIfNull(
+            result);
+
+        string comparisonReport =
+            BuildReport(
+                result);
+
+        string confidenceReport =
+            _confidenceDiagnostics.Run(
+                result);
+
+        return
+            comparisonReport +
+            Environment.NewLine +
+            confidenceReport;
     }
 
     /// <summary>
@@ -189,7 +242,7 @@ public sealed class MetadataComparisonDiagnostics
             in result.Fields)
         {
             builder.AppendLine(
-                $"[{field.FieldName}]");
+                $"[{field.EffectiveFieldName}]");
 
             builder.AppendLine(
                 $"Local: " +
@@ -266,10 +319,6 @@ public sealed class MetadataComparisonDiagnostics
             $"Cobertura de información: " +
             $"{result.InformationCoverage * 100:0.00}%");
 
-        builder.AppendLine(
-            $"Comparación completa: " +
-            $"{ToSpanish(result.IsFullyMatched)}");
-
         builder.AppendLine();
 
         builder.AppendLine(
@@ -287,16 +336,5 @@ public sealed class MetadataComparisonDiagnostics
         return string.IsNullOrWhiteSpace(value)
             ? "(sin información)"
             : value;
-    }
-
-    /// <summary>
-    /// Convierte un valor lógico a texto en español.
-    /// </summary>
-    private static string ToSpanish(
-        bool value)
-    {
-        return value
-            ? "Sí"
-            : "No";
     }
 }

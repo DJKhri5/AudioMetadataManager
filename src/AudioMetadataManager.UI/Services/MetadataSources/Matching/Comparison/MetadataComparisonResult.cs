@@ -210,16 +210,37 @@ public sealed class MetadataComparisonResult
     }
 
     /// <summary>
-    /// Indica si existe al menos un conflicto.
+    /// Indica si existe al menos un conflicto objetivo entre
+    /// los valores comparados.
+    ///
+    /// Esta propiedad no determina si la coincidencia debe
+    /// aceptarse o rechazarse.
     /// </summary>
     public bool HasConflicts =>
         Conflicts > 0;
 
     /// <summary>
-    /// Indica si la comparación es completamente satisfactoria.
+    /// Indica si existe al menos un campo con información
+    /// disponible solamente en una de las dos fuentes.
+    ///
+    /// Esta propiedad describe la integridad de la comparación,
+    /// pero no determina su nivel de confianza.
     /// </summary>
-    public bool IsFullyMatched =>
-        Conflicts == 0 &&
-        MissingLocalValues == 0 &&
-        MissingReferenceValues == 0;
+    public bool HasSingleSourceValues =>
+        MissingLocalValues > 0 ||
+        MissingReferenceValues > 0;
+
+    /// <summary>
+    /// Indica si existen campos aplicables sin información
+    /// en ninguna de las dos fuentes.
+    /// </summary>
+    public bool HasFieldsMissingFromBothSources =>
+        MissingBothValues > 0;
+
+    /// <summary>
+    /// Indica si existe al menos un campo realmente comparable,
+    /// es decir, con valores disponibles en ambas fuentes.
+    /// </summary>
+    public bool HasComparableFields =>
+        ComparableFields > 0;
 }
