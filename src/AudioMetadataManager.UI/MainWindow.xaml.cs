@@ -1,11 +1,22 @@
 ﻿using AudioMetadataManager.UI.Models;
 using AudioMetadataManager.UI.Services;
-using AudioMetadataManager.UI.Services.Parsing;
 using AudioMetadataManager.UI.Services.AudioAnalysis;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Diagnostics;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
+using AudioMetadataManager.UI.Services.MetadataSources;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Matching.Comparison.Diagnostics;
+using AudioMetadataManager.UI.Services.MetadataSources.Models;
+using AudioMetadataManager.UI.Services.MetadataSources.Pipeline;
+using AudioMetadataManager.UI.Services.Parsing;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Pipeline.Diagnostics;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Matching.Candidates;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Matching.Candidates.Diagnostics;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Matching.Comparison;
 using AudioMetadataManager.UI.Views;
 using Microsoft.Win32;
 using System.IO;
@@ -236,6 +247,91 @@ public partial class MainWindow : Window
             ParsedFileName parsedFileName =
                 _fileNameParserService.Parse(
                     audioFile);
+
+            MetadataSearchRequest searchRequest =
+                new()
+                {
+                    FileName =
+                        audioFile.FileName,
+
+                    ParsedArtist =
+                        parsedFileName.Artist,
+
+                    ParsedTitle =
+                        parsedFileName.Title,
+
+                    ParsedVersion =
+                        parsedFileName.Version,
+
+                    TaggedArtist =
+                        audioFile.Artist,
+        
+                    TaggedTitle =
+                        audioFile.Title,
+
+                    TaggedAlbum =
+                        audioFile.Album,
+
+                    TaggedYear =
+                        audioFile.Year,
+
+                    Duration =
+                        audioFile.Duration
+                };
+
+            MetadataSearchContext searchContext =
+                new(searchRequest);
+
+            MetadataSourceManager sourceManager =
+                MetadataSourceFactory.CreateDefault();
+
+            MetadataSearchPipeline pipeline =
+                new(sourceManager);
+
+            MetadataSearchPipelineResult pipelineResult =
+                await pipeline.ExecuteAsync(
+                    searchContext);
+
+            string pipelineReport =
+                MetadataSearchPipelineDiagnostics.BuildReport(
+                    pipelineResult);
+
+            LogTextBox.AppendText(
+                Environment.NewLine +
+                pipelineReport +
+                Environment.NewLine);
+
+            LocalMetadataComparisonInputFactory
+                localMetadataFactory =
+                    new();
+
+            MetadataComparisonInput localMetadata =
+                localMetadataFactory.Create(
+                    audioFile,
+                    parsedFileName);
+
+            MetadataCandidateEvaluationEngine
+                candidateEvaluationEngine =
+                    new();
+
+            MetadataCandidateEvaluationBatchResult
+                candidateEvaluationBatch =
+                    candidateEvaluationEngine.EvaluateBatch(
+                        localMetadata,
+                        pipelineResult.Candidates);
+
+            string candidateRankingReport =
+                MetadataCandidateEvaluationDiagnostics.BuildReport(
+                    candidateEvaluationBatch);
+
+            LogTextBox.AppendText(
+                Environment.NewLine +
+                candidateRankingReport +
+                Environment.NewLine);
+
+            LogTextBox.ScrollToEnd();
+
+            LogTextBox.ScrollToEnd();
 
             AppendLog(
                 $"Nombre interpretado: " +
