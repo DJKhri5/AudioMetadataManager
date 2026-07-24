@@ -17,6 +17,19 @@ using AudioMetadataManager.UI.Services.MetadataSources
     .Matching.Candidates.Diagnostics;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Matching.Comparison;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Consensus.Diagnostics;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Consensus.Engine;
+using ConsensusResult =
+    AudioMetadataManager.UI.Services.MetadataSources
+        .Consensus.Models.MetadataConsensusResult;
+using AudioMetadataManager.UI.Services.Simulation
+    .Planning.Decision;
+using AudioMetadataManager.UI.Services.Simulation
+    .Planning.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation
+    .Planning.Models;
 using AudioMetadataManager.UI.Views;
 using Microsoft.Win32;
 using System.IO;
@@ -292,6 +305,7 @@ public partial class MainWindow : Window
                 await pipeline.ExecuteAsync(
                     searchContext);
 
+            // Informe del pipeline.
             string pipelineReport =
                 MetadataSearchPipelineDiagnostics.BuildReport(
                     pipelineResult);
@@ -301,6 +315,7 @@ public partial class MainWindow : Window
                 pipelineReport +
                 Environment.NewLine);
 
+            // Identidad local y ranking.
             LocalMetadataComparisonInputFactory
                 localMetadataFactory =
                     new();
@@ -327,6 +342,42 @@ public partial class MainWindow : Window
             LogTextBox.AppendText(
                 Environment.NewLine +
                 candidateRankingReport +
+                Environment.NewLine);
+
+            // Nuevo consenso.
+            MetadataConsensusOrchestrator
+                consensusOrchestrator =
+                    new();
+
+            ConsensusResult consensusResult =
+                consensusOrchestrator.Evaluate(
+                    candidateEvaluationBatch);
+
+            string consensusReport =
+                MetadataConsensusDiagnostics.BuildReport(
+                    consensusResult);
+
+            LogTextBox.AppendText(
+                Environment.NewLine +
+                consensusReport +
+                Environment.NewLine);
+
+            MetadataChangeDecisionEngine
+                changeDecisionEngine =
+                    new();
+
+            MetadataChangePlan changePlan =
+                changeDecisionEngine.BuildPlan(
+                    audioFile,
+                    consensusResult);
+
+            string changePlanReport =
+                MetadataChangePlanDiagnostics.BuildReport(
+                    changePlan);
+
+            LogTextBox.AppendText(
+                Environment.NewLine +
+                changePlanReport +
                 Environment.NewLine);
 
             LogTextBox.ScrollToEnd();
