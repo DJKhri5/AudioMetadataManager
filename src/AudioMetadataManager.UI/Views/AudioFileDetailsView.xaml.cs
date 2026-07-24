@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AudioMetadataManager.UI.Views.Models.Simulation;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,20 @@ namespace AudioMetadataManager.UI.Views
         public AudioFileDetailsView()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// Plan visual mostrado en la pestaña de simulación.
+        /// </summary>
+        public SimulationPlanViewModel? SimulationPlan
+        {
+            get =>
+                SimulationPlanViewControl.DataContext
+                as SimulationPlanViewModel;
+
+            set =>
+                SimulationPlanViewControl.DataContext =
+                    value;
         }
     }
 }

@@ -5,12 +5,9 @@ using AudioMetadataManager.UI.Services.AudioAnalysis.Diagnostics;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Models;
 using AudioMetadataManager.UI.Services.MetadataSources;
 using AudioMetadataManager.UI.Services.MetadataSources
-    .Matching.Comparison.Diagnostics;
-using AudioMetadataManager.UI.Services.MetadataSources.Models;
-using AudioMetadataManager.UI.Services.MetadataSources.Pipeline;
-using AudioMetadataManager.UI.Services.Parsing;
+    .Consensus.Diagnostics;
 using AudioMetadataManager.UI.Services.MetadataSources
-    .Pipeline.Diagnostics;
+    .Consensus.Engine;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Matching.Candidates;
 using AudioMetadataManager.UI.Services.MetadataSources
@@ -18,12 +15,12 @@ using AudioMetadataManager.UI.Services.MetadataSources
 using AudioMetadataManager.UI.Services.MetadataSources
     .Matching.Comparison;
 using AudioMetadataManager.UI.Services.MetadataSources
-    .Consensus.Diagnostics;
+    .Matching.Comparison.Diagnostics;
+using AudioMetadataManager.UI.Services.MetadataSources.Models;
+using AudioMetadataManager.UI.Services.MetadataSources.Pipeline;
 using AudioMetadataManager.UI.Services.MetadataSources
-    .Consensus.Engine;
-using ConsensusResult =
-    AudioMetadataManager.UI.Services.MetadataSources
-        .Consensus.Models.MetadataConsensusResult;
+    .Pipeline.Diagnostics;
+using AudioMetadataManager.UI.Services.Parsing;
 using AudioMetadataManager.UI.Services.Simulation
     .Planning.Decision;
 using AudioMetadataManager.UI.Services.Simulation
@@ -31,10 +28,15 @@ using AudioMetadataManager.UI.Services.Simulation
 using AudioMetadataManager.UI.Services.Simulation
     .Planning.Models;
 using AudioMetadataManager.UI.Views;
+using AudioMetadataManager.UI.Views.Models.Simulation;
+using AudioMetadataManager.UI.Views.Models.Simulation.Mapping;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using ConsensusResult =
+    AudioMetadataManager.UI.Services.MetadataSources
+        .Consensus.Models.MetadataConsensusResult;
 
 namespace AudioMetadataManager.UI;
 
@@ -47,10 +49,14 @@ public partial class MainWindow : Window
         _fileNameParserService =
             new();
 
-    private readonly AudioAnalysisEngine _audioAnalysisEngine;
+    private readonly AudioAnalysisEngine 
+        _audioAnalysisEngine;
 
     private readonly AudioAnalysisTestRunner
         _audioAnalysisTestRunner;
+
+    private SimulationPlanViewModel?
+        _currentSimulationPlan;
 
     /// <summary>
     /// Abre la ventana de configuración de las fuentes externas
@@ -370,6 +376,17 @@ public partial class MainWindow : Window
                 changeDecisionEngine.BuildPlan(
                     audioFile,
                     consensusResult);
+
+            SimulationPlanViewModelFactory
+                simulationPlanFactory =
+                    new();
+
+            _currentSimulationPlan =
+                simulationPlanFactory.Create(
+                    changePlan);
+
+            AudioFileDetailsViewControl.SimulationPlan =
+                _currentSimulationPlan;
 
             string changePlanReport =
                 MetadataChangePlanDiagnostics.BuildReport(
