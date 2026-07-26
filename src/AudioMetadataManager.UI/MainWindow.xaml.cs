@@ -37,6 +37,14 @@ using System.Windows.Controls;
 using ConsensusResult =
     AudioMetadataManager.UI.Services.MetadataSources
         .Consensus.Models.MetadataConsensusResult;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Mapping;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Models;
 
 namespace AudioMetadataManager.UI;
 
@@ -59,6 +67,109 @@ public partial class MainWindow : Window
         _currentSimulationPlan;
 
     /// <summary>
+    /// Construye y valida una solicitud usando solamente los
+    /// cambios aprobados por el usuario.
+    ///
+    /// Esta acción no crea respaldos ni modifica archivos.
+    /// </summary>
+    private async void
+        AudioFileDetailsViewControl_ValidateApprovedChangesRequested(
+            object? sender,
+            EventArgs e)
+    {
+        if (_currentSimulationPlan is null)
+        {
+            AppendLog(
+                "No existe un plan de simulación activo.");
+
+            return;
+        }
+
+        if (!_currentSimulationPlan.HasApprovedChanges)
+        {
+            AppendLog(
+                "No existen cambios aprobados para validar.");
+
+            return;
+        }
+
+        AppendLog(
+            "Iniciando validación de cambios aprobados.");
+
+        try
+        {
+            MetadataApplyRequestFactory requestFactory =
+                new();
+
+            var request =
+                requestFactory.Create(
+                    _currentSimulationPlan);
+
+            MetadataApplicationPipeline pipeline =
+                new();
+
+            Progress<MetadataApplicationProgress> progress =
+                new(
+                    progressUpdate =>
+                    {
+                        AppendLog(
+                            $"Aplicación segura: " +
+                            $"{progressUpdate.Summary}");
+                    });
+
+            MetadataApplicationPipelineResult result =
+                await pipeline.ExecuteAsync(
+                    request,
+                    progress);
+
+            string report =
+                MetadataApplicationPipelineDiagnostics
+                    .BuildReport(
+                        result);
+
+            LogTextBox.AppendText(
+                Environment.NewLine +
+                report +
+                Environment.NewLine);
+
+            LogTextBox.ScrollToEnd();
+
+            if (result.ValidationResult?.IsValid != true)
+            {
+                AppendLog(
+                    "La solicitud fue rechazada por la " +
+                    "validación previa.");
+
+                return;
+            }
+
+            if (result.BackupResult?.WasSuccessful == true)
+            {
+                AppendLog(
+                    "La solicitud fue validada y el respaldo se " +
+                    "creó correctamente. Ningún metadato fue " +
+                    "modificado.");
+
+                AppendLog(
+                    $"Ruta del respaldo: " +
+                    $"{result.BackupResult.BackupFilePath}");
+
+                return;
+            }
+
+            AppendLog(
+                "La solicitud fue validada, pero el respaldo no " +
+                "pudo completarse. Ningún metadato fue modificado.");
+        }
+        catch (Exception exception)
+        {
+            AppendLog(
+                "No fue posible validar los cambios aprobados. " +
+                $"Detalle: {exception.Message}");
+        }
+    }
+
+    /// <summary>
     /// Abre la ventana de configuración de las fuentes externas
     /// de metadatos.
     /// </summary>
@@ -78,6 +189,10 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        AudioFileDetailsViewControl
+            .ValidateApprovedChangesRequested +=
+                AudioFileDetailsViewControl_ValidateApprovedChangesRequested;
 
         _audioAnalysisEngine =
             new AudioAnalysisEngine();

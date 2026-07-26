@@ -9,6 +9,32 @@ namespace AudioMetadataManager.UI.Views.Controls;
 /// </summary>
 public partial class SimulationPlanView : UserControl
 {
+    /// <summary>
+    /// Se produce cuando el usuario solicita validar los cambios
+    /// actualmente aprobados.
+    /// </summary>
+    public event EventHandler?
+        ValidateApprovedChangesRequested;
+
+    /// <summary>
+    /// Comunica a la ventana principal que el usuario desea
+    /// validar los cambios aprobados.
+    /// </summary>
+    private void ValidateApprovedChangesButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (DataContext is not
+            SimulationPlanViewModel viewModel ||
+            !viewModel.HasApprovedChanges)
+        {
+            return;
+        }
+
+        ValidateApprovedChangesRequested?.Invoke(
+            this,
+            EventArgs.Empty);
+    }
     public SimulationPlanView()
     {
         InitializeComponent();

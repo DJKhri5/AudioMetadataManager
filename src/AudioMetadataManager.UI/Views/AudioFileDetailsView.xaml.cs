@@ -21,6 +21,22 @@ namespace AudioMetadataManager.UI.Views
     /// </summary>
     public partial class AudioFileDetailsView : UserControl
     {
+
+        /// <summary>
+        /// Se produce cuando la vista de simulación solicita validar
+        /// los cambios aprobados.
+        /// </summary>
+        public event EventHandler?
+            ValidateApprovedChangesRequested
+        {
+            add =>
+                SimulationPlanViewControl
+                    .ValidateApprovedChangesRequested += value;
+
+            remove =>
+                SimulationPlanViewControl
+                    .ValidateApprovedChangesRequested -= value;
+        }
         public AudioFileDetailsView()
         {
             InitializeComponent();

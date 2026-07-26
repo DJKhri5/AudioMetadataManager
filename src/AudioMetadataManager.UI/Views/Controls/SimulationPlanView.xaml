@@ -170,6 +170,14 @@
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal">
 
+                    <Button x:Name="ValidateApprovedChangesButton"
+                        Width="170"
+                        Margin="0,0,8,0"
+                        Padding="10,6"
+                        Content="Validar cambios aprobados"
+                        IsEnabled="{Binding HasApprovedChanges}"
+                        Click="ValidateApprovedChangesButton_Click" />
+
                     <Button x:Name="SelectAutomaticButton"
                             Width="150"
                             Margin="0,0,8,0"
