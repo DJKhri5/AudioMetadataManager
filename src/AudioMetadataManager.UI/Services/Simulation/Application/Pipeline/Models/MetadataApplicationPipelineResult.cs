@@ -4,6 +4,8 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Validation;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Backup.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.Models;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Models;
@@ -68,6 +70,13 @@ public sealed class MetadataApplicationPipelineResult
     /// </summary>
     public MetadataBackupResult?
         BackupResult
+    { get; init; }
+
+    /// <summary>
+    /// Resultado producido por el motor de escritura.
+    /// </summary>
+    public MetadataWriteResult?
+        WriteResult
     { get; init; }
 
     /// <summary>

@@ -1,10 +1,12 @@
-﻿using System.Text;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Pipeline.Models;
-using AudioMetadataManager.UI.Services.Simulation
+﻿using AudioMetadataManager.UI.Services.Simulation
     .Application.Backup.Diagnostics;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Backup.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Models;
+using AudioMetadataManager.UI.Services.Simulation.Application
+    .Writing.Diagnostics;
+using System.Text;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Diagnostics;
@@ -51,6 +53,10 @@ public static class MetadataApplicationPipelineDiagnostics
             result);
 
         AppendBackup(
+            builder,
+            result);
+
+        AppendWriting(
             builder,
             result);
 
@@ -314,6 +320,36 @@ public static class MetadataApplicationPipelineDiagnostics
 
         builder.AppendLine(
             backupReport);
+    }
+
+    /// <summary>
+    /// Agrega el resultado detallado del motor de escritura.
+    /// </summary>
+    private static void AppendWriting(
+        StringBuilder builder,
+        MetadataApplicationPipelineResult result)
+    {
+        builder.AppendLine(
+            "--- Resultado del motor de escritura ---");
+
+        builder.AppendLine();
+
+        if (result.WriteResult is null)
+        {
+            builder.AppendLine(
+                "El pipeline no produjo un resultado de escritura.");
+
+            builder.AppendLine();
+
+            return;
+        }
+
+        string writeReport =
+            MetadataWriterDiagnostics.BuildReport(
+                result.WriteResult);
+
+        builder.AppendLine(
+            writeReport);
     }
 
     private static string GetStopReasonDisplay(
