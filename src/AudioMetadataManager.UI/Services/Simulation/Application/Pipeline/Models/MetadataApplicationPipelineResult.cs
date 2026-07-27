@@ -80,9 +80,11 @@ public sealed class MetadataApplicationPipelineResult
     { get; init; }
 
     /// <summary>
-    /// Resultado final de aplicación.
+    /// Resultado final, consolidado y auditable de la
+    /// aplicación de metadatos.
     ///
-    /// Permanecerá nulo hasta que exista un escritor real.
+    /// Permanece nulo cuando la ejecución fue solamente
+    /// diagnóstica o se detuvo antes de escribir.
     /// </summary>
     public MetadataApplyResult?
         ApplyResult
@@ -96,11 +98,12 @@ public sealed class MetadataApplicationPipelineResult
 
     /// <summary>
     /// Indica si la ejecución recorrió correctamente todas las
-    /// etapas obligatorias.
+    /// etapas obligatorias y produjo un resultado final válido.
     /// </summary>
     public bool WasSuccessful =>
         StopReason ==
             MetadataApplicationStopReason.Completed &&
+        ApplyResult?.WasSuccessful == true &&
         StageResults.Count > 0 &&
         StageResults.All(
             result =>
@@ -112,6 +115,12 @@ public sealed class MetadataApplicationPipelineResult
     public bool WasCancelled =>
         StopReason ==
         MetadataApplicationStopReason.Cancelled;
+
+    /// <summary>
+    /// Indica si se produjo una aplicación real.
+    /// </summary>
+    public bool HasApplyResult =>
+        ApplyResult is not null;
 
     /// <summary>
     /// Última etapa que llegó a ejecutarse.
@@ -155,13 +164,23 @@ public sealed class MetadataApplicationPipelineResult
                 return
                     $"{Request.FileName}: pipeline completado " +
                     $"correctamente en " +
-                    $"{ElapsedTime.TotalMilliseconds:0} ms.";
+                    $"{ElapsedTime.TotalMilliseconds:0} ms. " +
+                    $"Cambios aplicados: " +
+                    $"{ApplyResult!.SuccessfulFieldCount}.";
             }
 
             if (WasCancelled)
             {
                 return
                     $"{Request.FileName}: operación cancelada.";
+            }
+
+            if (StopReason ==
+                MetadataApplicationStopReason.None)
+            {
+                return
+                    $"{Request.FileName}: ejecución diagnóstica " +
+                    "completada sin aplicar metadatos.";
             }
 
             return

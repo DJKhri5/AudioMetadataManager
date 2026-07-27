@@ -2,6 +2,8 @@
     .Application.Writing.Interfaces;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.Resolution;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Writers;
@@ -12,8 +14,18 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// Estos escritores no modifican archivos.
 /// </summary>
 public abstract class DiagnosticMetadataFormatWriterBase
-    : IMetadataFormatWriter
+    : IMetadataFormatWriter,
+      IMetadataWriterDescriptor
 {
+
+    /// <inheritdoc />
+    public MetadataWriterKind WriterKind =>
+        MetadataWriterKind.Diagnostic;
+
+    /// <inheritdoc />
+    public int ResolutionPriority =>
+        10;
+
     protected DiagnosticMetadataFormatWriterBase(
         string name,
         IEnumerable<string> supportedExtensions)

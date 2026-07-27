@@ -7,15 +7,16 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// <summary>
 /// Mantiene el registro de escritores disponibles y selecciona
 /// el escritor compatible con una extensión.
+///
+/// Cuando existen varios escritores para el mismo formato, se
+/// prioriza explícitamente el escritor real sobre el
+/// diagnóstico.
 /// </summary>
 public sealed class MetadataWriterResolver
 {
     private readonly IReadOnlyList<IMetadataFormatWriter>
         _writers;
 
-    /// <summary>
-    /// Crea el resolutor con la colección indicada.
-    /// </summary>
     public MetadataWriterResolver(
         IEnumerable<IMetadataFormatWriter> writers)
     {
@@ -28,16 +29,10 @@ public sealed class MetadataWriterResolver
                 .ToArray();
     }
 
-    /// <summary>
-    /// Escritores registrados.
-    /// </summary>
     public IReadOnlyList<IMetadataFormatWriter>
         Writers =>
             _writers;
 
-    /// <summary>
-    /// Busca el escritor compatible con la extensión.
-    /// </summary>
     public MetadataWriterResolutionResult Resolve(
         string? extension)
     {
@@ -46,10 +41,15 @@ public sealed class MetadataWriterResolver
                 extension);
 
         IMetadataFormatWriter? writer =
-            _writers.FirstOrDefault(
-                candidate =>
+            _writers
+                .Where(candidate =>
                     candidate.CanWrite(
-                        normalizedExtension));
+                        normalizedExtension))
+                .OrderByDescending(
+                    GetResolutionPriority)
+                .ThenByDescending(
+                    GetWriterKindPriority)
+                .FirstOrDefault();
 
         return new MetadataWriterResolutionResult
         {
@@ -58,6 +58,35 @@ public sealed class MetadataWriterResolver
 
             Writer =
                 writer
+        };
+    }
+
+    private static int GetResolutionPriority(
+        IMetadataFormatWriter writer)
+    {
+        return writer is IMetadataWriterDescriptor descriptor
+            ? descriptor.ResolutionPriority
+            : 0;
+    }
+
+    private static int GetWriterKindPriority(
+        IMetadataFormatWriter writer)
+    {
+        if (writer is not IMetadataWriterDescriptor descriptor)
+        {
+            return 0;
+        }
+
+        return descriptor.WriterKind switch
+        {
+            MetadataWriterKind.Real =>
+                2,
+
+            MetadataWriterKind.Diagnostic =>
+                1,
+
+            _ =>
+                0
         };
     }
 
@@ -73,8 +102,7 @@ public sealed class MetadataWriterResolver
         string normalized =
             extension.Trim();
 
-        if (!normalized.StartsWith(
-                '.'))
+        if (!normalized.StartsWith('.'))
         {
             normalized =
                 "." + normalized;

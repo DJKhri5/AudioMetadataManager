@@ -1,12 +1,11 @@
-﻿using System.Diagnostics;
-using System.IO;
-using AudioMetadataManager.UI.Services.MetadataSources.Models;
+﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Interfaces;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Models;
+using AudioMetadataManager.UI.Services.Simulation.Application.Writing.Resolution;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.FieldMapping;
 using AudioMetadataManager.UI.Services.Simulation
@@ -19,6 +18,8 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Verification.Engine;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Verification.Models;
+using System.Diagnostics;
+using System.IO;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Base;
@@ -35,7 +36,8 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// la familia de formato y las extensiones compatibles.
 /// </summary>
 public abstract class TagLibMetadataWriterBase
-    : IMetadataFormatWriter
+    : IMetadataFormatWriter,
+      IMetadataWriterDescriptor
 {
     private readonly IReadOnlySet<string>
         _supportedExtensions;
@@ -45,6 +47,14 @@ public abstract class TagLibMetadataWriterBase
 
     private readonly ITagLibFieldMapper
         _fieldMapper;
+
+    /// <inheritdoc />
+    public MetadataWriterKind WriterKind =>
+        MetadataWriterKind.Real;
+
+    /// <inheritdoc />
+    public int ResolutionPriority =>
+        100;
 
     /// <summary>
     /// Inicializa un escritor TagLibSharp especializado.

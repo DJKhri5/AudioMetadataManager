@@ -589,14 +589,24 @@ public sealed class MetadataWriterEngine
     }
 
     private static IReadOnlyList<IMetadataFormatWriter>
-        CreateDefaultWriters()
+    CreateDefaultWriters()
     {
         return new IMetadataFormatWriter[]
         {
-            new DiagnosticMp3MetadataWriter(),
-            new DiagnosticFlacMetadataWriter(),
-            new DiagnosticWavMetadataWriter(),
-            new DiagnosticAiffMetadataWriter()
+        /*
+         * Escritores reales ya validados mediante pruebas
+         * aisladas.
+         */
+        new TagLibMp3MetadataWriter(),
+        new TagLibFlacMetadataWriter(),
+
+        /*
+         * Escritores diagnósticos de respaldo.
+         */
+        new DiagnosticMp3MetadataWriter(),
+        new DiagnosticFlacMetadataWriter(),
+        new DiagnosticWavMetadataWriter(),
+        new DiagnosticAiffMetadataWriter()
         };
     }
 }

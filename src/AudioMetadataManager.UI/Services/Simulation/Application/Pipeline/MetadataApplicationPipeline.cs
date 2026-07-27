@@ -21,10 +21,13 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// Coordina de forma segura las etapas necesarias para aplicar
 /// modificaciones de metadatos.
 ///
-/// La implementación actual ejecuta validación, respaldo real
-/// y resolución diagnóstica del escritor. La verificación
-/// posterior permanece pendiente y ningún metadato se modifica
-/// todavía.
+/// El pipeline valida la solicitud, crea y verifica el respaldo,
+/// resuelve el escritor, ejecuta la escritura y consolida la
+/// verificación posterior realizada por el escritor real.
+///
+/// MP3 y FLAC pueden completar una aplicación real. Los formatos
+/// que todavía utilizan escritores diagnósticos no modifican el
+/// archivo y no producen MetadataApplyResult.
 /// </summary>
 public sealed class MetadataApplicationPipeline
 {
@@ -49,7 +52,7 @@ public sealed class MetadataApplicationPipeline
     }
 
     /// <summary>
-    /// Crea el pipeline con un validador personalizado.
+    /// Crea el pipeline con componentes personalizados.
     /// </summary>
     public MetadataApplicationPipeline(
         MetadataApplyRequestValidator requestValidator,
@@ -74,9 +77,7 @@ public sealed class MetadataApplicationPipeline
 
     /// <summary>
     /// Ejecuta el pipeline de aplicación.
-    ///
-    /// Esta versión crea y verifica el respaldo, pero utiliza
-    /// escritores de diagnóstico que no modifican metadatos.
+    /// </summary>
     public Task<MetadataApplicationPipelineResult>
         ExecuteAsync(
             MetadataApplyRequest request,
@@ -114,12 +115,16 @@ public sealed class MetadataApplicationPipeline
             validationResult =
                 null;
 
+        MetadataBackupResult?
+            backupResult =
+                null;
+
         MetadataWriteResult?
             writeResult =
                 null;
 
-        MetadataBackupResult?
-            backupResult =
+        MetadataApplyResult?
+            applyResult =
                 null;
 
         try
@@ -133,12 +138,11 @@ public sealed class MetadataApplicationPipeline
                 10,
                 "Validando la solicitud de aplicación.");
 
-            MetadataApplicationStageResult
-                validationStage =
-                    ExecuteValidationStage(
-                        request,
-                        out validationResult,
-                        cancellationToken);
+            MetadataApplicationStageResult validationStage =
+                ExecuteValidationStage(
+                    request,
+                    out validationResult,
+                    cancellationToken);
 
             stageResults.Add(
                 validationStage);
@@ -158,17 +162,14 @@ public sealed class MetadataApplicationPipeline
                     request,
                     startedAtUtc,
                     pipelineStopwatch.Elapsed,
-                    MetadataApplicationStopReason
-                        .ValidationFailed,
+                    MetadataApplicationStopReason.ValidationFailed,
                     stageResults,
                     validationResult,
                     backupResult,
                     writeResult,
-                    "La solicitud no superó la validación " +
-                    "previa.");
+                    applyResult,
+                    "La solicitud no superó la validación previa.");
             }
-
-            cancellationToken.ThrowIfCancellationRequested();
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -282,6 +283,7 @@ public sealed class MetadataApplicationPipeline
                     validationResult,
                     backupResult,
                     writeResult,
+                    applyResult,
                     backupResult.Summary);
             }
 
@@ -292,7 +294,7 @@ public sealed class MetadataApplicationPipeline
                 request,
                 MetadataApplicationStage.MetadataWrite,
                 60,
-                "Resolviendo el escritor de metadatos.");
+                "Resolviendo y ejecutando el escritor de metadatos.");
 
             MetadataWriteRequest writeRequest =
                 new()
@@ -375,17 +377,61 @@ public sealed class MetadataApplicationPipeline
 
                     Message =
                         diagnosticExecution
-                            ? "El escritor compatible fue resuelto. " +
-                              "La ejecución fue diagnóstica y ningún " +
-                              "archivo fue modificado."
+                            ? "El escritor compatible fue resuelto, " +
+                              "pero la ejecución fue diagnóstica y " +
+                              "ningún metadato fue modificado."
                             : writeResult.Summary,
 
                     Details =
                         writeResult.Messages
                 });
 
-            if (!writeResult.WasSuccessful &&
-                !diagnosticExecution)
+            if (diagnosticExecution)
+            {
+                ReportProgress(
+                    progress,
+                    request,
+                    MetadataApplicationStage.PostWriteVerification,
+                    85,
+                    "La verificación posterior fue omitida porque " +
+                    "no existió una escritura real.");
+
+                stageResults.Add(
+                    CreateSkippedStage(
+                        MetadataApplicationStage
+                            .PostWriteVerification,
+                        "Etapa omitida porque el escritor " +
+                        "seleccionado fue diagnóstico."));
+
+                stageResults.Add(
+                    CreateCompletedStage(
+                        MetadataApplicationStage.Finalization,
+                        "La ejecución diagnóstica terminó " +
+                        "correctamente sin modificar el archivo."));
+
+                ReportProgress(
+                    progress,
+                    request,
+                    MetadataApplicationStage.Finalization,
+                    100,
+                    "Ejecución diagnóstica completada.");
+
+                pipelineStopwatch.Stop();
+
+                return BuildResult(
+                    request,
+                    startedAtUtc,
+                    pipelineStopwatch.Elapsed,
+                    MetadataApplicationStopReason.None,
+                    stageResults,
+                    validationResult,
+                    backupResult,
+                    writeResult,
+                    applyResult,
+                    string.Empty);
+            }
+
+            if (!writeResult.WasSuccessful)
             {
                 AddSkippedRemainingStages(
                     stageResults,
@@ -407,54 +453,130 @@ public sealed class MetadataApplicationPipeline
                     validationResult,
                     backupResult,
                     writeResult,
+                    applyResult,
                     writeResult.Summary);
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             ReportProgress(
                 progress,
                 request,
-                MetadataApplicationStage
-                    .PostWriteVerification,
+                MetadataApplicationStage.PostWriteVerification,
                 85,
-                "La verificación posterior no se ejecutó.");
+                "Consolidando la verificación posterior.");
+
+            DateTimeOffset verificationStartedAtUtc =
+                DateTimeOffset.UtcNow;
+
+            Stopwatch verificationStopwatch =
+                Stopwatch.StartNew();
+
+            applyResult =
+                BuildApplyResult(
+                    request,
+                    backupResult,
+                    writeResult,
+                    startedAtUtc,
+                    pipelineStopwatch.Elapsed);
+
+            verificationStopwatch.Stop();
+
+            bool verificationSuccessful =
+                applyResult.WasSuccessful;
 
             stageResults.Add(
-                CreateSkippedStage(
-                    MetadataApplicationStage
-                        .PostWriteVerification,
-                    "Etapa omitida porque no se realizó " +
-                    "ninguna escritura."));
+                new MetadataApplicationStageResult
+                {
+                    Stage =
+                        MetadataApplicationStage
+                            .PostWriteVerification,
+
+                    Status =
+                        verificationSuccessful
+                            ? MetadataApplicationStageStatus.Completed
+                            : MetadataApplicationStageStatus.Failed,
+
+                    StartedAtUtc =
+                        verificationStartedAtUtc,
+
+                    CompletedAtUtc =
+                        DateTimeOffset.UtcNow,
+
+                    ElapsedTime =
+                        verificationStopwatch.Elapsed,
+
+                    Message =
+                        verificationSuccessful
+                            ? "Todos los campos escritos fueron " +
+                              "verificados correctamente."
+                            : "La verificación posterior detectó " +
+                              "campos incompletos o no confirmados.",
+
+                    Details =
+                        applyResult.FieldResults
+                            .Select(
+                                field =>
+                                    field.Summary)
+                            .ToArray()
+                });
+
+            if (!verificationSuccessful)
+            {
+                stageResults.Add(
+                    CreateSkippedStage(
+                        MetadataApplicationStage.Finalization,
+                        "La finalización fue omitida porque la " +
+                        "verificación posterior falló."));
+
+                pipelineStopwatch.Stop();
+
+                return BuildResult(
+                    request,
+                    startedAtUtc,
+                    pipelineStopwatch.Elapsed,
+                    MetadataApplicationStopReason.VerificationFailed,
+                    stageResults,
+                    validationResult,
+                    backupResult,
+                    writeResult,
+                    applyResult,
+                    applyResult.Summary);
+            }
 
             stageResults.Add(
                 CreateCompletedStage(
                     MetadataApplicationStage.Finalization,
-                    "La ejecución segura de diagnóstico " +
-                    "terminó correctamente."));
+                    "La aplicación real de metadatos terminó " +
+                    "correctamente."));
 
             ReportProgress(
                 progress,
                 request,
                 MetadataApplicationStage.Finalization,
                 100,
-                "Validación completada. Ningún archivo fue " +
-                "modificado.");
+                "Metadatos aplicados y verificados correctamente.");
 
             pipelineStopwatch.Stop();
 
-            /*
-             * El pipeline todavía no puede declararse
-             * completamente terminado, porque respaldo,
-             * escritura y verificación fueron omitidos.
-             */
+            applyResult =
+                BuildApplyResult(
+                    request,
+                    backupResult,
+                    writeResult,
+                    startedAtUtc,
+                    pipelineStopwatch.Elapsed);
+
             return BuildResult(
                 request,
                 startedAtUtc,
                 pipelineStopwatch.Elapsed,
-                MetadataApplicationStopReason.None,
+                MetadataApplicationStopReason.Completed,
                 stageResults,
                 validationResult,
                 backupResult,
                 writeResult,
+                applyResult,
                 string.Empty);
         }
         catch (OperationCanceledException)
@@ -473,6 +595,12 @@ public sealed class MetadataApplicationPipeline
                 validationResult,
                 backupResult,
                 writeResult,
+                BuildCancelledApplyResult(
+                    request,
+                    backupResult,
+                    writeResult,
+                    startedAtUtc,
+                    pipelineStopwatch.Elapsed),
                 "La ejecución fue cancelada.");
         }
         catch (Exception exception)
@@ -492,6 +620,7 @@ public sealed class MetadataApplicationPipeline
                 validationResult,
                 backupResult,
                 writeResult,
+                applyResult,
                 $"Ocurrió un error inesperado: " +
                 $"{exception.Message}");
         }
@@ -554,6 +683,162 @@ public sealed class MetadataApplicationPipeline
 
             Details =
                 details
+        };
+    }
+
+    private static MetadataApplyResult BuildApplyResult(
+        MetadataApplyRequest request,
+        MetadataBackupResult backupResult,
+        MetadataWriteResult writeResult,
+        DateTimeOffset startedAtUtc,
+        TimeSpan elapsedTime)
+    {
+        MetadataFieldApplyResult[] fieldResults =
+            writeResult.FieldResults
+                .Select(
+                    result =>
+                        new MetadataFieldApplyResult
+                        {
+                            Field =
+                                result.Field,
+
+                            OriginalValue =
+                                result.OriginalValue,
+
+                            RequestedValue =
+                                result.RequestedValue,
+
+                            VerifiedValue =
+                                result.SaveSucceeded
+                                    ? result.RequestedValue
+                                    : string.Empty,
+
+                            WriteSucceeded =
+                                result.IsSupported &&
+                                result.ValuePrepared,
+
+                            VerificationSucceeded =
+                                result.SaveSucceeded,
+
+                            Message =
+                                result.Message
+                        })
+                .ToArray();
+
+        MetadataApplyStatus status;
+
+        if (writeResult.WasSuccessful &&
+            fieldResults.All(
+                field =>
+                    field.WasSuccessfullyApplied))
+        {
+            status =
+                MetadataApplyStatus.Completed;
+        }
+        else if (fieldResults.Any(
+                     field =>
+                         field.WasSuccessfullyApplied))
+        {
+            status =
+                MetadataApplyStatus.PartiallyCompleted;
+        }
+        else if (writeResult.Status ==
+                 MetadataWriteStatus.Cancelled)
+        {
+            status =
+                MetadataApplyStatus.Cancelled;
+        }
+        else if (writeResult.HasWrittenFields)
+        {
+            status =
+                MetadataApplyStatus.VerificationFailed;
+        }
+        else
+        {
+            status =
+                MetadataApplyStatus.WriteFailed;
+        }
+
+        return new MetadataApplyResult
+        {
+            RequestId =
+                request.RequestId,
+
+            PlanId =
+                request.PlanId,
+
+            FilePath =
+                request.FilePath,
+
+            FileName =
+                request.FileName,
+
+            Status =
+                status,
+
+            StartedAtUtc =
+                startedAtUtc,
+
+            CompletedAtUtc =
+                DateTimeOffset.UtcNow,
+
+            ElapsedTime =
+                elapsedTime,
+
+            BackupPath =
+                backupResult.BackupFilePath,
+
+            FieldResults =
+                fieldResults,
+
+            Messages =
+                writeResult.Messages.ToArray()
+        };
+    }
+
+    private static MetadataApplyResult BuildCancelledApplyResult(
+        MetadataApplyRequest request,
+        MetadataBackupResult? backupResult,
+        MetadataWriteResult? writeResult,
+        DateTimeOffset startedAtUtc,
+        TimeSpan elapsedTime)
+    {
+        return new MetadataApplyResult
+        {
+            RequestId =
+                request.RequestId,
+
+            PlanId =
+                request.PlanId,
+
+            FilePath =
+                request.FilePath,
+
+            FileName =
+                request.FileName,
+
+            Status =
+                MetadataApplyStatus.Cancelled,
+
+            StartedAtUtc =
+                startedAtUtc,
+
+            CompletedAtUtc =
+                DateTimeOffset.UtcNow,
+
+            ElapsedTime =
+                elapsedTime,
+
+            BackupPath =
+                backupResult?.BackupFilePath ??
+                string.Empty,
+
+            FieldResults =
+                Array.Empty<MetadataFieldApplyResult>(),
+
+            Messages =
+                writeResult?.Messages.ToArray() ??
+                Array.Empty<string>()
         };
     }
 
@@ -734,6 +1019,7 @@ public sealed class MetadataApplicationPipeline
             MetadataApplyValidationResult? validationResult,
             MetadataBackupResult? backupResult,
             MetadataWriteResult? writeResult,
+            MetadataApplyResult? applyResult,
             string errorMessage)
     {
         return new MetadataApplicationPipelineResult
@@ -759,17 +1045,17 @@ public sealed class MetadataApplicationPipeline
             ValidationResult =
                 validationResult,
 
-            ApplyResult =
-                null,
-
-            ErrorMessage =
-                errorMessage,
-
             BackupResult =
                 backupResult,
 
             WriteResult =
-                writeResult
+                writeResult,
+
+            ApplyResult =
+                applyResult,
+
+            ErrorMessage =
+                errorMessage
         };
     }
 
