@@ -13,4 +13,11 @@
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Documentation\Architecture\" />
+    <Folder Include="Documentation\Decisions\" />
+    <Folder Include="Documentation\Roadmap\" />
+    <Folder Include="Documentation\Releases\" />
+  </ItemGroup>
+
 </Project>
