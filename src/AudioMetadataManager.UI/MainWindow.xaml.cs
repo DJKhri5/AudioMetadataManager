@@ -20,7 +20,6 @@ using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.MetadataSources.Pipeline;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Pipeline.Diagnostics;
-using AudioMetadataManager.UI.Services.Parsing;
 using AudioMetadataManager.UI.Services.Simulation
     .Planning.Decision;
 using AudioMetadataManager.UI.Services.Simulation
@@ -45,6 +44,16 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Diagnostics;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Adapters;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Preparation;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Testing;
 
 namespace AudioMetadataManager.UI;
 
@@ -70,7 +79,12 @@ public partial class MainWindow : Window
     /// Construye y valida una solicitud usando solamente los
     /// cambios aprobados por el usuario.
     ///
-    /// Esta acción no crea respaldos ni modifica archivos.
+    /// Para archivos MP3, primero prepara los cambios mediante
+    /// TagLibSharp exclusivamente en memoria y verifica que el
+    /// archivo físico permanezca intacto.
+    ///
+    /// Después ejecuta el pipeline seguro, que crea el respaldo
+    /// obligatorio y utiliza todavía un escritor de diagnóstico.
     /// </summary>
     private async void
         AudioFileDetailsViewControl_ValidateApprovedChangesRequested(
@@ -105,6 +119,68 @@ public partial class MainWindow : Window
                 requestFactory.Create(
                     _currentSimulationPlan);
 
+            /*
+             * Preparación MP3 exclusivamente en memoria.
+             *
+             * Esta prueba asigna los cambios al objeto TagLib.Tag,
+             * pero no ejecuta TagLib.File.Save().
+             */
+            if (string.Equals(
+                    Path.GetExtension(
+                        request.FilePath),
+                    ".mp3",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                AppendLog(
+                    "Iniciando preparación MP3 en memoria.");
+
+                TagLibMp3ChangePreparer preparer =
+                    new();
+
+                TagLibMp3PreparationResult preparationResult =
+                    await Task.Run(
+                        () =>
+                            preparer.Prepare(
+                                request.FilePath,
+                                request.ValidChanges));
+
+                string preparationReport =
+                    TagLibMp3PreparationDiagnostics.BuildReport(
+                        preparationResult);
+
+                LogTextBox.AppendText(
+                    Environment.NewLine +
+                    preparationReport +
+                    Environment.NewLine);
+
+                LogTextBox.ScrollToEnd();
+
+                if (!preparationResult.WasSuccessful)
+                {
+                    AppendLog(
+                        "La preparación MP3 en memoria no superó " +
+                        "todas las comprobaciones. El pipeline no " +
+                        "continuará.");
+
+                    return;
+                }
+
+                AppendLog(
+                    "La preparación MP3 en memoria terminó " +
+                    "correctamente. El archivo físico permaneció " +
+                    "intacto.");
+            }
+            else
+            {
+                AppendLog(
+                    "La preparación TagLibSharp en memoria se " +
+                    "omitió porque el archivo seleccionado no es MP3.");
+            }
+
+            /*
+             * Después de superar la preparación en memoria,
+             * ejecutamos el pipeline seguro existente.
+             */
             MetadataApplicationPipeline pipeline =
                 new();
 
@@ -561,8 +637,13 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Ejecuta el diagnóstico completo y muestra el informe
-    /// generado por AudioAnalysisReportBuilder.
+    /// Ejecuta el diagnóstico técnico general y selecciona
+    /// automáticamente la prueba TagLibSharp correspondiente al
+    /// formato del archivo.
+    ///
+    /// Las escrituras reales se realizan únicamente sobre copias
+    /// temporales aisladas. El archivo original nunca se entrega
+    /// a los escritores.
     /// </summary>
     private async void RunAudioDiagnosticButton_Click(
         object sender,
@@ -595,6 +676,10 @@ public partial class MainWindow : Window
 
         try
         {
+            /*
+             * El diagnóstico técnico general se ejecuta para todos
+             * los formatos compatibles con AudioAnalysisEngine.
+             */
             AudioAnalysisTestReport report =
                 await Task.Run(
                     async () =>
@@ -608,6 +693,36 @@ public partial class MainWindow : Window
                 Environment.NewLine);
 
             LogTextBox.ScrollToEnd();
+
+            string extension =
+                Path.GetExtension(filePath)
+                    .ToLowerInvariant();
+
+            switch (extension)
+            {
+                case ".mp3":
+                    await RunMp3DiagnosticAsync(
+                        filePath);
+                    break;
+
+                case ".flac":
+                    await RunFlacDiagnosticAsync(
+                        filePath);
+                    break;
+
+                default:
+                    AppendLog(
+                        "El análisis técnico general terminó. " +
+                        $"Todavía no existe una prueba aislada de " +
+                        $"escritura para el formato {extension}.");
+                    break;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog(
+                "El diagnóstico o la prueba aislada fueron " +
+                "cancelados.");
         }
         catch (Exception exception)
         {
@@ -620,6 +735,260 @@ public partial class MainWindow : Window
             SetAudioAnalysisControlsEnabled(
                 true);
         }
+    }
+
+    /// <summary>
+    /// Ejecuta la inspección de sólo lectura y la prueba aislada
+    /// de escritura para un archivo MP3.
+    ///
+    /// El archivo original nunca se modifica.
+    /// </summary>
+    private async Task RunMp3DiagnosticAsync(
+        string filePath)
+    {
+        AppendLog(
+            "Iniciando inspección MP3 de sólo lectura.");
+
+        TagLibMp3MetadataAdapter tagLibAdapter =
+            new();
+
+        TagLibMp3InspectionResult inspectionResult =
+            await Task.Run(
+                () =>
+                    tagLibAdapter.Inspect(
+                        filePath));
+
+        string inspectionReport =
+            TagLibMp3InspectionDiagnostics.BuildReport(
+                inspectionResult);
+
+        LogTextBox.AppendText(
+            Environment.NewLine +
+            inspectionReport +
+            Environment.NewLine);
+
+        LogTextBox.ScrollToEnd();
+
+        if (!inspectionResult.WasSuccessful)
+        {
+            AppendLog(
+                "La inspección MP3 no terminó correctamente. " +
+                "La prueba aislada no se ejecutará.");
+
+            return;
+        }
+
+        AppendLog(
+            "Iniciando prueba aislada de escritura MP3. " +
+            "El archivo original permanecerá intacto.");
+
+        TagLibMp3IsolatedWriteTestRunner isolatedTestRunner =
+            new();
+
+        TagLibMp3IsolatedWriteTestResult isolatedTestResult =
+            await isolatedTestRunner.RunAsync(
+                filePath,
+                requestedGenre:
+                    "Electronic");
+
+        string isolatedTestReport =
+            TagLibMp3IsolatedWriteTestDiagnostics.BuildReport(
+                isolatedTestResult);
+
+        LogTextBox.AppendText(
+            Environment.NewLine +
+            isolatedTestReport +
+            Environment.NewLine);
+
+        LogTextBox.ScrollToEnd();
+
+        if (isolatedTestResult.WasSuccessful)
+        {
+            AppendLog(
+                "La prueba aislada MP3 terminó correctamente. " +
+                "El género fue guardado en la copia temporal, " +
+                "la carátula fue preservada y el archivo original " +
+                "permaneció intacto.");
+
+            AppendLog(
+                $"Carpeta de la prueba MP3: " +
+                $"{isolatedTestResult.TestDirectoryPath}");
+
+            return;
+        }
+
+        AppendLog(
+            "La prueba aislada MP3 no superó todas las " +
+            "comprobaciones. El escritor real continuará " +
+            "desactivado en el pipeline principal.");
+    }
+
+    /// <summary>
+    /// Ejecuta la primera prueba real de escritura FLAC sobre una
+    /// copia temporal aislada.
+    ///
+    /// En esta fase no modifica el archivo original ni activa el
+    /// escritor FLAC dentro del pipeline principal.
+    /// </summary>
+    private async Task RunFlacDiagnosticAsync(
+        string filePath)
+    {
+        AppendLog(
+            "Iniciando prueba aislada de escritura FLAC. " +
+            "El archivo original permanecerá intacto.");
+
+        TagLibFlacIsolatedWriteTestRunner isolatedTestRunner =
+            new();
+
+        TagLibIsolatedWriteTestResult isolatedTestResult =
+            await isolatedTestRunner.RunAsync(
+                filePath,
+                requestedGenre:
+                    "Electronic");
+
+        AppendLog(
+            "=== Prueba aislada de escritura FLAC ===");
+
+        AppendLog(
+            $"Archivo original: " +
+            $"{isolatedTestResult.OriginalFilePath}");
+
+        AppendLog(
+            $"Copia de trabajo: " +
+            $"{DisplayDiagnosticValue(
+                isolatedTestResult.WorkingCopyPath)}");
+
+        AppendLog(
+            $"Respaldo de la copia: " +
+            $"{DisplayDiagnosticValue(
+                isolatedTestResult.WorkingBackupPath)}");
+
+        AppendLog(
+            $"Género original: " +
+            $"{DisplayDiagnosticValue(
+                isolatedTestResult.OriginalGenre)}");
+
+        AppendLog(
+            $"Género solicitado: " +
+            $"{DisplayDiagnosticValue(
+                isolatedTestResult.RequestedGenre)}");
+
+        AppendLog(
+            $"Género persistido: " +
+            $"{DisplayDiagnosticValue(
+                isolatedTestResult.PersistedGenre)}");
+
+        AppendLog(
+            $"Original intacto: " +
+            $"{ToSpanish(
+                isolatedTestResult
+                    .OriginalFileRemainedUnchanged)}");
+
+        AppendLog(
+            $"Respaldo coincide con la copia inicial: " +
+            $"{ToSpanish(
+                isolatedTestResult
+                    .BackupMatchesInitialWorkingCopy)}");
+
+        AppendLog(
+            $"Copia modificada realmente: " +
+            $"{ToSpanish(
+                isolatedTestResult
+                    .WorkingCopyWasModified)}");
+
+        AppendLog(
+            $"Género verificado: " +
+            $"{ToSpanish(
+                isolatedTestResult.GenreWasPersisted)}");
+
+        AppendLog(
+            $"Imágenes antes: " +
+            $"{isolatedTestResult.PictureCountBefore}");
+
+        AppendLog(
+            $"Imágenes después: " +
+            $"{isolatedTestResult.PictureCountAfter}");
+
+        AppendLog(
+            $"Carátulas preservadas: " +
+            $"{ToSpanish(
+                isolatedTestResult.PicturesWerePreserved)}");
+
+        if (isolatedTestResult.WriteResult is not null)
+        {
+            AppendLog(
+                $"Escritor utilizado: " +
+                $"{isolatedTestResult.WriteResult.WriterName}");
+
+            AppendLog(
+                $"Estado de escritura: " +
+                $"{isolatedTestResult.WriteResult.Status}");
+
+            AppendLog(
+                $"Campos escritos: " +
+                $"{isolatedTestResult.WriteResult.WrittenFieldCount}");
+
+            AppendLog(
+                $"Campos fallidos: " +
+                $"{isolatedTestResult.WriteResult.FailedFieldCount}");
+
+            foreach (string message
+                in isolatedTestResult.WriteResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+        }
+
+        foreach (string message
+            in isolatedTestResult.Messages)
+        {
+            AppendLog(
+                $"- {message}");
+        }
+
+        AppendLog(
+            $"Prueba FLAC correcta: " +
+            $"{ToSpanish(
+                isolatedTestResult.WasSuccessful)}");
+
+        AppendLog(
+            $"Resumen: {isolatedTestResult.Summary}");
+
+        AppendLog(
+            "=== Fin de la prueba aislada FLAC ===");
+
+        if (isolatedTestResult.WasSuccessful)
+        {
+            AppendLog(
+                "La prueba aislada FLAC terminó correctamente. " +
+                "El género fue guardado en la copia temporal, " +
+                "las imágenes fueron preservadas y el archivo " +
+                "original permaneció intacto.");
+
+            AppendLog(
+                $"Carpeta de la prueba FLAC: " +
+                $"{isolatedTestResult.TestDirectoryPath}");
+
+            return;
+        }
+
+        AppendLog(
+            "La prueba aislada FLAC no superó todas las " +
+            "comprobaciones. El escritor FLAC continuará " +
+            "desactivado en el pipeline principal.");
+    }
+
+    /// <summary>
+    /// Prepara un valor para mostrarlo en los informes de
+    /// diagnóstico.
+    /// </summary>
+    private static string DisplayDiagnosticValue(
+        string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "(sin información)"
+            : value.Trim();
     }
 
     /// <summary>
