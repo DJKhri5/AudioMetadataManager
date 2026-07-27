@@ -19,10 +19,18 @@ Semantic Versioning where applicable.
 
 - Prepared the testing architecture to share file isolation logic
   between writer tests and application pipeline tests.
+- Refactored `TagLibIsolatedWriteTestRunner` to use the shared
+  `FileIsolationTestHarness`.
+- Delegated working-copy creation, backup generation, SHA-256
+  calculation, and isolation verification to the common testing
+  infrastructure.
+- Preserved the existing MP3 and FLAC isolated-write test behavior.
 
 ### Fixed
 
 - No user-facing defects were addressed in this milestone.
+- Removed duplicated file-isolation and hash-verification logic from
+  the TagLibSharp isolated writer test runner.
 
 ### Internal
 
@@ -30,3 +38,8 @@ Semantic Versioning where applicable.
 - Added `FileIsolationVerificationResult`.
 - Added `FileIsolationTestHarness`.
 - Prepared the codebase for end-to-end metadata application testing.
+- Added dependency injection support for `FileIsolationTestHarness`
+  in `TagLibIsolatedWriteTestRunner`.
+- Centralized isolated file safety checks for current and future writer
+  integration tests.
+- Revalidated real MP3 writing after the infrastructure refactor.

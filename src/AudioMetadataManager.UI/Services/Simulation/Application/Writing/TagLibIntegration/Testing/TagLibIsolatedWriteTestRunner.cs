@@ -1,8 +1,9 @@
 ﻿using System.IO;
-using System.Security.Cryptography;
 using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Testing.Infrastructure;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Interfaces;
 using AudioMetadataManager.UI.Services.Simulation
@@ -15,12 +16,46 @@ namespace AudioMetadataManager.UI.Services.Simulation
 
 /// <summary>
 /// Ejecuta una prueba real de escritura sobre una copia aislada,
-/// usando cualquier escritor compatible con IMetadataFormatWriter.
+/// usando cualquier escritor compatible con
+/// IMetadataFormatWriter.
+///
+/// La creación de la copia, el respaldo y la verificación de
+/// hashes se delegan a FileIsolationTestHarness.
 ///
 /// El archivo original nunca se entrega al escritor.
 /// </summary>
 public sealed class TagLibIsolatedWriteTestRunner
 {
+    private readonly FileIsolationTestHarness
+        _isolationHarness;
+
+    /// <summary>
+    /// Crea el runner con la infraestructura de aislamiento
+    /// predeterminada.
+    /// </summary>
+    public TagLibIsolatedWriteTestRunner()
+        : this(
+            new FileIsolationTestHarness())
+    {
+    }
+
+    /// <summary>
+    /// Crea el runner con una infraestructura de aislamiento
+    /// personalizada.
+    /// </summary>
+    public TagLibIsolatedWriteTestRunner(
+        FileIsolationTestHarness isolationHarness)
+    {
+        _isolationHarness =
+            isolationHarness ??
+            throw new ArgumentNullException(
+                nameof(isolationHarness));
+    }
+
+    /// <summary>
+    /// Ejecuta una prueba real de escritura exclusivamente sobre
+    /// una copia temporal del archivo proporcionado.
+    /// </summary>
     public async Task<TagLibIsolatedWriteTestResult>
         RunAsync(
             string? originalFilePath,
@@ -44,10 +79,6 @@ public sealed class TagLibIsolatedWriteTestRunner
             NormalizeDisplayValue(
                 formatDisplayName,
                 "(formato sin identificar)");
-
-        string normalizedTestFolderName =
-            NormalizeFolderName(
-                testFolderName);
 
         string normalizedRequestedGenre =
             NormalizeValue(
@@ -112,75 +143,51 @@ public sealed class TagLibIsolatedWriteTestRunner
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        string originalHashBefore =
-            await ComputeSha256Async(
-                normalizedOriginalPath,
-                cancellationToken);
+        FileIsolationContext?
+            isolationContext =
+                null;
 
-        string testDirectoryPath =
-            Path.Combine(
-                Path.GetTempPath(),
-                "AudioMetadataManager",
-                normalizedTestFolderName,
-                Guid.NewGuid().ToString("N"));
+        FileIsolationVerificationResult?
+            isolationVerification =
+                null;
 
-        Directory.CreateDirectory(
-            testDirectoryPath);
+        string originalGenre =
+            string.Empty;
 
-        string originalFileName =
-            Path.GetFileName(
-                normalizedOriginalPath);
+        string persistedGenre =
+            string.Empty;
 
-        string workingCopyPath =
-            Path.Combine(
-                testDirectoryPath,
-                "working_" + originalFileName);
+        int pictureCountBefore =
+            0;
 
-        string workingBackupPath =
-            Path.Combine(
-                testDirectoryPath,
-                "backup_" + originalFileName);
+        int pictureCountAfter =
+            0;
+
+        MetadataWriteResult?
+            writeResult =
+                null;
 
         try
         {
-            File.Copy(
-                normalizedOriginalPath,
-                workingCopyPath,
-                overwrite:
-                    false);
-
-            File.Copy(
-                workingCopyPath,
-                workingBackupPath,
-                overwrite:
-                    false);
+            isolationContext =
+                await _isolationHarness.CreateAsync(
+                    normalizedOriginalPath,
+                    testFolderName,
+                    cancellationToken);
 
             messages.Add(
                 $"Se creó una copia aislada del archivo " +
                 $"{normalizedFormatDisplayName}.");
 
             messages.Add(
-                "Se creó un respaldo independiente de la " +
-                "copia antes de ejecutar Save().");
+                "Se creó y verificó un respaldo independiente " +
+                "de la copia antes de ejecutar Save().");
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            string workingCopyHashBefore =
-                await ComputeSha256Async(
-                    workingCopyPath,
-                    cancellationToken);
-
-            string workingBackupHash =
-                await ComputeSha256Async(
-                    workingBackupPath,
-                    cancellationToken);
-
-            string originalGenre;
-            int pictureCountBefore;
-
             using (TagLib.File tagFile =
                 TagLib.File.Create(
-                    workingCopyPath))
+                    isolationContext.WorkingCopyPath))
             {
                 originalGenre =
                     JoinValues(
@@ -228,14 +235,14 @@ public sealed class TagLibIsolatedWriteTestRunner
                         Guid.NewGuid(),
 
                     FilePath =
-                        workingCopyPath,
+                        isolationContext.WorkingCopyPath,
 
                     FileName =
                         Path.GetFileName(
-                            workingCopyPath),
+                            isolationContext.WorkingCopyPath),
 
                     VerifiedBackupPath =
-                        workingBackupPath,
+                        isolationContext.WorkingBackupPath,
 
                     Changes =
                         new[]
@@ -253,19 +260,16 @@ public sealed class TagLibIsolatedWriteTestRunner
                         true
                 };
 
-            MetadataWriteResult writeResult =
+            writeResult =
                 await writer.WriteAsync(
                     writeRequest,
                     cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            string persistedGenre;
-            int pictureCountAfter;
-
             using (TagLib.File reopenedFile =
                 TagLib.File.Create(
-                    workingCopyPath))
+                    isolationContext.WorkingCopyPath))
             {
                 persistedGenre =
                     JoinValues(
@@ -275,14 +279,9 @@ public sealed class TagLibIsolatedWriteTestRunner
                     reopenedFile.Tag.Pictures?.Length ?? 0;
             }
 
-            string workingCopyHashAfter =
-                await ComputeSha256Async(
-                    workingCopyPath,
-                    cancellationToken);
-
-            string originalHashAfter =
-                await ComputeSha256Async(
-                    normalizedOriginalPath,
+            isolationVerification =
+                await _isolationHarness.VerifyAsync(
+                    isolationContext,
                     cancellationToken);
 
             messages.Add(
@@ -293,68 +292,20 @@ public sealed class TagLibIsolatedWriteTestRunner
                 "La copia fue reabierta para comprobar el " +
                 "valor persistido.");
 
-            messages.Add(
-                string.Equals(
-                    originalHashBefore,
-                    originalHashAfter,
-                    StringComparison.OrdinalIgnoreCase)
-                        ? "El hash del archivo original no cambió."
-                        : "El hash del archivo original cambió " +
-                          "inesperadamente.");
+            messages.AddRange(
+                isolationVerification.Messages);
 
-            return new TagLibIsolatedWriteTestResult
-            {
-                FormatDisplayName =
-                    normalizedFormatDisplayName,
-
-                OriginalFilePath =
-                    normalizedOriginalPath,
-
-                WorkingCopyPath =
-                    workingCopyPath,
-
-                WorkingBackupPath =
-                    workingBackupPath,
-
-                TestDirectoryPath =
-                    testDirectoryPath,
-
-                OriginalGenre =
-                    originalGenre,
-
-                RequestedGenre =
-                    normalizedRequestedGenre,
-
-                PersistedGenre =
-                    persistedGenre,
-
-                PictureCountBefore =
-                    pictureCountBefore,
-
-                PictureCountAfter =
-                    pictureCountAfter,
-
-                OriginalHashBefore =
-                    originalHashBefore,
-
-                OriginalHashAfter =
-                    originalHashAfter,
-
-                WorkingCopyHashBefore =
-                    workingCopyHashBefore,
-
-                WorkingCopyHashAfter =
-                    workingCopyHashAfter,
-
-                WorkingBackupHash =
-                    workingBackupHash,
-
-                WriteResult =
-                    writeResult,
-
-                Messages =
-                    messages.ToArray()
-            };
+            return BuildResult(
+                normalizedFormatDisplayName,
+                normalizedRequestedGenre,
+                originalGenre,
+                persistedGenre,
+                pictureCountBefore,
+                pictureCountAfter,
+                isolationContext,
+                isolationVerification,
+                writeResult,
+                messages);
         }
         catch (OperationCanceledException)
         {
@@ -371,43 +322,115 @@ public sealed class TagLibIsolatedWriteTestRunner
                 $"{normalizedFormatDisplayName} terminó con " +
                 $"un error: {exception.Message}");
 
-            string originalHashAfter =
-                File.Exists(normalizedOriginalPath)
-                    ? await ComputeSha256Async(
-                        normalizedOriginalPath,
-                        CancellationToken.None)
-                    : string.Empty;
-
-            return new TagLibIsolatedWriteTestResult
+            if (isolationContext is not null)
             {
-                FormatDisplayName =
-                    normalizedFormatDisplayName,
+                try
+                {
+                    isolationVerification =
+                        await _isolationHarness.VerifyAsync(
+                            isolationContext,
+                            CancellationToken.None);
 
-                OriginalFilePath =
-                    normalizedOriginalPath,
+                    messages.AddRange(
+                        isolationVerification.Messages);
+                }
+                catch (Exception verificationException)
+                {
+                    messages.Add(
+                        "No fue posible completar la verificación " +
+                        "del entorno aislado después del error: " +
+                        verificationException.Message);
+                }
+            }
 
-                WorkingCopyPath =
-                    workingCopyPath,
-
-                WorkingBackupPath =
-                    workingBackupPath,
-
-                TestDirectoryPath =
-                    testDirectoryPath,
-
-                RequestedGenre =
-                    normalizedRequestedGenre,
-
-                OriginalHashBefore =
-                    originalHashBefore,
-
-                OriginalHashAfter =
-                    originalHashAfter,
-
-                Messages =
-                    messages.ToArray()
-            };
+            return BuildResult(
+                normalizedFormatDisplayName,
+                normalizedRequestedGenre,
+                originalGenre,
+                persistedGenre,
+                pictureCountBefore,
+                pictureCountAfter,
+                isolationContext,
+                isolationVerification,
+                writeResult,
+                messages);
         }
+    }
+
+    private static TagLibIsolatedWriteTestResult BuildResult(
+        string formatDisplayName,
+        string requestedGenre,
+        string originalGenre,
+        string persistedGenre,
+        int pictureCountBefore,
+        int pictureCountAfter,
+        FileIsolationContext? isolationContext,
+        FileIsolationVerificationResult? isolationVerification,
+        MetadataWriteResult? writeResult,
+        IReadOnlyList<string> messages)
+    {
+        return new TagLibIsolatedWriteTestResult
+        {
+            FormatDisplayName =
+                formatDisplayName,
+
+            OriginalFilePath =
+                isolationContext?.OriginalFilePath ??
+                string.Empty,
+
+            WorkingCopyPath =
+                isolationContext?.WorkingCopyPath ??
+                string.Empty,
+
+            WorkingBackupPath =
+                isolationContext?.WorkingBackupPath ??
+                string.Empty,
+
+            TestDirectoryPath =
+                isolationContext?.TestDirectoryPath ??
+                string.Empty,
+
+            OriginalGenre =
+                originalGenre,
+
+            RequestedGenre =
+                requestedGenre,
+
+            PersistedGenre =
+                persistedGenre,
+
+            PictureCountBefore =
+                pictureCountBefore,
+
+            PictureCountAfter =
+                pictureCountAfter,
+
+            OriginalHashBefore =
+                isolationContext?.OriginalHashBefore ??
+                string.Empty,
+
+            OriginalHashAfter =
+                isolationVerification?.OriginalHashAfter ??
+                string.Empty,
+
+            WorkingCopyHashBefore =
+                isolationContext?.WorkingCopyHashBefore ??
+                string.Empty,
+
+            WorkingCopyHashAfter =
+                isolationVerification?.WorkingCopyHashAfter ??
+                string.Empty,
+
+            WorkingBackupHash =
+                isolationContext?.WorkingBackupHash ??
+                string.Empty,
+
+            WriteResult =
+                writeResult,
+
+            Messages =
+                messages.ToArray()
+        };
     }
 
     private static TagLibIsolatedWriteTestResult BuildFailure(
@@ -432,37 +455,11 @@ public sealed class TagLibIsolatedWriteTestRunner
         };
     }
 
-    private static async Task<string> ComputeSha256Async(
-        string filePath,
-        CancellationToken cancellationToken)
-    {
-        await using FileStream stream =
-            new(
-                filePath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                bufferSize:
-                    81920,
-                useAsync:
-                    true);
-
-        using SHA256 sha256 =
-            SHA256.Create();
-
-        byte[] hash =
-            await sha256.ComputeHashAsync(
-                stream,
-                cancellationToken);
-
-        return Convert.ToHexString(
-            hash);
-    }
-
     private static string NormalizePath(
         string? filePath)
     {
-        if (string.IsNullOrWhiteSpace(filePath))
+        if (string.IsNullOrWhiteSpace(
+                filePath))
         {
             return string.Empty;
         }
@@ -495,28 +492,6 @@ public sealed class TagLibIsolatedWriteTestRunner
             : value.Trim();
     }
 
-    private static string NormalizeFolderName(
-        string? value)
-    {
-        string normalized =
-            string.IsNullOrWhiteSpace(value)
-                ? "TagLibWriteTests"
-                : value.Trim();
-
-        foreach (char invalidCharacter
-            in Path.GetInvalidFileNameChars())
-        {
-            normalized =
-                normalized.Replace(
-                    invalidCharacter,
-                    '_');
-        }
-
-        return string.IsNullOrWhiteSpace(normalized)
-            ? "TagLibWriteTests"
-            : normalized;
-    }
-
     private static string JoinValues(
         IEnumerable<string>? values)
     {
@@ -528,9 +503,11 @@ public sealed class TagLibIsolatedWriteTestRunner
         return string.Join(
             ", ",
             values
-                .Where(value =>
-                    !string.IsNullOrWhiteSpace(value))
-                .Select(value =>
-                    value.Trim()));
+                .Where(
+                    value =>
+                        !string.IsNullOrWhiteSpace(value))
+                .Select(
+                    value =>
+                        value.Trim()));
     }
 }
