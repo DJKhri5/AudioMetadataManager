@@ -20,7 +20,8 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// o AIFF. Esa responsabilidad pertenece a cada implementación
 /// de IMetadataFormatWriter.
 /// </summary>
-public sealed class MetadataWriterEngine
+public sealed class MetadataWriterEngine :
+    IMetadataWriterEngine
 {
     private readonly MetadataWriterResolver
         _writerResolver;

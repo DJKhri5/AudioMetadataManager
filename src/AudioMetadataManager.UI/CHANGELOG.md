@@ -34,6 +34,12 @@ Semantic Versioning where applicable.
   metadata application pipeline.
 - Added structural coverage for successful, failed, and cancelled backup
   outcomes.
+- Added `IMetadataWriterEngine` as the reusable contract for executing
+  metadata write requests.
+- Added `MetadataWritingStage` as the third concrete stage of the modular
+  metadata application pipeline.
+- Added structural coverage for successful, no-writable-change, cancelled,
+  failed, and missing-backup writing scenarios.
 
 ### Changed
 
@@ -61,6 +67,12 @@ Semantic Versioning where applicable.
   `MetadataApplicationContext`.
 - Extended the common stage infrastructure to represent controlled
   cancellation results.
+- Updated `MetadataWriterEngine` to implement the reusable writer engine
+  contract.
+- Integrated metadata writing results with the shared
+  `MetadataApplicationContext`.
+- Required a verified backup before the metadata writing stage can invoke its
+  writer engine.
 
 ### Fixed
 
@@ -74,6 +86,10 @@ Semantic Versioning where applicable.
 - Prevented duplicate execution of the concrete metadata validation
   stage through the common stage infrastructure.
 - Prevented duplicate execution of the concrete metadata backup stage
+  through the common stage infrastructure.
+- Prevented metadata writing from starting when no verified backup is
+  available.
+- Prevented duplicate execution of the concrete metadata writing stage
   through the common stage infrastructure.
 
 ### Internal
@@ -103,3 +119,10 @@ Semantic Versioning where applicable.
   auditable results, and context storage.
 - Verified cleanup of the isolated temporary file used by the successful
   backup test.
+- Added controlled writer engine injection for structural stage testing.
+- Verified write-request mapping, cancellation-token forwarding, auditable
+  results, and context storage.
+- Verified special handling of `NoWritableChanges` as a completed stage with
+  warnings.
+- Verified cleanup of the isolated temporary backup used by the writing-stage
+  test.
