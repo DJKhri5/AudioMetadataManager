@@ -254,6 +254,28 @@ public abstract class MetadataApplicationStageBase :
     }
 
     /// <summary>
+    /// Construye un resultado interno cancelado.
+    /// </summary>
+    protected static MetadataApplicationStageExecution Cancelled(
+        string message,
+        IReadOnlyList<string>? details = null)
+    {
+        return new MetadataApplicationStageExecution
+        {
+            Status =
+                MetadataApplicationStageStatus.Cancelled,
+
+            Message =
+                NormalizeMessage(
+                    message),
+
+            Details =
+                details?.ToArray() ??
+                Array.Empty<string>()
+        };
+    }
+
+    /// <summary>
     /// Construye un resultado interno omitido.
     /// </summary>
     protected static MetadataApplicationStageExecution Skipped(

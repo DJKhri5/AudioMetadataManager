@@ -17,7 +17,8 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// mueve al destino definitivo después de finalizar
 /// correctamente.
 /// </summary>
-public sealed class MetadataBackupEngine
+public sealed class MetadataBackupEngine :
+    IMetadataBackupEngine
 {
     private readonly MetadataBackupOptions
         _options;

@@ -28,6 +28,12 @@ Semantic Versioning where applicable.
   modular metadata application pipeline.
 - Added structural coverage for valid, warning, and invalid validation
   outcomes.
+- Added `IMetadataBackupEngine` as the reusable contract for creating and
+  verifying metadata backups.
+- Added `MetadataBackupStage` as the second concrete stage of the modular
+  metadata application pipeline.
+- Added structural coverage for successful, failed, and cancelled backup
+  outcomes.
 
 ### Changed
 
@@ -49,6 +55,12 @@ Semantic Versioning where applicable.
   validation contract.
 - Integrated validation results with the shared
   `MetadataApplicationContext`.
+- Updated `MetadataBackupEngine` to implement the reusable backup engine
+  contract.
+- Integrated verified backup results with the shared
+  `MetadataApplicationContext`.
+- Extended the common stage infrastructure to represent controlled
+  cancellation results.
 
 ### Fixed
 
@@ -61,6 +73,8 @@ Semantic Versioning where applicable.
 - Prevented completed contexts from being modified or executed again.
 - Prevented duplicate execution of the concrete metadata validation
   stage through the common stage infrastructure.
+- Prevented duplicate execution of the concrete metadata backup stage
+  through the common stage infrastructure.
 
 ### Internal
 
@@ -83,3 +97,9 @@ Semantic Versioning where applicable.
   testing.
 - Verified auditable validation results, context storage, and status
   mapping without requiring real audio files.
+- Added controlled in-memory backup engine injection for structural stage
+  testing.
+- Verified backup request mapping, cancellation-token forwarding,
+  auditable results, and context storage.
+- Verified cleanup of the isolated temporary file used by the successful
+  backup test.
