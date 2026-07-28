@@ -22,6 +22,12 @@ Semantic Versioning where applicable.
   execution and configurable flow control.
 - Added structural tests for the application context, stage base, and
   pipeline executor.
+- Added `IMetadataApplyRequestValidator` as the reusable validation
+  contract for metadata application requests.
+- Added `MetadataValidationStage` as the first concrete stage of the
+  modular metadata application pipeline.
+- Added structural coverage for valid, warning, and invalid validation
+  outcomes.
 
 ### Changed
 
@@ -39,6 +45,10 @@ Semantic Versioning where applicable.
   and auditable result registration.
 - Decoupled pipeline execution flow from concrete validation, backup,
   writing, and verification implementations.
+- Updated `MetadataApplyRequestValidator` to implement the reusable
+  validation contract.
+- Integrated validation results with the shared
+  `MetadataApplicationContext`.
 
 ### Fixed
 
@@ -49,6 +59,8 @@ Semantic Versioning where applicable.
   pipeline executor.
 - Added optional rejection of duplicate execution orders.
 - Prevented completed contexts from being modified or executed again.
+- Prevented duplicate execution of the concrete metadata validation
+  stage through the common stage infrastructure.
 
 ### Internal
 
@@ -67,3 +79,7 @@ Semantic Versioning where applicable.
 - Added structural coverage for ordering, blocking failures, duplicate
   identities, strict ordering, automatic completion, and context
   preservation.
+- Added controlled in-memory validator injection for structural stage
+  testing.
+- Verified auditable validation results, context storage, and status
+  mapping without requiring real audio files.

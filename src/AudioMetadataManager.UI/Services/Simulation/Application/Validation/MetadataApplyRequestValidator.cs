@@ -10,7 +10,8 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// Ejecuta comprobaciones de seguridad antes de permitir que
 /// una solicitud avance hacia el respaldo o la escritura.
 /// </summary>
-public sealed class MetadataApplyRequestValidator
+public sealed class MetadataApplyRequestValidator :
+    IMetadataApplyRequestValidator
 {
     private static readonly IReadOnlySet<string>
         SupportedExtensions =
