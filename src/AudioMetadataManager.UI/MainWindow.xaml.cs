@@ -45,6 +45,8 @@ using AudioMetadataManager.UI.Services.Simulation
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Models;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Testing.PipelineStages.Verification;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Adapters;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Diagnostics;
@@ -71,6 +73,9 @@ public partial class MainWindow : Window
 
     private readonly AudioAnalysisTestRunner
         _audioAnalysisTestRunner;
+
+    private readonly MetadataVerificationStageTestRunner
+        _metadataVerificationStageTestRunner;
 
     private SimulationPlanViewModel?
         _currentSimulationPlan;
@@ -276,6 +281,9 @@ public partial class MainWindow : Window
         _audioAnalysisTestRunner =
             new AudioAnalysisTestRunner(
                 _audioAnalysisEngine);
+
+        _metadataVerificationStageTestRunner =
+            new MetadataVerificationStageTestRunner();
     }
 
     /// <summary>
@@ -693,6 +701,36 @@ public partial class MainWindow : Window
                 Environment.NewLine);
 
             LogTextBox.ScrollToEnd();
+
+            AppendLog(
+                "Iniciando pruebas estructurales de la etapa " +
+                "de verificación.");
+
+            MetadataVerificationStageTestResult
+                verificationStageTestResult =
+                    await _metadataVerificationStageTestRunner
+                        .RunAsync();
+
+            AppendLog(
+                "=== Etapa de verificación posterior a la " +
+                "escritura ===");
+
+            foreach (string message
+                in verificationStageTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Resultado general: " +
+                $"{ToSpanish(
+                    verificationStageTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                "=== Fin de las pruebas estructurales de " +
+                "verificación ===");
 
             string extension =
                 Path.GetExtension(filePath)

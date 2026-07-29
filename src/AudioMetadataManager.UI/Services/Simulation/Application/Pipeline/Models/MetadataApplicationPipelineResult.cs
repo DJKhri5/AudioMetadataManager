@@ -6,6 +6,8 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Backup.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.Verification.Models;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Models;
@@ -77,6 +79,16 @@ public sealed class MetadataApplicationPipelineResult
     /// </summary>
     public MetadataWriteResult?
         WriteResult
+    { get; init; }
+
+    /// <summary>
+    /// Resultado de la verificación posterior a la escritura.
+    ///
+    /// Permanece nulo cuando la escritura no se ejecutó, fue
+    /// omitida o no permitió realizar la verificación.
+    /// </summary>
+    public MetadataVerificationResult?
+        VerificationResult
     { get; init; }
 
     /// <summary>

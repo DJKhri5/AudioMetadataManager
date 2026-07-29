@@ -14,10 +14,6 @@ using AudioMetadataManager.UI.Services.Simulation
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration
     .FieldMapping.Models;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Writing.Verification.Engine;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Writing.Verification.Models;
 using System.Diagnostics;
 using System.IO;
 
@@ -41,9 +37,6 @@ public abstract class TagLibMetadataWriterBase
 {
     private readonly IReadOnlySet<string>
         _supportedExtensions;
-
-    private readonly MetadataWriterVerificationEngine
-        _verificationEngine;
 
     private readonly ITagLibFieldMapper
         _fieldMapper;
@@ -101,9 +94,6 @@ public abstract class TagLibMetadataWriterBase
                 "Debe existir al menos una extensión válida.",
                 nameof(supportedExtensions));
         }
-
-        _verificationEngine =
-            new MetadataWriterVerificationEngine();
 
         _fieldMapper =
             new TagLibFieldMapper();
@@ -232,9 +222,7 @@ public abstract class TagLibMetadataWriterBase
                         BuildFieldResults(
                             preparedFields,
                             saveSucceeded:
-                                false,
-                            verificationResult:
-                                null),
+                                false),
                         messages);
                 }
 
@@ -257,9 +245,7 @@ public abstract class TagLibMetadataWriterBase
                         BuildFieldResults(
                             preparedFields,
                             saveSucceeded:
-                                false,
-                            verificationResult:
-                                null),
+                                false),
                         messages);
                 }
 
@@ -274,27 +260,12 @@ public abstract class TagLibMetadataWriterBase
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            MetadataVerificationResult verificationResult =
-                _verificationEngine.Verify(
-                    request.NormalizedFilePath,
-                    request.ValidChanges,
-                    pictureCountBefore);
-
-            AddVerificationMessages(
-                messages,
-                verificationResult);
-
-            bool picturesPreserved =
-                !request.PreserveEmbeddedPictures ||
-                verificationResult.PicturesPreserved;
-
             IReadOnlyList<MetadataFieldWriteResult>
                 fieldResults =
                     BuildFieldResults(
                         preparedFields,
                         saveSucceeded:
-                            true,
-                        verificationResult);
+                            true);
 
             int successfulCount =
                 fieldResults.Count(
@@ -304,20 +275,18 @@ public abstract class TagLibMetadataWriterBase
             bool allFieldsSuccessful =
                 fieldResults.Count > 0 &&
                 successfulCount ==
-                fieldResults.Count;
+                    fieldResults.Count;
 
             MetadataWriteStatus finalStatus;
 
-            if (verificationResult.FileOpened &&
-                allFieldsSuccessful &&
-                picturesPreserved)
+            if (allFieldsSuccessful)
             {
                 finalStatus =
                     MetadataWriteStatus.Completed;
 
                 messages.Add(
-                    "Todos los campos solicitados fueron " +
-                    "guardados y verificados correctamente.");
+                    "Todos los campos solicitados fueron preparados " +
+                    "y guardados correctamente.");
             }
             else if (successfulCount > 0)
             {
@@ -326,8 +295,7 @@ public abstract class TagLibMetadataWriterBase
 
                 messages.Add(
                     "La escritura se completó parcialmente. " +
-                    "Al menos una comprobación no superó la " +
-                    "verificación posterior.");
+                    "Al menos un campo no pudo prepararse o guardarse.");
             }
             else
             {
@@ -335,8 +303,7 @@ public abstract class TagLibMetadataWriterBase
                     MetadataWriteStatus.SaveFailed;
 
                 messages.Add(
-                    "Ningún campo pudo verificarse después " +
-                    "del guardado.");
+                    "Ningún campo pudo confirmarse como guardado.");
             }
 
             return BuildResult(
@@ -345,7 +312,8 @@ public abstract class TagLibMetadataWriterBase
                 startedAtUtc,
                 stopwatch,
                 fieldResults,
-                messages);
+                messages,
+                pictureCountBefore);
         }
         catch (OperationCanceledException)
         {
@@ -360,9 +328,7 @@ public abstract class TagLibMetadataWriterBase
                 BuildFieldResults(
                     preparedFields,
                     saveSucceeded:
-                        false,
-                    verificationResult:
-                        null),
+                        false),
                 messages);
         }
         catch (TagLib.UnsupportedFormatException exception)
@@ -380,9 +346,7 @@ public abstract class TagLibMetadataWriterBase
                 BuildFieldResults(
                     preparedFields,
                     saveSucceeded:
-                        false,
-                    verificationResult:
-                        null),
+                        false),
                 messages);
         }
         catch (TagLib.CorruptFileException exception)
@@ -399,9 +363,7 @@ public abstract class TagLibMetadataWriterBase
                 BuildFieldResults(
                     preparedFields,
                     saveSucceeded:
-                        false,
-                    verificationResult:
-                        null),
+                        false),
                 messages);
         }
         catch (UnauthorizedAccessException exception)
@@ -418,9 +380,7 @@ public abstract class TagLibMetadataWriterBase
                 BuildFieldResults(
                     preparedFields,
                     saveSucceeded:
-                        false,
-                    verificationResult:
-                        null),
+                        false),
                 messages);
         }
         catch (IOException exception)
@@ -437,9 +397,7 @@ public abstract class TagLibMetadataWriterBase
                 BuildFieldResults(
                     preparedFields,
                     saveSucceeded:
-                        false,
-                    verificationResult:
-                        null),
+                        false),
                 messages);
         }
         catch (Exception exception)
@@ -457,9 +415,7 @@ public abstract class TagLibMetadataWriterBase
                 BuildFieldResults(
                     preparedFields,
                     saveSucceeded:
-                        false,
-                    verificationResult:
-                        null),
+                        false),
                 messages);
         }
     }
@@ -562,41 +518,16 @@ public abstract class TagLibMetadataWriterBase
         BuildFieldResults(
             IReadOnlyList<TagLibFieldMappingResult>
                 preparedFields,
-            bool saveSucceeded,
-            MetadataVerificationResult? verificationResult)
+            bool saveSucceeded)
     {
-        IReadOnlyDictionary<MetadataField,
-            MetadataFieldVerificationResult>
-            verificationByField =
-                verificationResult?
-                    .FieldResults
-                    .GroupBy(
-                        result =>
-                            result.Field)
-                    .ToDictionary(
-                        group =>
-                            group.Key,
-                        group =>
-                            group.Last()) ??
-                new Dictionary<MetadataField,
-                    MetadataFieldVerificationResult>();
-
         return preparedFields
             .Select(
                 preparedField =>
                 {
-                    bool hasVerification =
-                        verificationByField.TryGetValue(
-                            preparedField.Field,
-                            out MetadataFieldVerificationResult?
-                                fieldVerification);
-
-                    bool verified =
+                    bool fieldWasSaved =
                         saveSucceeded &&
                         preparedField.IsSupported &&
-                        preparedField.ValuePrepared &&
-                        hasVerification &&
-                        fieldVerification?.WasSuccessful == true;
+                        preparedField.ValuePrepared;
 
                     string message;
 
@@ -612,26 +543,11 @@ public abstract class TagLibMetadataWriterBase
                             "El valor fue preparado, pero el " +
                             "guardado no terminó correctamente.";
                     }
-                    else if (!hasVerification)
-                    {
-                        message =
-                            "El archivo fue guardado, pero el " +
-                            "motor posterior no devolvió una " +
-                            "verificación para este campo.";
-                    }
-                    else if (!verified)
-                    {
-                        message =
-                            fieldVerification?.Message ??
-                            "El archivo fue guardado, pero la " +
-                            "relectura no confirmó el valor.";
-                    }
                     else
                     {
                         message =
-                            "El valor fue preparado por el mapper, " +
-                            "guardado y verificado mediante el " +
-                            "motor común de verificación posterior.";
+                            "El valor fue preparado por el mapper " +
+                            "y TagLib.File.Save() terminó sin errores.";
                     }
 
                     return new MetadataFieldWriteResult
@@ -652,7 +568,7 @@ public abstract class TagLibMetadataWriterBase
                             preparedField.ValuePrepared,
 
                         SaveSucceeded =
-                            verified,
+                            fieldWasSaved,
 
                         Message =
                             message
@@ -741,7 +657,8 @@ public abstract class TagLibMetadataWriterBase
         Stopwatch stopwatch,
         IReadOnlyList<MetadataFieldWriteResult>
             fieldResults,
-        IReadOnlyList<string> messages)
+        IReadOnlyList<string> messages,
+        int pictureCountBefore = 0)
     {
         stopwatch.Stop();
 
@@ -765,6 +682,11 @@ public abstract class TagLibMetadataWriterBase
             WriterName =
                 Name,
 
+            PictureCountBefore =
+                Math.Max(
+                    0,
+                    pictureCountBefore),
+
             StartedAtUtc =
                 startedAtUtc,
 
@@ -780,46 +702,6 @@ public abstract class TagLibMetadataWriterBase
             Messages =
                 messages.ToArray()
         };
-    }
-
-    private static void AddVerificationMessages(
-        ICollection<string> messages,
-        MetadataVerificationResult verificationResult)
-    {
-        messages.Add(
-            verificationResult.FileOpened
-                ? "El motor común reabrió correctamente el " +
-                  "archivo para verificarlo."
-                : "El motor común no pudo reabrir el archivo " +
-                  "para verificarlo.");
-
-        messages.Add(
-            $"Verificación posterior: " +
-            $"{verificationResult.SuccessfulFieldCount} campo(s) " +
-            $"correcto(s), " +
-            $"{verificationResult.FailedFieldCount} fallido(s).");
-
-        messages.Add(
-            verificationResult.PicturesPreserved
-                ? "Las imágenes incrustadas fueron preservadas: " +
-                  $"{verificationResult.PictureCountAfter}."
-                : "La cantidad de imágenes incrustadas cambió. " +
-                  $"Antes: {verificationResult.PictureCountBefore}. " +
-                  $"Después: {verificationResult.PictureCountAfter}.");
-
-        foreach (string verificationMessage
-            in verificationResult.Messages)
-        {
-            if (string.IsNullOrWhiteSpace(
-                    verificationMessage))
-            {
-                continue;
-            }
-
-            messages.Add(
-                "Verificación: " +
-                verificationMessage.Trim());
-        }
     }
 
     private static string NormalizeExtension(

@@ -12,7 +12,8 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// Reabre un archivo mediante TagLibSharp y verifica los valores
 /// que debían quedar persistidos después de una escritura.
 /// </summary>
-public sealed class MetadataWriterVerificationEngine
+public sealed class MetadataWriterVerificationEngine :
+    IMetadataWriterVerificationEngine
 {
     public MetadataVerificationResult Verify(
         string? filePath,

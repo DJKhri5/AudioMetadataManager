@@ -8,6 +8,8 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Validation;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.Verification.Models;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Context;
@@ -97,6 +99,13 @@ public sealed class MetadataApplicationContext
     /// </summary>
     public MetadataWriteResult?
         WriteResult
+    { get; private set; }
+
+    /// <summary>
+    /// Resultado de la verificación posterior a la escritura.
+    /// </summary>
+    public MetadataVerificationResult?
+        VerificationResult
     { get; private set; }
 
     /// <summary>
@@ -228,6 +237,20 @@ public sealed class MetadataApplicationContext
         EnsureActive();
 
         WriteResult =
+            result ??
+            throw new ArgumentNullException(
+                nameof(result));
+    }
+
+    /// <summary>
+    /// Registra el resultado de la verificación posterior.
+    /// </summary>
+    public void SetVerificationResult(
+        MetadataVerificationResult result)
+    {
+        EnsureActive();
+
+        VerificationResult =
             result ??
             throw new ArgumentNullException(
                 nameof(result));
@@ -377,6 +400,9 @@ public sealed class MetadataApplicationContext
 
             WriteResult =
                 WriteResult,
+
+            VerificationResult =
+                VerificationResult,
 
             ApplyResult =
                 ApplyResult,

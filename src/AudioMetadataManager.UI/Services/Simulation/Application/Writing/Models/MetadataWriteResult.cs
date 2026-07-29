@@ -43,6 +43,15 @@ public sealed class MetadataWriteResult
         string.Empty;
 
     /// <summary>
+    /// Cantidad de imágenes incrustadas observada durante la
+    /// apertura utilizada para escribir.
+    ///
+    /// Este valor será utilizado por la etapa posterior de
+    /// verificación sin realizar una lectura previa adicional.
+    /// </summary>
+    public int PictureCountBefore { get; init; }
+
+    /// <summary>
     /// Momento UTC de inicio.
     /// </summary>
     public DateTimeOffset StartedAtUtc { get; init; }
