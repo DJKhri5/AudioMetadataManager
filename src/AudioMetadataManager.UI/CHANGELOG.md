@@ -46,6 +46,13 @@ Semantic Versioning where applicable.
   modular metadata application pipeline.
 - Added structural coverage for successful verification, mismatches, and
   missing, skipped, cancelled, and failed write outcomes.
+- Added `MetadataApplicationPipelineFactory` as the centralized default
+  composition point for the metadata application pipeline.
+- Added the default validation, backup, writing, and post-write verification
+  stage composition.
+- Added structural coverage for stage count, concrete types, identities,
+  execution orders, safe default options, independent creation, and null
+  option rejection.
 
 ### Changed
 
@@ -87,6 +94,11 @@ Semantic Versioning where applicable.
   `MetadataApplicationPipelineResult`.
 - Updated the verification stage to interpret the previous write result
   before invoking the verification engine.
+- Centralized construction of the default metadata application pipeline
+  outside `MainWindow` and individual consumers.
+- Configured the default composition to reject duplicate execution orders.
+- Preserved explicit context completion until a final result-building stage
+  is incorporated.
 
 ### Fixed
 
@@ -154,3 +166,17 @@ Semantic Versioning where applicable.
 - Passed thirteen structural checks for the metadata verification stage.
 - Revalidated isolated MP3 writing, including preservation of the original
   file, backup, and embedded artwork.
+- Added `MetadataApplicationPipelineFactoryTestRunner`.
+- Added `MetadataApplicationPipelineFactoryTestResult`.
+- Verified the default registration of validation, backup, writing, and
+  post-write verification stages.
+- Verified stage identities and execution orders `100`, `200`, `300`, and
+  `400`.
+- Verified safe default pipeline options and independent instances across
+  successive factory calls.
+- Verified rejection of null pipeline options.
+- Temporarily integrated the pipeline composition runner into the
+  `MainWindow` diagnostic workflow.
+- Passed eight structural checks for the default pipeline composition.
+- Revalidated the structural verification-stage checks and isolated MP3
+  diagnostic after integrating the composition test.

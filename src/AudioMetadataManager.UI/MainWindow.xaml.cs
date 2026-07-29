@@ -45,6 +45,8 @@ using AudioMetadataManager.UI.Services.Simulation
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Models;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Testing.PipelineComposition;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.PipelineStages.Verification;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Adapters;
@@ -76,6 +78,10 @@ public partial class MainWindow : Window
 
     private readonly MetadataVerificationStageTestRunner
         _metadataVerificationStageTestRunner;
+
+    private readonly
+        MetadataApplicationPipelineFactoryTestRunner
+            _metadataApplicationPipelineFactoryTestRunner;
 
     private SimulationPlanViewModel?
         _currentSimulationPlan;
@@ -284,6 +290,9 @@ public partial class MainWindow : Window
 
         _metadataVerificationStageTestRunner =
             new MetadataVerificationStageTestRunner();
+
+        _metadataApplicationPipelineFactoryTestRunner =
+            new MetadataApplicationPipelineFactoryTestRunner();
     }
 
     /// <summary>
@@ -731,6 +740,38 @@ public partial class MainWindow : Window
             AppendLog(
                 "=== Fin de las pruebas estructurales de " +
                 "verificación ===");
+
+            AppendLog(
+                "Iniciando pruebas estructurales de la " +
+                "composición del pipeline.");
+
+            MetadataApplicationPipelineFactoryTestResult
+                pipelineFactoryTestResult =
+                    await _metadataApplicationPipelineFactoryTestRunner
+                        .RunAsync();
+
+            AppendLog(
+                "=== Composición predeterminada del pipeline ===");
+
+            foreach (string message
+                in pipelineFactoryTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Resultado general: " +
+                $"{ToSpanish(
+                    pipelineFactoryTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                pipelineFactoryTestResult.Summary);
+
+            AppendLog(
+                "=== Fin de las pruebas estructurales de " +
+                "composición ===");
 
             string extension =
                 Path.GetExtension(filePath)
