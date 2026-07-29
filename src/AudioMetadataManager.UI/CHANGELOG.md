@@ -40,6 +40,12 @@ Semantic Versioning where applicable.
   metadata application pipeline.
 - Added structural coverage for successful, no-writable-change, cancelled,
   failed, and missing-backup writing scenarios.
+- Added `IMetadataWriterVerificationEngine` as the reusable contract for
+  post-write metadata verification.
+- Added `MetadataVerificationStage` as the fourth concrete stage of the
+  modular metadata application pipeline.
+- Added structural coverage for successful verification, mismatches, and
+  missing, skipped, cancelled, and failed write outcomes.
 
 ### Changed
 
@@ -73,6 +79,14 @@ Semantic Versioning where applicable.
   `MetadataApplicationContext`.
 - Required a verified backup before the metadata writing stage can invoke its
   writer engine.
+- Updated `MetadataWriterVerificationEngine` to implement the reusable
+  verification contract.
+- Preserved the pre-write embedded artwork count to verify artwork
+  preservation after writing.
+- Integrated verification results with `MetadataApplicationContext` and
+  `MetadataApplicationPipelineResult`.
+- Updated the verification stage to interpret the previous write result
+  before invoking the verification engine.
 
 ### Fixed
 
@@ -91,6 +105,11 @@ Semantic Versioning where applicable.
   available.
 - Prevented duplicate execution of the concrete metadata writing stage
   through the common stage infrastructure.
+- Prevented post-write verification from running when no previous write
+  result is available.
+- Prevented skipped, cancelled, or failed writes from being verified as
+  successfully completed writes.
+- Prevented duplicate execution of the concrete metadata verification stage.
 
 ### Internal
 
@@ -126,3 +145,12 @@ Semantic Versioning where applicable.
   warnings.
 - Verified cleanup of the isolated temporary backup used by the writing-stage
   test.
+- Added controlled verification engine injection for structural stage
+  testing.
+- Verified input mapping, cancellation-token forwarding, auditable
+  information, and verification-result storage in the shared context.
+- Temporarily integrated `MetadataVerificationStageTestRunner` into the
+  `MainWindow` diagnostic workflow.
+- Passed thirteen structural checks for the metadata verification stage.
+- Revalidated isolated MP3 writing, including preservation of the original
+  file, backup, and embedded artwork.
