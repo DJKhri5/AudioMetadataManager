@@ -75,6 +75,12 @@ Semantic Versioning where applicable.
   into a single fingerprint-to-MusicBrainz-recording flow, with
   `AudioIdentificationResult`, `AudioIdentificationStatus`, and
   `AudioIdentificationDiagnostics`.
+- Added `Services/Artwork`: `ArtworkDownloader` (bounded-size HTTP
+  image download, capped even without a `Content-Length` header),
+  `TagLibArtworkEmbedder` (embeds a picture via TagLibSharp, refusing
+  to write without a verified backup path, mirroring
+  `TagLibMetadataWriterBase`'s safety checks), `TrackArtworkService`
+  orchestrating both, and `TrackArtworkDiagnostics`.
 
 ### Changed
 
@@ -219,3 +225,9 @@ Semantic Versioning where applicable.
   orchestrator correctly reported `LookupFailed` when no AcoustID
   client key is configured. A live AcoustID lookup with a real client
   key is still pending. See milestone 13.23.
+- Verified `TrackArtworkService` end to end against an isolated copy
+  of a real file from the user's music library: downloaded a real
+  JPEG over HTTP, embedded it via TagLibSharp, reopened the file with
+  a fresh `TagLib.File` instance to confirm the write was persisted
+  to disk, and confirmed by SHA-256 hash that the original library
+  file was never touched. See milestone 13.24.
