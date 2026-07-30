@@ -53,6 +53,23 @@ Semantic Versioning where applicable.
 - Added structural coverage for stage count, concrete types, identities,
   execution orders, safe default options, independent creation, and null
   option rejection.
+- Added `ChromaprintOptions`, `ChromaprintFingerprintRequest`, and
+  `ChromaprintFingerprintResult` for local acoustic fingerprint
+  generation.
+- Added `ChromaprintFingerprintExecutor`, invoking the external `fpcalc`
+  tool through `ArgumentList` to avoid argument injection, with explicit
+  handling of timeout versus user cancellation.
+- Added `ChromaprintFingerprintDiagnostics` for manual verification
+  against real audio files.
+- Added the AcoustID lookup provider (`Providers/AcoustId`), mirroring
+  the existing Discogs provider layering: `AcoustIdOptions`,
+  `AcoustIdApiKeyStore`, `AcoustIdOptionsFactory`,
+  `AcoustIdApiRequestBuilder`, `AcoustIdApiClient`,
+  `AcoustIdApiResponse`, response DTOs, `AcoustIdLookupResponseParser`,
+  `AcoustIdRecordingCandidateMapper`, `AcoustIdLookupExecutor`, and
+  `AcoustIdLookupProvider`.
+- Added `AcoustIdLookupDiagnostics` for manual verification of
+  fingerprint-to-recording lookups.
 
 ### Changed
 
@@ -180,3 +197,14 @@ Semantic Versioning where applicable.
 - Passed eight structural checks for the default pipeline composition.
 - Revalidated the structural verification-stage checks and isolated MP3
   diagnostic after integrating the composition test.
+- Neither Chromaprint nor AcoustID were registered with
+  `MetadataSourceFactory`: both are identification-flow building blocks,
+  not metadata search sources.
+- Installed the .NET 8 SDK (8.0.423) on the development machine and
+  built `AudioMetadataManager.UI.csproj` for the first time with the
+  Chromaprint and AcoustID providers included: 0 warnings, 0 errors.
+- Fixed a missing `using System.IO;` in `ChromaprintFingerprintExecutor`
+  (the `UseWPF` project does not implicitly include that namespace),
+  the only build error found. AcoustID required no fixes.
+- Manual runs against a real audio file (`fpcalc`) and the live AcoustID
+  API (client key) are still pending. See milestones 13.21 and 13.22.
