@@ -70,6 +70,11 @@ Semantic Versioning where applicable.
   `AcoustIdLookupProvider`.
 - Added `AcoustIdLookupDiagnostics` for manual verification of
   fingerprint-to-recording lookups.
+- Added `AudioIdentificationOrchestrator` (`Services/MetadataSources/Identification`),
+  chaining `ChromaprintFingerprintExecutor` and `AcoustIdLookupProvider`
+  into a single fingerprint-to-MusicBrainz-recording flow, with
+  `AudioIdentificationResult`, `AudioIdentificationStatus`, and
+  `AudioIdentificationDiagnostics`.
 
 ### Changed
 
@@ -206,5 +211,11 @@ Semantic Versioning where applicable.
 - Fixed a missing `using System.IO;` in `ChromaprintFingerprintExecutor`
   (the `UseWPF` project does not implicitly include that namespace),
   the only build error found. AcoustID required no fixes.
-- Manual runs against a real audio file (`fpcalc`) and the live AcoustID
-  API (client key) are still pending. See milestones 13.21 and 13.22.
+- Installed Chromaprint (`fpcalc` 1.6.1) via `winget install AcoustID.Chromaprint`
+  and ran the real `ChromaprintFingerprintExecutor` and
+  `AudioIdentificationOrchestrator` against real files from the user's
+  music library through a scratchpad smoke-test project, read-only.
+  Fingerprints matched raw `fpcalc` output exactly; the end-to-end
+  orchestrator correctly reported `LookupFailed` when no AcoustID
+  client key is configured. A live AcoustID lookup with a real client
+  key is still pending. See milestone 13.23.
