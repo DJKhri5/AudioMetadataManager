@@ -53,6 +53,13 @@ Semantic Versioning where applicable.
 - Added structural coverage for stage count, concrete types, identities,
   execution orders, safe default options, independent creation, and null
   option rejection.
+- Added `MetadataApplicationPipelineIsolatedTestRunner` for isolated
+  end-to-end execution of the default metadata application pipeline.
+- Added `MetadataApplicationPipelineIsolatedTestResult` to consolidate
+  pipeline execution, file isolation, artwork preservation, cleanup,
+  timing, and error evidence.
+- Added temporary diagnostic integration for executing the complete
+  pipeline over selected audio files.
 
 ### Changed
 
@@ -99,6 +106,11 @@ Semantic Versioning where applicable.
 - Configured the default composition to reject duplicate execution orders.
 - Preserved explicit context completion until a final result-building stage
   is incorporated.
+- Reused `MetadataApplicationPipelineFactory.CreateDefault()` to execute
+  validation, backup, writing, and post-write verification as one
+  integrated workflow.
+- Captured pipeline backup, write, verification, persisted genre, and
+  artwork results before removing the isolated test environment.
 
 ### Fixed
 
@@ -122,6 +134,9 @@ Semantic Versioning where applicable.
 - Prevented skipped, cancelled, or failed writes from being verified as
   successfully completed writes.
 - Prevented duplicate execution of the concrete metadata verification stage.
+- Propagated `PictureCountBefore` through
+  `MetadataWriterEngine.MergeWriterResult(...)` so post-write verification
+  receives the actual pre-write embedded artwork count.
 
 ### Internal
 
@@ -180,3 +195,14 @@ Semantic Versioning where applicable.
 - Passed eight structural checks for the default pipeline composition.
 - Revalidated the structural verification-stage checks and isolated MP3
   diagnostic after integrating the composition test.
+- Executed the complete four-stage metadata application pipeline over
+  isolated MP3 and FLAC working copies.
+- Verified successful backup creation, genre writing, post-write
+  verification, and temporary directory cleanup.
+- Verified that the original MP3 and FLAC files remained unchanged.
+- Verified embedded artwork preservation with one picture in MP3 and two
+  pictures in FLAC.
+- Verified that the isolated working copies changed while the initial and
+  pipeline backups preserved their pre-write state.
+- Recorded test start, completion, elapsed time, exceptions, and auditable
+  stage messages.

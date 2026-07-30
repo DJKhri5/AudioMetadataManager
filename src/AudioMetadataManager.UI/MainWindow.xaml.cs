@@ -21,6 +21,31 @@ using AudioMetadataManager.UI.Services.MetadataSources.Pipeline;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Pipeline.Diagnostics;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Mapping;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation.Application.Pipeline.Integration.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Testing.PipelineComposition;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Testing.PipelineExecution;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Testing.PipelineStages.Verification;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Adapters;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Preparation;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.Testing;
+using AudioMetadataManager.UI.Services.Simulation
     .Planning.Decision;
 using AudioMetadataManager.UI.Services.Simulation
     .Planning.Diagnostics;
@@ -36,28 +61,6 @@ using System.Windows.Controls;
 using ConsensusResult =
     AudioMetadataManager.UI.Services.MetadataSources
         .Consensus.Models.MetadataConsensusResult;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Mapping;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Pipeline;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Pipeline.Diagnostics;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Pipeline.Models;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Testing.PipelineComposition;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Testing.PipelineStages.Verification;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Writing.TagLibIntegration.Adapters;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Writing.TagLibIntegration.Diagnostics;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Writing.TagLibIntegration.Models;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Writing.TagLibIntegration.Preparation;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Writing.TagLibIntegration.Testing;
 
 namespace AudioMetadataManager.UI;
 
@@ -773,6 +776,9 @@ public partial class MainWindow : Window
                 "=== Fin de las pruebas estructurales de " +
                 "composición ===");
 
+            await RunMetadataApplicationPipelineDiagnosticAsync(
+                filePath);
+
             string extension =
                 Path.GetExtension(filePath)
                     .ToLowerInvariant();
@@ -814,6 +820,119 @@ public partial class MainWindow : Window
             SetAudioAnalysisControlsEnabled(
                 true);
         }
+    }
+
+    /// <summary>
+    /// Ejecuta las cuatro etapas reales del pipeline sobre una copia
+    /// temporal aislada del archivo seleccionado.
+    /// 
+    /// El archivo original nunca se entrega a las etapas de
+    /// escritura.
+    /// </summary>
+    private async Task
+        RunMetadataApplicationPipelineDiagnosticAsync(
+            string filePath)
+    {
+        AppendLog(
+            "Iniciando prueba integral aislada del pipeline.");
+
+        MetadataApplicationPipelineIsolatedTestRunner testRunner =
+            new();
+
+        MetadataApplicationPipelineIsolatedTestResult testResult =
+            await testRunner.RunAsync(
+                filePath,
+                requestedGenre:
+                    "Electronic");
+
+        AppendLog(
+            "=== Pipeline integral aislado ===");
+
+        AppendLog(
+            $"Entorno preparado: " +
+            $"{ToSpanish(testResult.EnvironmentWasPrepared)}");
+
+        AppendLog(
+            $"Etapas registradas: " +
+            $"{testResult.RegisteredStageCount}");
+
+        AppendLog(
+            $"Etapas ejecutadas: " +
+            $"{testResult.ExecutedStageCount}");
+
+        AppendLog(
+            $"Ejecución del pipeline correcta: " +
+            $"{ToSpanish(
+                testResult.PipelineExecutionWasSuccessful)}");
+
+        AppendLog(
+            $"Respaldo del pipeline correcto: " +
+            $"{ToSpanish(
+                testResult
+                    .PipelineBackupWasSuccessfulBeforeCleanup)}");
+
+        AppendLog(
+            $"Escritura correcta: " +
+            $"{ToSpanish(testResult.WriteWasSuccessful)}");
+
+        AppendLog(
+            $"Verificación posterior correcta: " +
+            $"{ToSpanish(
+                testResult.VerificationWasSuccessful)}");
+
+        AppendLog(
+            $"Género verificado: " +
+            $"{ToSpanish(
+                testResult.GenreVerificationWasSuccessful)}");
+
+        AppendLog(
+            $"Género solicitado: " +
+            $"{DisplayDiagnosticValue(
+                testResult.RequestedGenre)}");
+
+        AppendLog(
+            $"Género persistido: " +
+            $"{DisplayDiagnosticValue(
+                testResult.PersistedGenre)}");
+
+        AppendLog(
+            $"Imágenes antes: " +
+            $"{testResult.PictureCountBefore}");
+
+        AppendLog(
+            $"Imágenes después: " +
+            $"{testResult.PictureCountAfter}");
+
+        AppendLog(
+            $"Limpieza ejecutada: " +
+            $"{ToSpanish(testResult.CleanupWasAttempted)}");
+
+        AppendLog(
+            $"Carpeta temporal eliminada: " +
+            $"{ToSpanish(testResult.TestDirectoryWasRemoved)}");
+
+        foreach (string message in testResult.Messages)
+        {
+            AppendLog(
+                $"- {message}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                testResult.ErrorMessage))
+        {
+            AppendLog(
+                $"Error: {testResult.ErrorMessage}");
+        }
+
+        AppendLog(
+            $"Prueba integral correcta: " +
+            $"{ToSpanish(testResult.WasSuccessful)}");
+
+        AppendLog(
+            $"Resumen: {testResult.Summary}");
+
+        AppendLog(
+            "=== Fin del pipeline integral aislado ===");
     }
 
     /// <summary>

@@ -456,6 +456,9 @@ public sealed class MetadataWriterEngine :
                         ? writerName
                         : writerResult.WriterName,
 
+            PictureCountBefore =
+                writerResult.PictureCountBefore,
+
             StartedAtUtc =
                 startedAtUtc,
 
