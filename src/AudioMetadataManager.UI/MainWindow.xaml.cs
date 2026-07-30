@@ -39,15 +39,17 @@ using ConsensusResult =
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Mapping;
 using AudioMetadataManager.UI.Services.Simulation
-    .Application.Pipeline;
-using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Execution;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.PipelineComposition;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.PipelineStages.Verification;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Adapters;
 using AudioMetadataManager.UI.Services.Simulation
@@ -190,9 +192,11 @@ public partial class MainWindow : Window
 
             /*
              * Después de superar la preparación en memoria,
-             * ejecutamos el pipeline seguro existente.
+             * ejecutamos el pipeline modular real (Validation,
+             * Backup, Writing, Verification, Finalization y
+             * Artwork).
              */
-            MetadataApplicationPipeline pipeline =
+            MetadataApplicationPipelineRunner runner =
                 new();
 
             Progress<MetadataApplicationProgress> progress =
@@ -205,7 +209,7 @@ public partial class MainWindow : Window
                     });
 
             MetadataApplicationPipelineResult result =
-                await pipeline.ExecuteAsync(
+                await runner.RunAsync(
                     request,
                     progress);
 
@@ -230,23 +234,63 @@ public partial class MainWindow : Window
                 return;
             }
 
-            if (result.BackupResult?.WasSuccessful == true)
+            if (result.BackupResult?.WasSuccessful != true)
             {
                 AppendLog(
-                    "La solicitud fue validada y el respaldo se " +
-                    "creó correctamente. Ningún metadato fue " +
+                    "La solicitud fue validada, pero el respaldo " +
+                    "no pudo completarse. Ningún metadato fue " +
                     "modificado.");
-
-                AppendLog(
-                    $"Ruta del respaldo: " +
-                    $"{result.BackupResult.BackupFilePath}");
 
                 return;
             }
 
             AppendLog(
-                "La solicitud fue validada, pero el respaldo no " +
-                "pudo completarse. Ningún metadato fue modificado.");
+                $"Respaldo creado y verificado: " +
+                $"{result.BackupResult.BackupFilePath}");
+
+            if (result.WriteResult is null)
+            {
+                AppendLog(
+                    "El respaldo se completó, pero no se produjo " +
+                    "un resultado de escritura.");
+
+                return;
+            }
+
+            if (result.WriteResult.Status ==
+                MetadataWriteStatus.NoWritableChanges)
+            {
+                AppendLog(
+                    "No había cambios de campo para escribir en " +
+                    "esta solicitud.");
+            }
+            else if (!result.WriteResult.WasSuccessful)
+            {
+                AppendLog(
+                    "La escritura de metadatos no terminó " +
+                    $"correctamente: {result.WriteResult.Summary}");
+
+                return;
+            }
+            else
+            {
+                AppendLog(
+                    $"Escritura completada: " +
+                    $"{result.WriteResult.Summary}");
+
+                AppendLog(
+                    result.VerificationResult?.WasSuccessful == true
+                        ? "La verificación posterior confirmó los " +
+                          "valores escritos."
+                        : "La verificación posterior detectó " +
+                          "diferencias o no pudo completarse.");
+            }
+
+            if (result.ArtworkResult is not null)
+            {
+                AppendLog(
+                    $"Carátula: {result.ArtworkResult.Message}");
+            }
         }
         catch (Exception exception)
         {

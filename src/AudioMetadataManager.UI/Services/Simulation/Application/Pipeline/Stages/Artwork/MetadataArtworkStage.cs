@@ -18,9 +18,14 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// Descarga e incrusta la carátula de la pista, cuando la
 /// solicitud la pidió.
 ///
-/// Es la única etapa opcional del pipeline: cuando la solicitud
-/// no incluye una dirección de carátula, la etapa se omite sin
-/// afectar el resto de la ejecución.
+/// Es la última etapa del pipeline, después de Finalization, y
+/// la única cuyo fallo no es bloqueante: un problema al descargar
+/// o incrustar la carátula (por ejemplo, un error de red) termina
+/// como CompletedWithWarnings, no como Failed. La carátula es una
+/// mejora opcional; no debe impedir que el resultado de la
+/// aplicación de metadatos ya finalizada se reporte como exitoso.
+/// Cuando la solicitud no incluye una dirección de carátula, la
+/// etapa se omite sin afectar el resto de la ejecución.
 /// </summary>
 public sealed class MetadataArtworkStage :
     MetadataApplicationStageBase
@@ -59,7 +64,7 @@ public sealed class MetadataArtworkStage :
 
     /// <inheritdoc />
     public override int ExecutionOrder =>
-        500;
+        600;
 
     /// <inheritdoc />
     protected override async
@@ -127,7 +132,7 @@ public sealed class MetadataArtworkStage :
                 artworkResult.Message);
         }
 
-        return Failed(
+        return CompletedWithWarnings(
             artworkResult.Message);
     }
 }

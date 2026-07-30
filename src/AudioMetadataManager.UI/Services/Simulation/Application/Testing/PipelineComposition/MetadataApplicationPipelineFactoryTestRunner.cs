@@ -9,6 +9,8 @@ using AudioMetadataManager.UI.Services.Simulation
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Stages.Backup;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Stages.Finalization;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Stages.Validation;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Stages.Verification;
@@ -40,13 +42,13 @@ public sealed class MetadataApplicationPipelineFactoryTestRunner
         MetadataApplicationPipelineExecutor secondExecutor =
             MetadataApplicationPipelineFactory.CreateDefault();
 
-        bool exactlyFiveStagesWereRegistered =
-            firstExecutor.Stages.Count == 5;
+        bool exactlySixStagesWereRegistered =
+            firstExecutor.Stages.Count == 6;
 
-        if (!exactlyFiveStagesWereRegistered)
+        if (!exactlySixStagesWereRegistered)
         {
             messages.Add(
-                "La fábrica no registró exactamente cinco etapas.");
+                "La fábrica no registró exactamente seis etapas.");
         }
 
         Type[] expectedStageTypes =
@@ -55,6 +57,7 @@ public sealed class MetadataApplicationPipelineFactoryTestRunner
             typeof(MetadataBackupStage),
             typeof(MetadataWritingStage),
             typeof(MetadataVerificationStage),
+            typeof(MetadataFinalizationStage),
             typeof(MetadataArtworkStage)
         };
 
@@ -79,6 +82,7 @@ public sealed class MetadataApplicationPipelineFactoryTestRunner
             MetadataApplicationStage.Backup,
             MetadataApplicationStage.MetadataWrite,
             MetadataApplicationStage.PostWriteVerification,
+            MetadataApplicationStage.Finalization,
             MetadataApplicationStage.Artwork
         };
 
@@ -113,7 +117,8 @@ public sealed class MetadataApplicationPipelineFactoryTestRunner
             200,
             300,
             400,
-            500
+            500,
+            600
         };
 
         bool executionOrdersWereCorrect =
@@ -131,7 +136,7 @@ public sealed class MetadataApplicationPipelineFactoryTestRunner
         {
             messages.Add(
                 "Los órdenes de ejecución no corresponden a 100, " +
-                "200, 300, 400 y 500.");
+                "200, 300, 400, 500 y 600.");
         }
 
         bool finalStageOrderWasCorrect =
@@ -142,8 +147,8 @@ public sealed class MetadataApplicationPipelineFactoryTestRunner
         {
             messages.Add(
                 "El orden final del pipeline no corresponde a " +
-                "validación, respaldo, escritura, verificación y " +
-                "carátula.");
+                "validación, respaldo, escritura, verificación, " +
+                "finalización y carátula.");
         }
 
         MetadataApplicationPipelineOptions options =
@@ -154,7 +159,7 @@ public sealed class MetadataApplicationPipelineFactoryTestRunner
             options.StopOnCancellation &&
             !options.StopOnSkippedStage &&
             options.RejectDuplicateExecutionOrder &&
-            !options.CompleteContextAutomatically;
+            options.CompleteContextAutomatically;
 
         if (!defaultOptionsWereSafe)
         {
@@ -214,8 +219,8 @@ public sealed class MetadataApplicationPipelineFactoryTestRunner
         MetadataApplicationPipelineFactoryTestResult result =
             new()
             {
-                ExactlyFiveStagesWereRegistered =
-                    exactlyFiveStagesWereRegistered,
+                ExactlySixStagesWereRegistered =
+                    exactlySixStagesWereRegistered,
 
                 ConcreteStageTypesWereCorrect =
                     concreteStageTypesWereCorrect,

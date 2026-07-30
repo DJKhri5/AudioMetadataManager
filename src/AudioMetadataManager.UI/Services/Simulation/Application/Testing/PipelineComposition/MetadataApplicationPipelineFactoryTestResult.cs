@@ -7,7 +7,7 @@
 /// </summary>
 public sealed class MetadataApplicationPipelineFactoryTestResult
 {
-    public bool ExactlyFiveStagesWereRegistered
+    public bool ExactlySixStagesWereRegistered
     { get; init; }
 
     public bool ConcreteStageTypesWereCorrect
@@ -35,7 +35,7 @@ public sealed class MetadataApplicationPipelineFactoryTestResult
         Array.Empty<string>();
 
     public bool WasSuccessful =>
-        ExactlyFiveStagesWereRegistered &&
+        ExactlySixStagesWereRegistered &&
         ConcreteStageTypesWereCorrect &&
         StageIdentitiesWereCorrect &&
         ExecutionOrdersWereCorrect &&

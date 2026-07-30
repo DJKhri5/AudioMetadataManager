@@ -43,8 +43,11 @@ public sealed class MetadataApplicationPipelineOptions
     /// Indica si el contexto debe finalizarse automáticamente
     /// cuando todas las etapas terminan sin fallos bloqueantes.
     ///
-    /// Se mantendrá desactivado mientras no exista una etapa
-    /// final real que construya MetadataApplyResult.
+    /// El valor predeterminado de esta clase es falso. La
+    /// composición predeterminada del pipeline
+    /// (MetadataApplicationPipelineFactory.CreateDefault) lo
+    /// activa explícitamente, ya que incluye MetadataFinalizationStage,
+    /// la etapa real que construye MetadataApplyResult.
     /// </summary>
     public bool CompleteContextAutomatically { get; init; }
 

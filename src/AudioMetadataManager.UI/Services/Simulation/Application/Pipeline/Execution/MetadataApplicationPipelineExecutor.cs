@@ -85,9 +85,17 @@ public sealed class MetadataApplicationPipelineExecutor
     /// <summary>
     /// Ejecuta secuencialmente las etapas registradas.
     /// </summary>
+    /// <param name="context">
+    /// Contexto compartido de la ejecución.
+    /// </param>
+    /// <param name="progress">
+    /// Receptor opcional de actualizaciones de progreso, reportadas
+    /// después de que cada etapa registra su resultado.
+    /// </param>
     public async Task<MetadataApplicationPipelineExecutionResult>
         ExecuteAsync(
-            MetadataApplicationContext context)
+            MetadataApplicationContext context,
+            IProgress<MetadataApplicationProgress>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(
             context);
@@ -136,6 +144,24 @@ public sealed class MetadataApplicationPipelineExecutor
 
                 break;
             }
+
+            progress?.Report(
+                new MetadataApplicationProgress
+                {
+                    Stage =
+                        stage.Stage,
+
+                    Percentage =
+                        executedStageCount *
+                        100.0 /
+                        _stages.Count,
+
+                    Message =
+                        stageResult.Message,
+
+                    FileName =
+                        context.Request.FileName
+                });
 
             if (_options.StopOnCancellation &&
                 stageResult.Status ==
