@@ -81,8 +81,23 @@ Semantic Versioning where applicable.
   to write without a verified backup path, mirroring
   `TagLibMetadataWriterBase`'s safety checks), `TrackArtworkService`
   orchestrating both, and `TrackArtworkDiagnostics`.
+- Added `MetadataArtworkStage` (execution order 500) as a fifth stage
+  in `MetadataApplicationPipelineFactory.CreateDefault()`, alongside
+  Validation/Backup/Writing/Verification. Added
+  `MetadataApplicationStage.Artwork`, `MetadataApplyRequest.ArtworkUrl`,
+  and `ArtworkResult` on both `MetadataApplicationContext` and
+  `MetadataApplicationPipelineResult`.
 
 ### Changed
+
+- Relaxed `MetadataApplyRequest.IsStructurallyValid` and
+  `MetadataApplyRequestValidator`'s `NO_VALID_CHANGES` check to allow
+  artwork-only requests (no field changes).
+- `MetadataWritingStage` now short-circuits to a synthetic
+  `NoWritableChanges` result when a request has no valid field
+  changes, instead of invoking the real writer with an empty change
+  set (which `MetadataWriteRequest.IsStructurallyValid` would have
+  rejected as `ValidationFailed`).
 
 - Prepared the testing architecture to share file isolation logic
   between writer tests and application pipeline tests.
@@ -231,3 +246,19 @@ Semantic Versioning where applicable.
   a fresh `TagLib.File` instance to confirm the write was persisted
   to disk, and confirmed by SHA-256 hash that the original library
   file was never touched. See milestone 13.24.
+- Re-ran the existing `Simulation.Application` structural test suite
+  (Context, Validation, Backup, Writing, Verification, Executor,
+  Factory) after wiring `MetadataArtworkStage` into
+  `MetadataApplicationPipelineFactory.CreateDefault()`: no regressions
+  attributable to this change. Verified end to end against isolated
+  copies of a real file: field change + artwork together, artwork-only
+  requests, and a genuine network failure path (HTTP 429), all with
+  the original library file's hash confirmed unchanged.
+- Found and investigated a pre-existing cancellation-handling
+  discrepancy in `MetadataApplicationStageBase`: two existing
+  structural tests (`MetadataApplicationStageBaseTestRunner` and
+  `MetadataVerificationStageTestRunner`) assert opposite expected
+  behaviors for a token that is already cancelled before a stage
+  starts. Attempted a fix, confirmed it satisfies one test while
+  breaking the other, and reverted it rather than unilaterally pick a
+  contract. Left unresolved and documented in milestone 13.25.
