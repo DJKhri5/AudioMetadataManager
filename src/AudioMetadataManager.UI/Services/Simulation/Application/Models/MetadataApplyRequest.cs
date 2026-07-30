@@ -61,6 +61,16 @@ public sealed class MetadataApplyRequest
         true;
 
     /// <summary>
+    /// Dirección de una imagen de carátula propuesta por una
+    /// fuente externa de metadatos.
+    ///
+    /// Es independiente de los cambios de campo: una solicitud
+    /// puede pedir únicamente una carátula, sin modificar ningún
+    /// otro metadato.
+    /// </summary>
+    public string? ArtworkUrl { get; init; }
+
+    /// <summary>
     /// Cambios válidos y diferentes del valor original.
     /// </summary>
     public IReadOnlyList<MetadataFieldChange>
@@ -70,13 +80,19 @@ public sealed class MetadataApplyRequest
                 .ToArray();
 
     /// <summary>
+    /// Indica si la solicitud pide una carátula.
+    /// </summary>
+    public bool HasArtworkRequest =>
+        !string.IsNullOrWhiteSpace(ArtworkUrl);
+
+    /// <summary>
     /// Indica si la solicitud contiene información suficiente
     /// para iniciar una validación previa.
     /// </summary>
     public bool IsStructurallyValid =>
         PlanId != Guid.Empty &&
         !string.IsNullOrWhiteSpace(FilePath) &&
-        ValidChanges.Count > 0;
+        (ValidChanges.Count > 0 || HasArtworkRequest);
 
     /// <summary>
     /// Cantidad de cambios aprobados utilizables.

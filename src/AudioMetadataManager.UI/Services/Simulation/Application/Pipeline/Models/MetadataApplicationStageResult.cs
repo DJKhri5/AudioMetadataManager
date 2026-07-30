@@ -84,6 +84,9 @@ public sealed class MetadataApplicationStageResult
             MetadataApplicationStage.Finalization =>
                 "Finalización",
 
+            MetadataApplicationStage.Artwork =>
+                "Adquisición de carátula",
+
             _ =>
                 "Sin etapa"
         };

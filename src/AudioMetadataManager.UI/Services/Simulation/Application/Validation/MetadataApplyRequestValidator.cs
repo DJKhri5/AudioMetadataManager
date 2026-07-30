@@ -94,13 +94,14 @@ public sealed class MetadataApplyRequestValidator :
                 "La solicitud no contiene una ruta de archivo.");
         }
 
-        if (request.ValidChanges.Count == 0)
+        if (request.ValidChanges.Count == 0 &&
+            !request.HasArtworkRequest)
         {
             AddError(
                 issues,
                 "NO_VALID_CHANGES",
                 "La solicitud no contiene cambios válidos " +
-                "aprobados.");
+                "aprobados ni una carátula solicitada.");
         }
     }
 

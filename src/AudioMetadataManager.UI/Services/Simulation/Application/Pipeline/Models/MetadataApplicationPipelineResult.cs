@@ -1,4 +1,5 @@
-﻿using AudioMetadataManager.UI.Services.Simulation
+﻿using AudioMetadataManager.UI.Services.Artwork.Models;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Validation;
@@ -89,6 +90,14 @@ public sealed class MetadataApplicationPipelineResult
     /// </summary>
     public MetadataVerificationResult?
         VerificationResult
+    { get; init; }
+
+    /// <summary>
+    /// Resultado de la adquisición de carátula, cuando la
+    /// solicitud la pidió.
+    /// </summary>
+    public TrackArtworkResult?
+        ArtworkResult
     { get; init; }
 
     /// <summary>

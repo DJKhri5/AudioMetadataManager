@@ -1,4 +1,5 @@
-﻿using AudioMetadataManager.UI.Services.Simulation
+﻿using AudioMetadataManager.UI.Services.Artwork.Models;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Backup.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
@@ -106,6 +107,14 @@ public sealed class MetadataApplicationContext
     /// </summary>
     public MetadataVerificationResult?
         VerificationResult
+    { get; private set; }
+
+    /// <summary>
+    /// Resultado de la adquisición de carátula, cuando la
+    /// solicitud la pidió.
+    /// </summary>
+    public TrackArtworkResult?
+        ArtworkResult
     { get; private set; }
 
     /// <summary>
@@ -251,6 +260,20 @@ public sealed class MetadataApplicationContext
         EnsureActive();
 
         VerificationResult =
+            result ??
+            throw new ArgumentNullException(
+                nameof(result));
+    }
+
+    /// <summary>
+    /// Registra el resultado de la adquisición de carátula.
+    /// </summary>
+    public void SetArtworkResult(
+        TrackArtworkResult result)
+    {
+        EnsureActive();
+
+        ArtworkResult =
             result ??
             throw new ArgumentNullException(
                 nameof(result));
@@ -403,6 +426,9 @@ public sealed class MetadataApplicationContext
 
             VerificationResult =
                 VerificationResult,
+
+            ArtworkResult =
+                ArtworkResult,
 
             ApplyResult =
                 ApplyResult,

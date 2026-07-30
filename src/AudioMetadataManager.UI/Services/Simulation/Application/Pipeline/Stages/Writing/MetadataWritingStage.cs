@@ -89,6 +89,49 @@ public sealed class MetadataWritingStage :
                     });
         }
 
+        if (applyRequest.ValidChanges.Count == 0)
+        {
+            MetadataWriteResult noFieldChangesResult =
+                new()
+                {
+                    WriteRequestId =
+                        Guid.NewGuid(),
+
+                    ApplyRequestId =
+                        applyRequest.RequestId,
+
+                    PlanId =
+                        applyRequest.PlanId,
+
+                    Status =
+                        MetadataWriteStatus.NoWritableChanges,
+
+                    FilePath =
+                        applyRequest.FilePath,
+
+                    StartedAtUtc =
+                        DateTimeOffset.UtcNow,
+
+                    CompletedAtUtc =
+                        DateTimeOffset.UtcNow,
+
+                    Messages =
+                        new[]
+                        {
+                            "La solicitud no contiene cambios de " +
+                            "campo; la escritura fue omitida."
+                        }
+                };
+
+            context.SetWriteResult(
+                noFieldChangesResult);
+
+            return CompletedWithWarnings(
+                "No hay cambios de campo para escribir en esta " +
+                "solicitud.",
+                noFieldChangesResult.Messages);
+        }
+
         MetadataWriteRequest writeRequest =
             new()
             {

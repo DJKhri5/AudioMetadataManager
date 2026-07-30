@@ -1,6 +1,8 @@
 ﻿using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Execution;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Stages.Artwork;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Stages.Backup;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Stages.Contracts;
@@ -22,7 +24,8 @@ public static class MetadataApplicationPipelineFactory
 {
     /// <summary>
     /// Crea el pipeline predeterminado con validación, respaldo,
-    /// escritura y verificación posterior a la escritura.
+    /// escritura, verificación posterior a la escritura y
+    /// adquisición opcional de carátula.
     /// </summary>
     public static MetadataApplicationPipelineExecutor
         CreateDefault()
@@ -53,7 +56,8 @@ public static class MetadataApplicationPipelineFactory
             new MetadataValidationStage(),
             new MetadataBackupStage(),
             new MetadataWritingStage(),
-            new MetadataVerificationStage()
+            new MetadataVerificationStage(),
+            new MetadataArtworkStage()
         };
 
         return new MetadataApplicationPipelineExecutor(

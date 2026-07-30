@@ -35,5 +35,11 @@ public enum MetadataApplicationStage
     /// <summary>
     /// Construcción del resultado final y cierre de la operación.
     /// </summary>
-    Finalization = 5
+    Finalization = 5,
+
+    /// <summary>
+    /// Descarga e incrustación opcional de la carátula de la
+    /// pista, cuando la solicitud la incluye.
+    /// </summary>
+    Artwork = 6
 }
