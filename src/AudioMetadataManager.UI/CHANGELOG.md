@@ -87,6 +87,20 @@ Semantic Versioning where applicable.
   `MetadataApplicationStage.Artwork`, `MetadataApplyRequest.ArtworkUrl`,
   and `ArtworkResult` on both `MetadataApplicationContext` and
   `MetadataApplicationPipelineResult`.
+- Added `MetadataFinalizationStage` (execution order 500), the first
+  real implementation of the long-reserved
+  `MetadataApplicationStage.Finalization` identity. Builds
+  `MetadataApplyResult` and registers it via
+  `MetadataApplicationContext.SetApplyResult`, replicating
+  `MetadataApplicationPipeline.BuildApplyResult`'s existing
+  classification logic rather than redesigning it.
+- Added `MetadataApplicationPipelineRunner`, a single-call entry point
+  that creates the context, runs the executor with progress reporting,
+  and finalizes the context regardless of outcome (success, blocking
+  failure, or cancellation) so `context.BuildResult()` never throws.
+- Added an optional `IProgress<MetadataApplicationProgress>` parameter
+  to `MetadataApplicationPipelineExecutor.ExecuteAsync`, reported after
+  each stage registers its result.
 
 ### Changed
 
@@ -98,6 +112,23 @@ Semantic Versioning where applicable.
   changes, instead of invoking the real writer with an empty change
   set (which `MetadataWriteRequest.IsStructurallyValid` would have
   rejected as `ValidationFailed`).
+- Swapped `MetadataFinalizationStage` (now 500) and
+  `MetadataArtworkStage` (now 600) so the consolidated apply result
+  exists before the optional artwork step runs. Reclassified artwork
+  download/embed failures from `Failed` to `CompletedWithWarnings`:
+  as the pipeline's only optional stage, a network hiccup on the
+  artwork must not mask an otherwise successful metadata write.
+- Enabled `MetadataApplicationPipelineOptions.CompleteContextAutomatically`
+  in `MetadataApplicationPipelineFactory.CreateDefault()`, now that
+  `MetadataFinalizationStage` satisfies the precondition its own doc
+  comment described.
+- Migrated `MainWindow.xaml.cs`'s
+  `AudioFileDetailsViewControl_ValidateApprovedChangesRequested` from
+  the monolithic `MetadataApplicationPipeline` to
+  `MetadataApplicationPipelineRunner`, and extended its log output to
+  cover writing, verification, and artwork outcomes (previously the
+  method stopped narrating after the backup stage, even though writing
+  and verification already ran internally).
 
 - Prepared the testing architecture to share file isolation logic
   between writer tests and application pipeline tests.
@@ -262,3 +293,15 @@ Semantic Versioning where applicable.
   starts. Attempted a fix, confirmed it satisfies one test while
   breaking the other, and reverted it rather than unilaterally pick a
   contract. Left unresolved and documented in milestone 13.25.
+- Re-ran the same structural test suite again after adding
+  `MetadataFinalizationStage`, reordering it ahead of
+  `MetadataArtworkStage`, and updating
+  `MetadataApplicationPipelineFactoryTestRunner` for six stages and
+  `CompleteContextAutomatically == true`: no new regressions. Verified
+  end to end through `MetadataApplicationPipelineRunner` itself (the
+  same path `MainWindow` now uses) against isolated copies of a real
+  file: field change plus artwork, artwork-only requests (confirming
+  `ApplyResult` stays correctly null), and a broken artwork URL
+  alongside a real field write (confirming `WasSuccessful` still
+  reports true). The pre-existing cancellation discrepancy from
+  milestone 13.25 was re-confirmed unrelated. See milestone 13.26.
