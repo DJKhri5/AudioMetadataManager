@@ -43,9 +43,18 @@ public sealed class SpotifyOptions
     /// <summary>
     /// Cantidad máxima de candidatos solicitados durante
     /// una búsqueda.
+    ///
+    /// La documentación oficial permite hasta 50, pero se
+    /// comprobó de forma empírica que una app nueva en
+    /// "Development mode" recibe HTTP 400 ("Invalid limit") con
+    /// cualquier valor mayor a 10. El valor predeterminado se
+    /// mantiene en 10 para que la aplicación funcione sin
+    /// configuración adicional; puede aumentarse una vez que la
+    /// app de Spotify salga de modo desarrollo (Extended Quota
+    /// Mode).
     /// </summary>
     public int ResultsPerPage { get; init; } =
-        20;
+        10;
 
     /// <summary>
     /// Tiempo máximo permitido para una solicitud HTTP, tanto
