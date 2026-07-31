@@ -204,6 +204,13 @@ Semantic Versioning where applicable.
 
 ### Fixed
 
+- Changed `SpotifyOptions.ResultsPerPage`'s default from 20 to 10.
+  Discovered live that a freshly created Spotify app in "Development
+  mode" returns HTTP 400 (`Invalid limit`) for any search `limit`
+  above 10, despite the documented valid range being 1-50 — not a URL
+  encoding bug (verified `Uri.AbsoluteUri`/`PathAndQuery` were correct
+  regardless of construction method), just an undocumented dev-mode
+  cap. See milestone 13.29.
 - No user-facing defects were addressed in this milestone.
 - Removed duplicated file-isolation and hash-verification logic from
   the TagLibSharp isolated writer test runner.
@@ -355,3 +362,11 @@ Semantic Versioning where applicable.
   one unusable track correctly discarded. A live search against the
   real Spotify API is still pending real credentials. See milestone
   13.28.
+- Verified the Spotify provider against the real, live API with real
+  credentials for the first time: saved Client ID/Secret via
+  `SpotifyCredentialStore`, then ran a real search for
+  "Daft Punk" / "One More Time" through the actual production code
+  path (`SpotifyOptionsFactory` → `SpotifyMetadataProvider` →
+  `SpotifyAuthClient` real token exchange → `SpotifySearchExecutor`).
+  Got 8 correctly mapped candidates back, the top one being the exact
+  track searched for. See milestone 13.29.
