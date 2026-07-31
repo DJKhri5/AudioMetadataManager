@@ -35,6 +35,9 @@ packages/
 publish/
 artifacts/
 
+# Instalador compilado (el script .iss sí se versiona)
+installer/Output/
+
 # Sistema operativo
 Thumbs.db
 Desktop.ini

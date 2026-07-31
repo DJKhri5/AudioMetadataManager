@@ -1,6 +1,8 @@
-# Audio Metadata Manager v0.2 — Visual Studio 2022 / .NET 8 WPF
+# Audio Metadata Manager — Visual Studio 2022+ / .NET 8 WPF
 
-Aplicación Windows en **Modo Simulación**. Esta versión analiza la biblioteca y puede crear respaldos verificados, pero no renombra, mueve ni escribe etiquetas.
+Aplicación Windows para gestionar metadatos de una biblioteca de audio local. Crea siempre un respaldo verificado antes de escribir, y puede escribir etiquetas y carátulas reales mediante TagLibSharp cuando el usuario aprueba los cambios propuestos.
+
+Para el detalle completo y actualizado de qué está implementado y qué sigue pendiente, ver `src/AudioMetadataManager.UI/CHANGELOG.md` y `src/AudioMetadataManager.UI/Documentation/Milestones/`.
 
 ## Funciones incluidas
 
@@ -15,18 +17,21 @@ Aplicación Windows en **Modo Simulación**. Esta versión analiza la biblioteca
 - Proyectos `.ammproj` guardables y reanudables.
 - Exportación CSV.
 - Respaldo en `_Respaldo Audio` con verificación SHA-256 y manifiesto JSON.
+- Búsqueda de metadatos externos en Discogs y Spotify; adquisición de carátula con aprobación manual.
 
 ## Abrir en Visual Studio
 
-1. Visual Studio 2022 17.8 o posterior.
+1. Visual Studio 2022 17.8 o posterior (o Visual Studio Build Tools con el mismo workload).
 2. Carga de trabajo **Desarrollo de escritorio de .NET**.
-3. Abrir `AudioMetadataManager.sln`.
+3. Abrir `src/AudioMetadataManager.slnx`.
 4. Restaurar paquetes NuGet y ejecutar.
 
-## Publicar versión portátil
+## Publicar versión portátil y generar el instalador
 
-Ejecutar `build-windows.ps1` desde PowerShell con .NET 8 SDK. El resultado queda en `publish/AudioMetadataManager`.
+Ejecutar `build-windows.ps1` desde PowerShell con el SDK de .NET 8 instalado. Publica un ejecutable autocontenido de un solo archivo en `publish/AudioMetadataManager`.
 
-## Límite deliberado de la v0.2
+Si además está instalado [Inno Setup](https://jrsoftware.org/isinfo.php) (`winget install --id JRSoftware.InnoSetup -e`), el mismo script compila automáticamente un instalador real en `installer/Output/AudioMetadataManager-Setup.exe`, usando el script `installer/AudioMetadataManager.iss`.
 
-El análisis espectral para detectar MP3 transcodificados y las búsquedas Discogs/Beatport/Spotify/SoundCloud no están activas aún. Se muestran como requisitos del roadmap y no se simulan con datos inventados.
+## Estado del roadmap
+
+El análisis espectral para detectar MP3 transcodificados todavía no está implementado. SoundCloud y Beatport siguen sin una fuente real (SoundCloud restringe el alta de nuevas apps en su API; Beatport no tiene API pública). Ver el CHANGELOG para el detalle completo.
