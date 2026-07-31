@@ -125,6 +125,10 @@ Semantic Versioning where applicable.
   and `MetadataSourceFactory.CreateDefault` accepts an optional
   `SpotifyOptions?` parameter mirroring the existing `DiscogsOptions?`
   one.
+- Added a real Windows installer via Inno Setup
+  (`installer/AudioMetadataManager.iss`): Program Files install, Start
+  Menu shortcuts, optional desktop shortcut, and a registered
+  uninstaller listed in "Add/Remove Programs".
 
 ### Changed
 
@@ -204,6 +208,16 @@ Semantic Versioning where applicable.
 
 ### Fixed
 
+- Fixed `build-windows.ps1`: it referenced a root-level
+  `AudioMetadataManager.sln` and `src/AudioMetadataManager/AudioMetadataManager.csproj`,
+  neither of which exist (the real solution is `src/AudioMetadataManager.slnx`,
+  the real project is `src/AudioMetadataManager.UI/AudioMetadataManager.UI.csproj`),
+  and ran `dotnet test` against a solution with no test project.
+  Corrected the paths, removed the non-existent test step, and added
+  automatic installer compilation via Inno Setup when it's installed.
+  Updated `README.md` to match (it also referenced the wrong solution
+  path and still described the app as not writing files, which has
+  not been true for several milestones).
 - Changed `SpotifyOptions.ResultsPerPage`'s default from 20 to 10.
   Discovered live that a freshly created Spotify app in "Development
   mode" returns HTTP 400 (`Invalid limit`) for any search `limit`
@@ -370,3 +384,17 @@ Semantic Versioning where applicable.
   `SpotifyAuthClient` real token exchange → `SpotifySearchExecutor`).
   Got 8 correctly mapped candidates back, the top one being the exact
   track searched for. See milestone 13.29.
+- Verified the Windows installer end to end without opening any
+  window: published the self-contained single-file exe, compiled it
+  with Inno Setup's command-line compiler, silently installed it to
+  an isolated test folder, and confirmed the exe copied correctly.
+  Caught that Inno Setup had also created real Start Menu shortcuts
+  and a real "Add/Remove Programs" registry entry on the actual
+  system despite the isolated install path (expected installer
+  behavior, but not intended as a lasting side effect of a
+  verification run) — immediately ran the generated uninstaller and
+  confirmed the registry key, Start Menu folder, and app files were
+  all removed, leaving the system as it was before the test. Also
+  ran the corrected `build-windows.ps1` in full (publish + installer
+  compilation in one pass), not just its steps individually. See
+  milestone 13.30.
