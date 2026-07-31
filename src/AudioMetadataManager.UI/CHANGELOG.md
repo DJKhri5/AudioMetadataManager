@@ -101,6 +101,17 @@ Semantic Versioning where applicable.
 - Added an optional `IProgress<MetadataApplicationProgress>` parameter
   to `MetadataApplicationPipelineExecutor.ExecuteAsync`, reported after
   each stage registers its result.
+- Added `ArtworkUrl`/`ArtworkSourceName`/`HasArtworkCandidate` to
+  `MetadataConsensusResult` and `MetadataChangePlan`, and had
+  `MetadataConsensusOrchestrator.Evaluate` select the best
+  artwork-bearing candidate (by the same `DecisionPriority`/
+  `RankingScore` ordering already used elsewhere) so a real Discogs
+  candidate's cover image can reach the apply request. Added
+  `SimulationPlanViewModel.IsArtworkApproved` (defaults to `false`,
+  mirroring the existing manual-approval pattern for field proposals)
+  and a checkbox in `SimulationPlanView.xaml` to approve it.
+  `MetadataApplyRequestFactory` now sets `ArtworkUrl` only when both
+  a candidate exists and the user approved it.
 
 ### Changed
 
@@ -129,6 +140,10 @@ Semantic Versioning where applicable.
   cover writing, verification, and artwork outcomes (previously the
   method stopped narrating after the backup stage, even though writing
   and verification already ran internally).
+- `SimulationPlanViewModel.HasApprovedChanges` now also considers an
+  approved artwork candidate, not just selected field proposals, so
+  the "Validate approved changes" button enables for artwork-only
+  requests too.
 
 - Prepared the testing architecture to share file isolation logic
   between writer tests and application pipeline tests.
@@ -305,3 +320,14 @@ Semantic Versioning where applicable.
   alongside a real field write (confirming `WasSuccessful` still
   reports true). The pre-existing cancellation discrepancy from
   milestone 13.25 was re-confirmed unrelated. See milestone 13.26.
+- Verified the full artwork candidate → approval → apply-request data
+  path with real code (a scratchpad console app, no WPF window):
+  `MetadataConsensusOrchestrator` correctly picked the highest-priority
+  artwork-bearing candidate over a weaker one and over a stronger
+  candidate with no artwork; `HasApprovedChanges` correctly went from
+  `false` to `true` on an artwork-only plan after approval; and
+  `MetadataApplyRequestFactory` correctly included or omitted
+  `ArtworkUrl` based on approval state in both directions. The new
+  `SimulationPlanView.xaml` checkbox itself was not visually tested —
+  no way to open the WPF window in this environment. See milestone
+  13.27.
