@@ -116,6 +116,10 @@ public sealed class MetadataConsensusOrchestrator
                 groups,
                 fieldResults);
 
+        MetadataCandidateEvaluationResult? bestArtworkCandidate =
+            SelectBestArtworkCandidate(
+                evaluationList);
+
         return new ConsensusResult
         {
             Fields =
@@ -125,8 +129,39 @@ public sealed class MetadataConsensusOrchestrator
                 overallConfidence,
 
             Reasons =
-                reasons
+                reasons,
+
+            ArtworkUrl =
+                bestArtworkCandidate?.Candidate.ArtworkUrl ??
+                    string.Empty,
+
+            ArtworkSourceName =
+                bestArtworkCandidate?.Candidate.SourceName ??
+                    string.Empty
         };
+    }
+
+    /// <summary>
+    /// Elige la carátula propuesta por el candidato mejor
+    /// posicionado que ofrezca una, entre los candidatos
+    /// utilizables.
+    /// </summary>
+    private static MetadataCandidateEvaluationResult?
+        SelectBestArtworkCandidate(
+            IReadOnlyList<MetadataCandidateEvaluationResult>
+                evaluationList)
+    {
+        return evaluationList
+            .Where(
+                evaluation =>
+                    evaluation.Candidate.HasArtwork)
+            .OrderByDescending(
+                evaluation =>
+                    evaluation.DecisionPriority)
+            .ThenByDescending(
+                evaluation =>
+                    evaluation.RankingScore)
+            .FirstOrDefault();
     }
 
     /// <summary>

@@ -34,6 +34,12 @@ public sealed class MetadataApplyRequestFactory
                         change.IsValidChange)
                 .ToArray();
 
+        string? approvedArtworkUrl =
+            simulationPlan.HasArtworkCandidate &&
+            simulationPlan.IsArtworkApproved
+                ? simulationPlan.ArtworkUrl
+                : null;
+
         return new MetadataApplyRequest
         {
             PlanId =
@@ -47,6 +53,9 @@ public sealed class MetadataApplyRequestFactory
 
             Changes =
                 changes,
+
+            ArtworkUrl =
+                approvedArtworkUrl,
 
             RequireBackup =
                 true,

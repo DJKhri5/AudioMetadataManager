@@ -22,6 +22,8 @@ public sealed class SimulationPlanViewModel
     private MetadataChangePlanStatus _status =
         MetadataChangePlanStatus.Pending;
 
+    private bool _isArtworkApproved;
+
     public event PropertyChangedEventHandler?
         PropertyChanged;
 
@@ -131,6 +133,67 @@ public sealed class SimulationPlanViewModel
             _ =>
                 "Pendiente"
         };
+
+    /// <summary>
+    /// Dirección de la carátula propuesta, cuando existe.
+    /// </summary>
+    public string ArtworkUrl { get; init; } =
+        string.Empty;
+
+    /// <summary>
+    /// Plataforma que propuso la carátula.
+    /// </summary>
+    public string ArtworkSourceName { get; init; } =
+        string.Empty;
+
+    /// <summary>
+    /// Indica si el plan tiene una carátula propuesta para
+    /// aprobar.
+    /// </summary>
+    public bool HasArtworkCandidate =>
+        !string.IsNullOrWhiteSpace(
+            ArtworkUrl);
+
+    /// <summary>
+    /// Texto preparado para mostrar el estado de la carátula.
+    /// </summary>
+    public string ArtworkStatusDisplay =>
+        HasArtworkCandidate
+            ? string.IsNullOrWhiteSpace(
+                    ArtworkSourceName)
+                ? "Carátula propuesta disponible."
+                : $"Carátula propuesta disponible desde " +
+                  $"{ArtworkSourceName}."
+            : "No hay carátula propuesta para esta pista.";
+
+    /// <summary>
+    /// Indica si el usuario aprobó incrustar la carátula
+    /// propuesta.
+    ///
+    /// Sin efecto cuando <see cref="HasArtworkCandidate"/> es
+    /// falso.
+    /// </summary>
+    public bool IsArtworkApproved
+    {
+        get =>
+            _isArtworkApproved;
+
+        set
+        {
+            if (_isArtworkApproved == value)
+            {
+                return;
+            }
+
+            _isArtworkApproved =
+                value;
+
+            OnPropertyChanged();
+
+            OnPropertyChanged(
+                nameof(HasApprovedChanges));
+        }
+    }
 
     /// <summary>
     /// Propuestas visibles.
@@ -257,10 +320,13 @@ public sealed class SimulationPlanViewModel
         ApprovedProposals.Count;
 
     /// <summary>
-    /// Indica si existe al menos una propuesta aprobada.
+    /// Indica si existe al menos una propuesta aprobada, o una
+    /// carátula aprobada.
     /// </summary>
     public bool HasApprovedChanges =>
-        ApprovedChangeCount > 0;
+        ApprovedChangeCount > 0 ||
+        (HasArtworkCandidate &&
+         IsArtworkApproved);
 
     private void OnPropertyChanged(
         [CallerMemberName]

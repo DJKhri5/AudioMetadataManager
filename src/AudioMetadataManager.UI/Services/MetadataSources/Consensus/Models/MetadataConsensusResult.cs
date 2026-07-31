@@ -44,6 +44,30 @@ public sealed class MetadataConsensusResult
         Array.Empty<string>();
 
     /// <summary>
+    /// Dirección de la carátula propuesta por el candidato mejor
+    /// posicionado que ofrece una, cuando existe.
+    ///
+    /// Independiente de los campos de texto: no forma parte de
+    /// <see cref="Fields"/> porque la carátula no es un
+    /// MetadataField.
+    /// </summary>
+    public string ArtworkUrl { get; init; } =
+        string.Empty;
+
+    /// <summary>
+    /// Plataforma que propuso la carátula seleccionada.
+    /// </summary>
+    public string ArtworkSourceName { get; init; } =
+        string.Empty;
+
+    /// <summary>
+    /// Indica si el consenso encontró una carátula propuesta.
+    /// </summary>
+    public bool HasArtworkCandidate =>
+        !string.IsNullOrWhiteSpace(
+            ArtworkUrl);
+
+    /// <summary>
     /// Busca el resultado de un campo concreto.
     /// </summary>
     public MetadataConsensusFieldResult? GetField(

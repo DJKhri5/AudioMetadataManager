@@ -55,6 +55,26 @@ public sealed class MetadataChangePlan
         Array.Empty<string>();
 
     /// <summary>
+    /// Dirección de la carátula propuesta por el consenso, cuando
+    /// existe. Independiente de <see cref="Proposals"/>.
+    /// </summary>
+    public string ArtworkUrl { get; init; } =
+        string.Empty;
+
+    /// <summary>
+    /// Plataforma que propuso la carátula.
+    /// </summary>
+    public string ArtworkSourceName { get; init; } =
+        string.Empty;
+
+    /// <summary>
+    /// Indica si el plan tiene una carátula propuesta.
+    /// </summary>
+    public bool HasArtworkCandidate =>
+        !string.IsNullOrWhiteSpace(
+            ArtworkUrl);
+
+    /// <summary>
     /// Propuestas que representarían un cambio real.
     /// </summary>
     public IReadOnlyList<MetadataChangeProposal>

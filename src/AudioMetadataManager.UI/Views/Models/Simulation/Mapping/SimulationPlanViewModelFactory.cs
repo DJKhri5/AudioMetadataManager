@@ -33,7 +33,13 @@ public sealed class SimulationPlanViewModelFactory
                     plan.FilePath,
 
                 Status =
-                    plan.Status
+                    plan.Status,
+
+                ArtworkUrl =
+                    plan.ArtworkUrl,
+
+                ArtworkSourceName =
+                    plan.ArtworkSourceName
             };
 
         foreach (

@@ -122,7 +122,13 @@ public sealed class MetadataChangeDecisionEngine
                 status,
 
             Reasons =
-                reasons
+                reasons,
+
+            ArtworkUrl =
+                consensusResult.ArtworkUrl,
+
+            ArtworkSourceName =
+                consensusResult.ArtworkSourceName
         };
     }
 
