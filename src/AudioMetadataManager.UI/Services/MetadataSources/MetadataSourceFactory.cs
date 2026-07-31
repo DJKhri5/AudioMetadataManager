@@ -2,6 +2,8 @@
 using AudioMetadataManager.UI.Services.MetadataSources.Providers;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Providers.Discogs.Configuration;
+using AudioMetadataManager.UI.Services.MetadataSources
+    .Providers.Spotify.Configuration;
 
 namespace AudioMetadataManager.UI.Services.MetadataSources;
 
@@ -15,16 +17,21 @@ public static class MetadataSourceFactory
     /// Construye el administrador con todas las plataformas
     /// conocidas por la aplicación.
     ///
-    /// Discogs utilizará una configuración predeterminada
-    /// sin credenciales cuando no se proporcione una
-    /// configuración externa.
+    /// Discogs y Spotify utilizarán una configuración
+    /// predeterminada sin credenciales cuando no se proporcione
+    /// una configuración externa.
     /// </summary>
     public static MetadataSourceManager CreateDefault(
-        DiscogsOptions? discogsOptions = null)
+        DiscogsOptions? discogsOptions = null,
+        SpotifyOptions? spotifyOptions = null)
     {
         DiscogsOptions effectiveDiscogsOptions =
             discogsOptions ??
             DiscogsOptionsFactory.CreateDefault();
+
+        SpotifyOptions effectiveSpotifyOptions =
+            spotifyOptions ??
+            SpotifyOptionsFactory.CreateDefault();
 
         IReadOnlyList<IMetadataSource> sources =
             new List<IMetadataSource>
@@ -34,7 +41,8 @@ public static class MetadataSourceFactory
 
                 new BeatportMetadataSource(),
 
-                new SpotifyMetadataSource(),
+                new SpotifyMetadataSource(
+                    effectiveSpotifyOptions),
 
                 new SoundCloudMetadataSource()
             };
