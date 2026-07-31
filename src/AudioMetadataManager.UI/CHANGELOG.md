@@ -112,6 +112,19 @@ Semantic Versioning where applicable.
   and a checkbox in `SimulationPlanView.xaml` to approve it.
   `MetadataApplyRequestFactory` now sets `ArtworkUrl` only when both
   a candidate exists and the user approved it.
+- Added a real Spotify metadata provider (`Providers/Spotify`),
+  replacing the `IsAvailable => false` stub, following the same
+  layered structure as Discogs/AcoustID: `SpotifyOptions`,
+  `SpotifyCredentialStore`, `SpotifyOptionsFactory`,
+  `SpotifyAuthClient` (Client Credentials token exchange with
+  in-memory caching and automatic renewal), `SpotifyApiRequestBuilder`,
+  `SpotifyApiClient`, response DTOs, `SpotifySearchResponseParser`,
+  `SpotifySearchCandidateMapper`, `SpotifySearchExecutor`,
+  `SpotifyMetadataProvider`, and `SpotifySearchDiagnostics`.
+  `SpotifyMetadataSource` now adapts it to `IMetadataSource` for real,
+  and `MetadataSourceFactory.CreateDefault` accepts an optional
+  `SpotifyOptions?` parameter mirroring the existing `DiscogsOptions?`
+  one.
 
 ### Changed
 
@@ -331,3 +344,14 @@ Semantic Versioning where applicable.
   `SimulationPlanView.xaml` checkbox itself was not visually tested —
   no way to open the WPF window in this environment. See milestone
   13.27.
+- Verified the Spotify provider without live credentials (none
+  configured yet): `SpotifyApiRequestBuilder` produces the expected
+  search URL, `SpotifyMetadataProvider` and `SpotifyAuthClient` both
+  fail gracefully with `AuthenticationFailed`/`InvalidConfiguration`
+  when no Client ID/Secret are set, and a hand-crafted sample response
+  matching Spotify's real JSON shape was parsed and mapped correctly
+  end to end (artist joining, best-resolution artwork selection,
+  duration conversion, and year extraction from `release_date`), with
+  one unusable track correctly discarded. A live search against the
+  real Spotify API is still pending real credentials. See milestone
+  13.28.
