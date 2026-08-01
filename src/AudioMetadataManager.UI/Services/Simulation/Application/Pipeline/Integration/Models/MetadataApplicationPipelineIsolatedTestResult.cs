@@ -19,7 +19,7 @@ public sealed class
     /// <summary>
     /// Cantidad de etapas obligatorias esperadas.
     /// </summary>
-    public const int ExpectedStageCount = 4;
+    public const int ExpectedStageCount = 5;
 
     /// <summary>
     /// Ruta del archivo original, que nunca debe modificarse.

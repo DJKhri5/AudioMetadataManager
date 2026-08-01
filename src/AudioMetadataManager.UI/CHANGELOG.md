@@ -60,6 +60,14 @@ Semantic Versioning where applicable.
   timing, and error evidence.
 - Added temporary diagnostic integration for executing the complete
   pipeline over selected audio files.
+- Added `IMetadataApplyResultBuilder` as the reusable contract for building
+  consolidated metadata application results.
+- Added `MetadataApplyResultBuilder` to consolidate field results, operation
+  status, timing, paths, identifiers, and deduplicated auditable messages.
+- Added `MetadataFinalizationStage` as the fifth and final stage of the
+  modular metadata application pipeline.
+- Added structural coverage for consolidated result construction and final
+  status mapping.
 
 ### Changed
 
@@ -111,6 +119,14 @@ Semantic Versioning where applicable.
   integrated workflow.
 - Captured pipeline backup, write, verification, persisted genre, and
   artwork results before removing the isolated test environment.
+- Extended the default metadata application pipeline with the finalization
+  stage at execution order `500`.
+- Updated the default pipeline composition tests to validate five stages,
+  their concrete types, identities, and execution orders.
+- Updated the isolated end-to-end pipeline test to register and execute all
+  five stages.
+- Consolidated validation, backup, writing, verification, and finalization
+  evidence into `MetadataApplyResult`.
 
 ### Fixed
 
@@ -206,3 +222,18 @@ Semantic Versioning where applicable.
   pipeline backups preserved their pre-write state.
 - Recorded test start, completion, elapsed time, exceptions, and auditable
   stage messages.
+- Added controlled structural testing for `MetadataApplyResultBuilder`.
+- Verified preservation of request and plan identifiers, file information,
+  backup paths, field values, write states, and verification states.
+- Verified final status calculation, coherent timing, message consolidation,
+  and duplicate-message removal.
+- Updated the pipeline composition to validation, backup, writing,
+  post-write verification, and finalization.
+- Verified stage identities and execution orders `100`, `200`, `300`, `400`,
+  and `500`.
+- Executed the complete five-stage pipeline over an isolated FLAC working
+  copy.
+- Verified successful result construction, backup, writing, post-write
+  verification, and temporary directory cleanup.
+- Verified preservation of the original FLAC file and its two embedded
+  pictures.

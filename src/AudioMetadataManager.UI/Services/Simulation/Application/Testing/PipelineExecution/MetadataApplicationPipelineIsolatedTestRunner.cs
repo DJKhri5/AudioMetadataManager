@@ -53,7 +53,7 @@ public sealed class
     }
 
     /// <summary>
-    /// Ejecuta las cuatro etapas reales del pipeline sobre una
+    /// Ejecuta las cinco etapas reales del pipeline sobre una
     /// copia temporal del archivo indicado.
     /// </summary>
     public async

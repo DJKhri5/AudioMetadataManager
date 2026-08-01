@@ -26,9 +26,12 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Diagnostics;
-using AudioMetadataManager.UI.Services.Simulation.Application.Pipeline.Integration.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Pipeline.Integration.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Testing;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.PipelineComposition;
 using AudioMetadataManager.UI.Services.Simulation
@@ -85,6 +88,9 @@ public partial class MainWindow : Window
     private readonly
         MetadataApplicationPipelineFactoryTestRunner
             _metadataApplicationPipelineFactoryTestRunner;
+
+    private readonly MetadataApplyResultBuilderTestRunner
+        _metadataApplyResultBuilderTestRunner;
 
     private SimulationPlanViewModel?
         _currentSimulationPlan;
@@ -296,6 +302,10 @@ public partial class MainWindow : Window
 
         _metadataApplicationPipelineFactoryTestRunner =
             new MetadataApplicationPipelineFactoryTestRunner();
+
+        _metadataApplyResultBuilderTestRunner =
+            MetadataApplyResultBuilderTestRunner
+                .CreateDefault();
     }
 
     /// <summary>
@@ -775,6 +785,136 @@ public partial class MainWindow : Window
             AppendLog(
                 "=== Fin de las pruebas estructurales de " +
                 "composición ===");
+
+            AppendLog(
+                "Iniciando prueba del constructor del " +
+                "resultado final.");
+
+            MetadataApplyResultBuilderTestResult
+                resultBuilderTestResult =
+                    await Task.Run(
+                        () =>
+                            _metadataApplyResultBuilderTestRunner
+                                .Run());
+
+            AppendLog(
+                "=== Constructor del resultado final ===");
+
+            AppendLog(
+                $"Identificadores conservados: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .IdentifiersPreserved)}");
+
+            AppendLog(
+                $"Información del archivo conservada: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .FileInformationPreserved)}");
+
+            AppendLog(
+                $"Ruta de respaldo conservada: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .BackupPathPreserved)}");
+
+            AppendLog(
+                $"Cantidad de campos conservada: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .FieldCountPreserved)}");
+
+            AppendLog(
+                $"Valores de los campos conservados: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .FieldValuesPreserved)}");
+
+            AppendLog(
+                $"Estado de escritura conservado: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .WriteStatusPreserved)}");
+
+            AppendLog(
+                $"Estado de verificación conservado: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .VerificationStatusPreserved)}");
+
+            AppendLog(
+                $"Estado final correcto: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .FinalStatusCorrect)}");
+
+            AppendLog(
+                $"Mensajes consolidados: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .MessagesConsolidated)}");
+
+            AppendLog(
+                $"Mensajes duplicados eliminados: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .DuplicateMessagesRemoved)}");
+
+            AppendLog(
+                $"Tiempos coherentes: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .TimingIsValid)}");
+
+            if (resultBuilderTestResult.ApplyResult is not null)
+            {
+                AppendLog(
+                    $"Estado construido: " +
+                    $"{resultBuilderTestResult
+                        .ApplyResult.Status}");
+
+                AppendLog(
+                    $"Campos consolidados: " +
+                    $"{resultBuilderTestResult
+                        .ApplyResult.FieldResults.Count}");
+
+                AppendLog(
+                    $"Duración construida: " +
+                    $"{resultBuilderTestResult
+                        .ApplyResult.ElapsedTime}");
+            }
+
+            foreach (string message
+                in resultBuilderTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    resultBuilderTestResult.ErrorMessage))
+            {
+                AppendLog(
+                    $"Error: " +
+                    $"{resultBuilderTestResult.ErrorMessage}");
+
+                AppendLog(
+                    $"Tipo de excepción: " +
+                    $"{resultBuilderTestResult.ExceptionType}");
+            }
+
+            AppendLog(
+                $"Prueba del constructor correcta: " +
+                $"{ToSpanish(
+                    resultBuilderTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: " +
+                $"{resultBuilderTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la prueba del constructor ===");
 
             await RunMetadataApplicationPipelineDiagnosticAsync(
                 filePath);
