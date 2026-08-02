@@ -68,6 +68,12 @@ Semantic Versioning where applicable.
   modular metadata application pipeline.
 - Added structural coverage for consolidated result construction and final
   status mapping.
+- Added `IMetadataApplicationCoordinator` as the productive entry-point
+  contract for approved metadata application requests.
+- Added `MetadataApplicationCoordinator` to execute the complete default
+  metadata application pipeline through a single reusable operation.
+- Added controlled coordinator coverage for null requests, null factories,
+  pre-cancelled execution, null executors, and factory exceptions.
 
 ### Changed
 
@@ -127,6 +133,12 @@ Semantic Versioning where applicable.
   five stages.
 - Consolidated validation, backup, writing, verification, and finalization
   evidence into `MetadataApplyResult`.
+- Centralized creation of `MetadataApplicationContext` and execution of the
+  default five-stage pipeline in `MetadataApplicationCoordinator`.
+- Translated pipeline cancellation and stage failures into auditable
+  `MetadataApplicationStopReason` values.
+- Integrated the coordinator test runner into the temporary technical
+  diagnostic workflow.
 
 ### Fixed
 
@@ -153,6 +165,10 @@ Semantic Versioning where applicable.
 - Propagated `PictureCountBefore` through
   `MetadataWriterEngine.MergeWriterResult(...)` so post-write verification
   receives the actual pre-write embedded artwork count.
+- Prevented a pre-cancelled productive execution from invoking the pipeline
+  executor factory.
+- Prevented null executor instances and factory exceptions from escaping
+  without a finalized auditable result.
 
 ### Internal
 
@@ -236,4 +252,14 @@ Semantic Versioning where applicable.
 - Verified successful result construction, backup, writing, post-write
   verification, and temporary directory cleanup.
 - Verified preservation of the original FLAC file and its two embedded
+  pictures.
+- Added `MetadataApplicationCoordinatorTestRunner`.
+- Added `MetadataApplicationCoordinatorTestResult`.
+- Verified rejection of null requests and null executor factories.
+- Verified controlled handling of pre-cancelled executions, null executors,
+  and factory exceptions.
+- Verified that all controlled coordinator results receive a completion time.
+- Revalidated the complete five-stage pipeline over an isolated FLAC working
+  copy after integrating the coordinator diagnostics.
+- Revalidated preservation of the original FLAC file and its two embedded
   pictures.
