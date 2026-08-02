@@ -33,6 +33,8 @@ using AudioMetadataManager.UI.Services.Simulation
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Testing.Coordination;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.PipelineComposition;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.PipelineExecution;
@@ -91,6 +93,9 @@ public partial class MainWindow : Window
 
     private readonly MetadataApplyResultBuilderTestRunner
         _metadataApplyResultBuilderTestRunner;
+
+    private readonly MetadataApplicationCoordinatorTestRunner
+        _metadataApplicationCoordinatorTestRunner;
 
     private SimulationPlanViewModel?
         _currentSimulationPlan;
@@ -306,6 +311,9 @@ public partial class MainWindow : Window
         _metadataApplyResultBuilderTestRunner =
             MetadataApplyResultBuilderTestRunner
                 .CreateDefault();
+
+        _metadataApplicationCoordinatorTestRunner =
+            new MetadataApplicationCoordinatorTestRunner();
     }
 
     /// <summary>
@@ -915,6 +923,91 @@ public partial class MainWindow : Window
 
             AppendLog(
                 "=== Fin de la prueba del constructor ===");
+
+            AppendLog(
+                "Iniciando pruebas controladas del coordinador " +
+                "productivo.");
+
+            MetadataApplicationCoordinatorTestResult
+                coordinatorTestResult =
+                    await _metadataApplicationCoordinatorTestRunner
+                        .RunAsync();
+
+            AppendLog(
+                "=== Coordinador productivo de aplicación ===");
+
+            foreach (string message
+                in coordinatorTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Solicitud nula rechazada: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .NullRequestWasRejected)}");
+
+            AppendLog(
+                $"Fábrica nula rechazada: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .NullExecutorFactoryWasRejected)}");
+
+            AppendLog(
+                $"Cancelación previa controlada: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .PreCancelledExecutionWasHandled)}");
+
+            AppendLog(
+                $"Razón de cancelación correcta: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .CancellationStopReasonWasCorrect)}");
+
+            AppendLog(
+                $"Ejecutor nulo controlado: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .NullExecutorWasHandled)}");
+
+            AppendLog(
+                $"Razón del ejecutor nulo correcta: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .NullExecutorStopReasonWasCorrect)}");
+
+            AppendLog(
+                $"Excepción de fábrica controlada: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .FactoryExceptionWasHandled)}");
+
+            AppendLog(
+                $"Razón de excepción correcta: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .FactoryExceptionStopReasonWasCorrect)}");
+
+            AppendLog(
+                $"Resultados finalizados: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .ResultsWereFinalized)}");
+
+            AppendLog(
+                $"Prueba del coordinador correcta: " +
+                $"{ToSpanish(
+                    coordinatorTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {coordinatorTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de las pruebas del coordinador ===");
 
             await RunMetadataApplicationPipelineDiagnosticAsync(
                 filePath);
