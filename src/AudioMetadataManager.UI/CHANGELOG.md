@@ -74,6 +74,14 @@ Semantic Versioning where applicable.
   metadata application pipeline through a single reusable operation.
 - Added controlled coordinator coverage for null requests, null factories,
   pre-cancelled execution, null executors, and factory exceptions.
+- Added automatic synchronization between approved simulation changes and
+  the productive apply button state.
+- Added explicit user confirmation before starting a future productive
+  metadata application.
+- Added `MetadataApplyRequestIsolationFactory` to redirect approved requests
+  to temporary working copies while preserving request data.
+- Added controlled coverage for isolated request preparation.
+- Added a resizable activity log area to the main window.
 
 ### Changed
 
@@ -139,6 +147,14 @@ Semantic Versioning where applicable.
   `MetadataApplicationStopReason` values.
 - Integrated the coordinator test runner into the temporary technical
   diagnostic workflow.
+- Centralized active simulation plan replacement and property-change
+  subscriptions in `MainWindow`.
+- Updated the apply action to react automatically when approved proposals
+  are selected or cleared.
+- Compactened the main window header and redistributed vertical space
+  between the file table, details, and activity log.
+- Integrated isolated request factory diagnostics into the temporary
+  technical diagnostic workflow.
 
 ### Fixed
 
@@ -169,6 +185,14 @@ Semantic Versioning where applicable.
   executor factory.
 - Prevented null executor instances and factory exceptions from escaping
   without a finalized auditable result.
+- Prevented the productive apply action from being enabled without an active
+  plan containing approved changes.
+- Prevented stale simulation plans from remaining active after selecting or
+  rescanning a library.
+- Prevented an application confirmation from proceeding when the plan or
+  approved changes are no longer available.
+- Prevented the activity log from becoming effectively unusable at the
+  default window size.
 
 ### Internal
 
@@ -263,3 +287,14 @@ Semantic Versioning where applicable.
   copy after integrating the coordinator diagnostics.
 - Revalidated preservation of the original FLAC file and its two embedded
   pictures.
+- Added `MetadataApplyRequestIsolationFactoryTestResult`.
+- Added `MetadataApplyRequestIsolationFactoryTestRunner`.
+- Verified rejection of null requests and empty working-copy paths.
+- Verified preservation of request identifiers, creation time, approved
+  changes, backup requirements, and post-write verification requirements.
+- Verified replacement of only the destination path and file name.
+- Added temporary diagnostic reporting for isolated request preparation.
+- Revalidated the complete five-stage pipeline over an isolated FLAC file.
+- Revalidated preservation of the original FLAC file and its two embedded
+  pictures.
+- Added a `GridSplitter` between the details panel and activity log.

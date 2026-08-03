@@ -60,15 +60,19 @@
                 <RowDefinition Height="Auto"/>
 
                 <!-- Tabla de archivos -->
-                <RowDefinition Height="2*"
-                               MinHeight="160"/>
+                <RowDefinition Height="1.2*"
+                   MinHeight="130"/>
 
                 <!-- Panel de detalles -->
-                <RowDefinition Height="2*"
-                               MinHeight="260"/>
+                <RowDefinition Height="1.3*"
+                   MinHeight="180"/>
+
+                <!-- Separador ajustable -->
+                <RowDefinition Height="Auto"/>
 
                 <!-- Registro -->
-                <RowDefinition Height="110"/>
+                <RowDefinition Height="0.8*"
+                   MinHeight="110"/>
 
                 <!-- Botones -->
                 <RowDefinition Height="Auto"/>
@@ -76,14 +80,14 @@
 
             <!-- Encabezado -->
             <StackPanel Grid.Row="0"
-                        Margin="0,0,0,16">
+                        Margin="0,0,0,8">
 
                 <TextBlock Text="Audio Metadata Manager"
-                           FontSize="28"
+                           FontSize="24"
                            FontWeight="SemiBold"/>
 
                 <TextBlock Text="Organización, análisis y restauración segura de bibliotecas musicales"
-                           Margin="0,4,0,0"
+                           Margin="0,2,0,0"
                            Foreground="DimGray"/>
             </StackPanel>
 
@@ -234,8 +238,17 @@
                                       Path=SelectedItem}"
                 Margin="0,0,0,12"/>
 
+            <GridSplitter Grid.Row="4"
+              Height="6"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Center"
+              ResizeDirection="Rows"
+              ResizeBehavior="PreviousAndNext"
+              ShowsPreview="True"
+              Margin="0,0,0,4"/>
+
             <!-- Registro de actividad -->
-            <GroupBox Grid.Row="4"
+            <GroupBox Grid.Row="5"
                       Header="Registro de actividad"
                       Padding="8"
                       Margin="0,0,0,12">
@@ -249,7 +262,7 @@
             </GroupBox>
 
             <!-- Acciones inferiores -->
-            <StackPanel Grid.Row="5"
+            <StackPanel Grid.Row="6"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right">
 
@@ -271,7 +284,8 @@
                         Content="Respaldar y aplicar cambios"
                         MinWidth="190"
                         Padding="12,7"
-                        IsEnabled="False"/>
+                        IsEnabled="False"
+                        Click="ApplyChangesButton_Click"/>
 
             </StackPanel>
 

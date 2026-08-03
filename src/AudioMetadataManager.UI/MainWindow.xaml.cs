@@ -60,6 +60,7 @@ using AudioMetadataManager.UI.Views;
 using AudioMetadataManager.UI.Views.Models.Simulation;
 using AudioMetadataManager.UI.Views.Models.Simulation.Mapping;
 using Microsoft.Win32;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -97,8 +98,77 @@ public partial class MainWindow : Window
     private readonly MetadataApplicationCoordinatorTestRunner
         _metadataApplicationCoordinatorTestRunner;
 
+    private readonly
+        MetadataApplyRequestIsolationFactoryTestRunner
+            _metadataApplyRequestIsolationFactoryTestRunner;
+
     private SimulationPlanViewModel?
         _currentSimulationPlan;
+
+    /// <summary>
+    /// Sustituye el plan activo y mantiene sincronizado el estado
+    /// de las acciones productivas de la interfaz.
+    /// </summary>
+    private void SetCurrentSimulationPlan(
+        SimulationPlanViewModel? simulationPlan)
+    {
+        if (_currentSimulationPlan is not null)
+        {
+            _currentSimulationPlan.PropertyChanged -=
+                CurrentSimulationPlan_PropertyChanged;
+        }
+
+        _currentSimulationPlan =
+            simulationPlan;
+
+        if (_currentSimulationPlan is not null)
+        {
+            _currentSimulationPlan.PropertyChanged +=
+                CurrentSimulationPlan_PropertyChanged;
+        }
+
+        AudioFileDetailsViewControl.SimulationPlan =
+            _currentSimulationPlan;
+
+        UpdateApplyChangesButtonState();
+    }
+
+    /// <summary>
+    /// Reacciona a cambios en las propuestas aprobadas del plan.
+    /// </summary>
+    private void CurrentSimulationPlan_PropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(
+                e.PropertyName) ||
+            string.Equals(
+                e.PropertyName,
+                nameof(
+                    SimulationPlanViewModel
+                        .HasApprovedChanges),
+                StringComparison.Ordinal) ||
+            string.Equals(
+                e.PropertyName,
+                nameof(
+                    SimulationPlanViewModel
+                        .ApprovedChangeCount),
+                StringComparison.Ordinal))
+        {
+            UpdateApplyChangesButtonState();
+        }
+    }
+
+    /// <summary>
+    /// Habilita la aplicación productiva únicamente cuando existe
+    /// un plan activo con al menos un cambio aprobado.
+    /// </summary>
+    private void UpdateApplyChangesButtonState()
+    {
+        ApplyChangesButton.IsEnabled =
+            _currentSimulationPlan?.HasApprovedChanges ==
+            true;
+    }
 
     /// <summary>
     /// Construye y valida una solicitud usando solamente los
@@ -314,6 +384,9 @@ public partial class MainWindow : Window
 
         _metadataApplicationCoordinatorTestRunner =
             new MetadataApplicationCoordinatorTestRunner();
+
+        _metadataApplyRequestIsolationFactoryTestRunner =
+            new MetadataApplyRequestIsolationFactoryTestRunner();
     }
 
     /// <summary>
@@ -342,6 +415,12 @@ public partial class MainWindow : Window
 
         AudioFilesDataGrid.SelectedItem =
             null;
+
+        SetCurrentSimulationPlan(
+            null);
+
+        SetCurrentSimulationPlan(
+            null);
 
         UpdateSelectedFileButtons();
 
@@ -403,15 +482,75 @@ public partial class MainWindow : Window
         ExportButton.IsEnabled =
             false;
 
-        ApplyChangesButton.IsEnabled =
-            false;
-
         LogTextBox.AppendText(
             $"{Environment.NewLine}" +
             $"Biblioteca seleccionada: " +
             $"{dialog.FolderName}");
 
         LogTextBox.ScrollToEnd();
+    }
+
+    /// <summary>
+    /// Solicita confirmación explícita antes de iniciar una
+    /// aplicación productiva de metadatos.
+    ///
+    /// Este incremento todavía no ejecuta el coordinador ni modifica
+    /// archivos.
+    /// </summary>
+    private void ApplyChangesButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_currentSimulationPlan is null)
+        {
+            AppendLog(
+                "No existe un plan de simulación activo.");
+
+            UpdateApplyChangesButtonState();
+            return;
+        }
+
+        if (!_currentSimulationPlan.HasApprovedChanges)
+        {
+            AppendLog(
+                "No existen cambios aprobados para aplicar.");
+
+            UpdateApplyChangesButtonState();
+            return;
+        }
+
+        int approvedChangeCount =
+            _currentSimulationPlan.ApprovedChangeCount;
+
+        MessageBoxResult confirmation =
+            MessageBox.Show(
+                this,
+                $"Se aplicarán {approvedChangeCount} cambio(s) " +
+                $"aprobado(s) al archivo:\n\n" +
+                $"{_currentSimulationPlan.FileName}\n\n" +
+                "Antes de escribir los metadatos se creará y " +
+                "verificará un respaldo.\n\n" +
+                "¿Desea continuar?",
+                "Confirmar aplicación de metadatos",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            AppendLog(
+                "La aplicación de cambios fue cancelada por el usuario.");
+
+            return;
+        }
+
+        AppendLog(
+            $"Aplicación confirmada para " +
+            $"{approvedChangeCount} cambio(s) aprobado(s).");
+
+        AppendLog(
+            "La ejecución productiva todavía no está habilitada " +
+            "en este incremento. Ningún archivo fue modificado.");
     }
 
     /// <summary>
@@ -610,12 +749,9 @@ public partial class MainWindow : Window
                 simulationPlanFactory =
                     new();
 
-            _currentSimulationPlan =
+            SetCurrentSimulationPlan(
                 simulationPlanFactory.Create(
-                    changePlan);
-
-            AudioFileDetailsViewControl.SimulationPlan =
-                _currentSimulationPlan;
+                    changePlan));
 
             string changePlanReport =
                 MetadataChangePlanDiagnostics.BuildReport(
@@ -1008,6 +1144,85 @@ public partial class MainWindow : Window
 
             AppendLog(
                 "=== Fin de las pruebas del coordinador ===");
+
+            AppendLog(
+                "Iniciando prueba de la fábrica de solicitudes " +
+                "aisladas.");
+
+            MetadataApplyRequestIsolationFactoryTestResult
+                isolationFactoryTestResult =
+                    _metadataApplyRequestIsolationFactoryTestRunner
+                        .Run();
+
+            AppendLog(
+                "=== Fábrica de solicitudes aisladas ===");
+
+            foreach (string message
+                in isolationFactoryTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Solicitud nula rechazada: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .NullRequestWasRejected)}");
+
+            AppendLog(
+                $"Ruta vacía rechazada: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .EmptyPathWasRejected)}");
+
+            AppendLog(
+                $"Identificadores conservados: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .IdentifiersWerePreserved)}");
+
+            AppendLog(
+                $"Fecha de creación conservada: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .CreationTimeWasPreserved)}");
+
+            AppendLog(
+                $"Cambios conservados: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .ChangesWerePreserved)}");
+
+            AppendLog(
+                $"Requisitos conservados: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .RequirementsWerePreserved)}");
+
+            AppendLog(
+                $"Ruta aislada aplicada: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .WorkingCopyPathWasApplied)}");
+
+            AppendLog(
+                $"Nombre aislado aplicado: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .WorkingCopyFileNameWasApplied)}");
+
+            AppendLog(
+                $"Prueba de la fábrica aislada correcta: " +
+                $"{ToSpanish(
+                    isolationFactoryTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {isolationFactoryTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la prueba de solicitudes aisladas ===");
 
             await RunMetadataApplicationPipelineDiagnosticAsync(
                 filePath);
