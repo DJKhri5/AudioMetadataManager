@@ -22,6 +22,7 @@ using AudioMetadataManager.UI.Services.MetadataSources
     .Pipeline.Diagnostics;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Mapping;
+using AudioMetadataManager.UI.Services.Simulation.Application.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Pipeline;
 using AudioMetadataManager.UI.Services.Simulation
@@ -101,6 +102,13 @@ public partial class MainWindow : Window
     private readonly
         MetadataApplyRequestIsolationFactoryTestRunner
             _metadataApplyRequestIsolationFactoryTestRunner;
+
+    private readonly
+        MetadataApplicationIsolatedExecutorTestRunner
+            _metadataApplicationIsolatedExecutorTestRunner;
+
+    private readonly MetadataApplicationIsolatedExecutor
+            _metadataApplicationIsolatedExecutor;
 
     private SimulationPlanViewModel?
         _currentSimulationPlan;
@@ -387,6 +395,12 @@ public partial class MainWindow : Window
 
         _metadataApplyRequestIsolationFactoryTestRunner =
             new MetadataApplyRequestIsolationFactoryTestRunner();
+
+        _metadataApplicationIsolatedExecutorTestRunner =
+            new MetadataApplicationIsolatedExecutorTestRunner();
+
+        _metadataApplicationIsolatedExecutor =
+            new MetadataApplicationIsolatedExecutor();
     }
 
     /// <summary>
@@ -415,9 +429,6 @@ public partial class MainWindow : Window
 
         AudioFilesDataGrid.SelectedItem =
             null;
-
-        SetCurrentSimulationPlan(
-            null);
 
         SetCurrentSimulationPlan(
             null);
@@ -474,6 +485,9 @@ public partial class MainWindow : Window
         AudioFilesDataGrid.SelectedItem =
             null;
 
+        SetCurrentSimulationPlan(
+            null);
+
         UpdateSelectedFileButtons();
 
         SaveProjectButton.IsEnabled =
@@ -497,7 +511,13 @@ public partial class MainWindow : Window
     /// Este incremento todavía no ejecuta el coordinador ni modifica
     /// archivos.
     /// </summary>
-    private void ApplyChangesButton_Click(
+    /// <summary>
+    /// Confirma los cambios aprobados y ejecuta el pipeline completo
+    /// exclusivamente sobre una copia temporal aislada.
+    ///
+    /// El archivo original nunca se entrega al escritor.
+    /// </summary>
+    private async void ApplyChangesButton_Click(
         object sender,
         RoutedEventArgs e)
     {
@@ -525,13 +545,15 @@ public partial class MainWindow : Window
         MessageBoxResult confirmation =
             MessageBox.Show(
                 this,
-                $"Se aplicarán {approvedChangeCount} cambio(s) " +
-                $"aprobado(s) al archivo:\n\n" +
-                $"{_currentSimulationPlan.FileName}\n\n" +
-                "Antes de escribir los metadatos se creará y " +
-                "verificará un respaldo.\n\n" +
+                $"Se ejecutarán {approvedChangeCount} cambio(s) " +
+                $"aprobado(s) sobre una copia temporal del archivo:" +
+                $"\n\n{_currentSimulationPlan.FileName}\n\n" +
+                "El archivo original permanecerá protegido y no " +
+                "será entregado al escritor.\n\n" +
+                "La copia temporal y su respaldo serán eliminados " +
+                "después de finalizar las verificaciones.\n\n" +
                 "¿Desea continuar?",
-                "Confirmar aplicación de metadatos",
+                "Confirmar ejecución aislada",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning,
                 MessageBoxResult.No);
@@ -539,18 +561,151 @@ public partial class MainWindow : Window
         if (confirmation != MessageBoxResult.Yes)
         {
             AppendLog(
-                "La aplicación de cambios fue cancelada por el usuario.");
+                "La ejecución aislada fue cancelada por el usuario.");
 
             return;
         }
 
+        ApplyChangesButton.IsEnabled =
+            false;
+
         AppendLog(
-            $"Aplicación confirmada para " +
+            $"Ejecución aislada confirmada para " +
             $"{approvedChangeCount} cambio(s) aprobado(s).");
 
         AppendLog(
-            "La ejecución productiva todavía no está habilitada " +
-            "en este incremento. Ningún archivo fue modificado.");
+            "Preparando una copia temporal protegida.");
+
+        try
+        {
+            MetadataApplyRequestFactory requestFactory =
+                new();
+
+            MetadataApplyRequest request =
+                requestFactory.Create(
+                    _currentSimulationPlan);
+
+            MetadataApplicationIsolatedExecutionResult result =
+                await _metadataApplicationIsolatedExecutor
+                    .ExecuteAsync(
+                        request);
+
+            AppendLog(
+                "=== Aplicación aprobada sobre copia aislada ===");
+
+            AppendLog(
+                $"Entorno aislado preparado: " +
+                $"{ToSpanish(
+                    result.IsolationWasPrepared)}");
+
+            AppendLog(
+                $"Pipeline completado: " +
+                $"{ToSpanish(
+                    result.PipelineWasSuccessful)}");
+
+            AppendLog(
+                $"Archivo original intacto: " +
+                $"{ToSpanish(
+                    result.OriginalFileRemainedUnchanged)}");
+
+            AppendLog(
+                $"Copia temporal modificada: " +
+                $"{ToSpanish(
+                    result.WorkingCopyWasModified)}");
+
+            AppendLog(
+                $"Respaldo inicial preservado: " +
+                $"{ToSpanish(
+                    result.InitialBackupWasPreserved)}");
+
+            AppendLog(
+                $"Limpieza temporal correcta: " +
+                $"{ToSpanish(
+                    result.CleanupWasSuccessful)}");
+
+            if (result.PipelineResult is not null)
+            {
+                AppendLog(
+                    $"Estado del pipeline: " +
+                    $"{result.PipelineResult.StopReason}");
+
+                AppendLog(
+                    $"Etapas correctas: " +
+                    $"{result.PipelineResult
+                        .SuccessfulStageCount}");
+
+                AppendLog(
+                    $"Campos aplicados en la copia: " +
+                    $"{result.PipelineResult
+                        .ApplyResult?
+                        .SuccessfulFieldCount ?? 0}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    result.ErrorMessage))
+            {
+                AppendLog(
+                    $"Error: {result.ErrorMessage}");
+            }
+
+            AppendLog(
+                $"Ejecución aislada correcta: " +
+                $"{ToSpanish(
+                    result.WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {result.Summary}");
+
+            AppendLog(
+                "=== Fin de la aplicación aislada ===");
+
+            if (result.WasSuccessful)
+            {
+                MessageBox.Show(
+                    this,
+                    "La ejecución sobre la copia temporal terminó " +
+                    "correctamente.\n\n" +
+                    "El archivo original permaneció intacto.\n\n" +
+                    "Todavía no se han aplicado cambios al archivo " +
+                    "original.",
+                    "Ejecución aislada completada",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    this,
+                    "La ejecución aislada no superó todas las " +
+                    "comprobaciones.\n\n" +
+                    "Revise el Registro de actividad para obtener " +
+                    "más información.\n\n" +
+                    "El archivo original no debe considerarse " +
+                    "modificado por esta operación.",
+                    "Ejecución aislada incompleta",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+        catch (Exception exception)
+        {
+            AppendLog(
+                "No fue posible completar la ejecución aislada. " +
+                $"Detalle: {exception.Message}");
+
+            MessageBox.Show(
+                this,
+                "No fue posible completar la ejecución aislada.\n\n" +
+                "Revise el Registro de actividad para obtener más " +
+                "información.",
+                "Error de ejecución aislada",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            UpdateApplyChangesButtonState();
+        }
     }
 
     /// <summary>
@@ -1223,6 +1378,97 @@ public partial class MainWindow : Window
 
             AppendLog(
                 "=== Fin de la prueba de solicitudes aisladas ===");
+
+            AppendLog(
+                "Iniciando prueba integral del ejecutor aislado. " +
+                "El archivo original permanecerá protegido.");
+
+            MetadataApplicationIsolatedExecutorTestResult
+                isolatedExecutorTestResult =
+                    await _metadataApplicationIsolatedExecutorTestRunner
+                        .RunAsync(
+                            filePath);
+
+            AppendLog(
+                "=== Ejecutor coordinado sobre copia aislada ===");
+
+            foreach (string message
+                in isolatedExecutorTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Entorno aislado preparado: " +
+                $"{ToSpanish(
+                    isolatedExecutorTestResult
+                        .IsolationWasPrepared)}");
+
+            AppendLog(
+                $"Pipeline coordinado correcto: " +
+                $"{ToSpanish(
+                    isolatedExecutorTestResult
+                        .PipelineWasSuccessful)}");
+
+            AppendLog(
+                $"Archivo original intacto: " +
+                $"{ToSpanish(
+                    isolatedExecutorTestResult
+                        .OriginalFileRemainedUnchanged)}");
+
+            AppendLog(
+                $"Copia temporal modificada: " +
+                $"{ToSpanish(
+                    isolatedExecutorTestResult
+                        .WorkingCopyWasModified)}");
+
+            AppendLog(
+                $"Respaldo inicial preservado: " +
+                $"{ToSpanish(
+                    isolatedExecutorTestResult
+                        .InitialBackupWasPreserved)}");
+
+            AppendLog(
+                $"Limpieza temporal correcta: " +
+                $"{ToSpanish(
+                    isolatedExecutorTestResult
+                        .CleanupWasSuccessful)}");
+
+            AppendLog(
+                $"Género solicitado: " +
+                $"{isolatedExecutorTestResult.RequestedGenre}");
+
+            AppendLog(
+                $"Género persistido: " +
+                $"{isolatedExecutorTestResult.PersistedGenre}");
+
+            AppendLog(
+                $"Género verificado: " +
+                $"{ToSpanish(
+                    isolatedExecutorTestResult
+                        .GenreWasPersisted)}");
+
+            if (!string.IsNullOrWhiteSpace(
+                    isolatedExecutorTestResult.ErrorMessage))
+            {
+                AppendLog(
+                    $"Error del ejecutor aislado: " +
+                    $"{isolatedExecutorTestResult.ErrorMessage}");
+            }
+
+            AppendLog(
+                $"Prueba del ejecutor aislado correcta: " +
+                $"{ToSpanish(
+                    isolatedExecutorTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: " +
+                $"{isolatedExecutorTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la prueba del ejecutor aislado ===");
 
             await RunMetadataApplicationPipelineDiagnosticAsync(
                 filePath);

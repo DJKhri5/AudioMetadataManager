@@ -82,6 +82,16 @@ Semantic Versioning where applicable.
   to temporary working copies while preserving request data.
 - Added controlled coverage for isolated request preparation.
 - Added a resizable activity log area to the main window.
+- Added `MetadataApplicationIsolatedExecutionResult` to consolidate
+  pipeline, isolation, verification, cleanup, and error evidence.
+- Added `MetadataApplicationIsolatedExecutor` to coordinate complete
+  metadata application over temporary working copies.
+- Added controlled end-to-end coverage for the coordinated isolated
+  executor.
+- Added isolated pipeline execution from the approved-changes action in
+  `MainWindow`.
+- Added user-facing completion and failure reporting for isolated
+  application operations.
 
 ### Changed
 
@@ -155,6 +165,18 @@ Semantic Versioning where applicable.
   between the file table, details, and activity log.
 - Integrated isolated request factory diagnostics into the temporary
   technical diagnostic workflow.
+- Converted `ApplyChangesButton_Click` to an asynchronous isolated
+  application workflow.
+- Replaced the provisional apply confirmation behavior with execution of
+  the complete five-stage pipeline over a temporary working copy.
+- Updated the apply confirmation message to explain temporary-copy
+  execution, original-file protection, and automatic cleanup.
+- Routed approved simulation plans through `MetadataApplyRequestFactory`
+  and `MetadataApplicationIsolatedExecutor`.
+- Temporarily disabled the apply button while an isolated execution is in
+  progress.
+- Extended the temporary technical diagnostic workflow with coordinated
+  isolated-executor validation.
 
 ### Fixed
 
@@ -193,6 +215,13 @@ Semantic Versioning where applicable.
   approved changes are no longer available.
 - Prevented the activity log from becoming effectively unusable at the
   default window size.
+- Removed a duplicated active-plan reset from `ScanButton_Click`.
+- Prevented a simulation plan from remaining active after selecting a
+  different library folder.
+- Prevented repeated apply-button activation while an isolated pipeline
+  execution is in progress.
+- Prevented the approved-changes action from delivering the original file
+  path directly to the metadata writer.
 
 ### Internal
 
@@ -298,3 +327,19 @@ Semantic Versioning where applicable.
 - Revalidated preservation of the original FLAC file and its two embedded
   pictures.
 - Added a `GridSplitter` between the details panel and activity log.
+- Added `MetadataApplicationIsolatedExecutorTestResult`.
+- Added `MetadataApplicationIsolatedExecutorTestRunner`.
+- Verified preparation of the isolated execution environment.
+- Verified complete coordinator and five-stage pipeline execution over a
+  temporary FLAC working copy.
+- Verified persistence of the requested genre value.
+- Verified that the original FLAC file remained unchanged.
+- Verified that the temporary working copy changed.
+- Verified preservation of the initial working-copy backup.
+- Verified successful removal of the isolated execution directory.
+- Revalidated embedded-artwork preservation with two FLAC pictures.
+- Integrated temporary diagnostic reporting for the coordinated isolated
+  executor.
+- Validated approved isolated execution from the main-window apply action.
+- Verified five successful stages and one applied field from the
+  user-initiated isolated workflow.
