@@ -20,6 +20,7 @@ using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.MetadataSources.Pipeline;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Pipeline.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation.Application.Coordination;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Mapping;
 using AudioMetadataManager.UI.Services.Simulation.Application.Models;
@@ -129,6 +130,9 @@ public partial class MainWindow : Window
 
     private readonly MetadataApplicationIsolatedExecutor
             _metadataApplicationIsolatedExecutor;
+
+    private readonly MetadataProductiveApplicationCoordinator
+            _metadataProductiveApplicationCoordinator;
 
     private SimulationPlanViewModel?
         _currentSimulationPlan;
@@ -436,6 +440,9 @@ public partial class MainWindow : Window
 
         _metadataApplicationIsolatedExecutor =
             new MetadataApplicationIsolatedExecutor();
+
+        _metadataProductiveApplicationCoordinator =
+            new MetadataProductiveApplicationCoordinator();
     }
 
     /// <summary>
@@ -620,10 +627,43 @@ public partial class MainWindow : Window
                 requestFactory.Create(
                     _currentSimulationPlan);
 
-            MetadataApplicationIsolatedExecutionResult result =
-                await _metadataApplicationIsolatedExecutor
-                    .ExecuteAsync(
+            MetadataProductiveApplicationResult productiveResult =
+                await _metadataProductiveApplicationCoordinator
+                    .PrepareAsync(
                         request);
+
+            MetadataApplicationIsolatedExecutionResult? result =
+                productiveResult.IsolatedExecutionResult;
+
+            if (result is null)
+            {
+                AppendLog(
+                    "La preparación productiva no produjo un resultado " +
+                    "aislado disponible.");
+
+                if (!string.IsNullOrWhiteSpace(
+                        productiveResult.ErrorMessage))
+                {
+                    AppendLog(
+                        $"Error: {productiveResult.ErrorMessage}");
+                }
+
+                AppendLog(
+                    $"Resumen: {productiveResult.Summary}");
+
+                MessageBox.Show(
+                    this,
+                    "No fue posible preparar una copia verificada para la " +
+                    "segunda confirmación.\n\n" +
+                    "El archivo original permaneció intacto.\n\n" +
+                    "Revise el Registro de actividad para obtener más " +
+                    "información.",
+                    "Preparación productiva incompleta",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return;
+            }
 
             AppendLog(
                 "=== Aplicación aprobada sobre copia aislada ===");
@@ -654,9 +694,14 @@ public partial class MainWindow : Window
                     result.InitialBackupWasPreserved)}");
 
             AppendLog(
-                $"Limpieza temporal correcta: " +
+                $"Entorno verificado conservado: " +
                 $"{ToSpanish(
-                    result.CleanupWasSuccessful)}");
+                    result.EnvironmentWasPreserved)}");
+
+            AppendLog(
+                $"Copia disponible para segunda confirmación: " +
+                $"{ToSpanish(
+                    productiveResult.VerifiedCopyWasPrepared)}");
 
             if (result.PipelineResult is not null)
             {
@@ -692,32 +737,141 @@ public partial class MainWindow : Window
                 $"Resumen: {result.Summary}");
 
             AppendLog(
-                "=== Fin de la aplicación aislada ===");
+                "=== Fin de la preparación productiva ===");
 
-            if (result.WasSuccessful)
+            if (productiveResult.VerifiedCopyWasPrepared)
             {
-                MessageBox.Show(
-                    this,
-                    "La ejecución sobre la copia temporal terminó " +
-                    "correctamente.\n\n" +
-                    "El archivo original permaneció intacto.\n\n" +
-                    "Todavía no se han aplicado cambios al archivo " +
-                    "original.",
-                    "Ejecución aislada completada",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                MessageBoxResult confirmationResult =
+                    MessageBox.Show(
+                        this,
+                        "La copia temporal fue preparada y verificada " +
+                        "correctamente.\n\n" +
+                        "El archivo original permaneció intacto.\n\n" +
+                        "¿Desea promover ahora la copia verificada y aplicar " +
+                        "los cambios al archivo original?\n\n" +
+                        "Seleccione Sí para aplicar los cambios o No para " +
+                        "cancelar la promoción.",
+                        "Segunda confirmación requerida",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning,
+                        MessageBoxResult.No);
+
+                MetadataPromotionDecision promotionDecision =
+                    confirmationResult == MessageBoxResult.Yes
+                        ? MetadataPromotionDecision.Approved
+                        : MetadataPromotionDecision.Declined;
+
+                AppendLog(
+                    promotionDecision ==
+                        MetadataPromotionDecision.Approved
+                        ? "El usuario aprobó la promoción productiva."
+                        : "El usuario rechazó la promoción productiva.");
+
+                MetadataProductiveApplicationResult completedResult =
+                    await _metadataProductiveApplicationCoordinator
+                        .CompleteAsync(
+                            productiveResult,
+                            promotionDecision);
+
+                AppendLog(
+                    "=== Finalización productiva ===");
+
+                foreach (string message
+                    in completedResult.Messages)
+                {
+                    AppendLog(
+                        $"- {message}");
+                }
+
+                AppendLog(
+                    $"Promoción aprobada: " +
+                    $"{ToSpanish(
+                        completedResult.PromotionWasApproved)}");
+
+                AppendLog(
+                    $"Promoción rechazada: " +
+                    $"{ToSpanish(
+                        completedResult.PromotionWasDeclined)}");
+
+                AppendLog(
+                    $"Promoción completada: " +
+                    $"{ToSpanish(
+                        completedResult.WasSuccessfullyPromoted)}");
+
+                AppendLog(
+                    $"Rechazo seguro: " +
+                    $"{ToSpanish(
+                        completedResult.WasSafelyDeclined)}");
+
+                AppendLog(
+                    $"Archivo original en estado seguro: " +
+                    $"{ToSpanish(
+                        completedResult.OriginalEndedInSafeState)}");
+
+                AppendLog(
+                    $"Estado final controlado: " +
+                    $"{ToSpanish(
+                        completedResult.EndedInControlledState)}");
+
+                if (!string.IsNullOrWhiteSpace(
+                        completedResult.ErrorMessage))
+                {
+                    AppendLog(
+                        $"Error: {completedResult.ErrorMessage}");
+                }
+
+                AppendLog(
+                    $"Resumen: {completedResult.Summary}");
+
+                AppendLog(
+                    "=== Fin de la finalización productiva ===");
+
+                if (completedResult.WasSuccessfullyPromoted)
+                {
+                    MessageBox.Show(
+                        this,
+                        "Los cambios fueron aplicados correctamente.\n\n" +
+                        "Se creó y verificó un respaldo antes de modificar " +
+                        "el archivo original.\n\n" +
+                        "La escritura final también fue verificada.",
+                        "Cambios aplicados",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                else if (completedResult.WasSafelyDeclined)
+                {
+                    MessageBox.Show(
+                        this,
+                        "La promoción fue cancelada.\n\n" +
+                        "El archivo original permaneció intacto y el entorno " +
+                        "temporal fue eliminado de forma segura.",
+                        "Aplicación cancelada",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        this,
+                        "La finalización productiva no terminó correctamente.\n\n" +
+                        "El sistema intentó mantener el archivo en un estado " +
+                        "seguro.\n\n" +
+                        "Revise el Registro de actividad.",
+                        "Finalización productiva incompleta",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
             }
             else
             {
                 MessageBox.Show(
                     this,
-                    "La ejecución aislada no superó todas las " +
+                    "La preparación productiva no superó todas las " +
                     "comprobaciones.\n\n" +
                     "Revise el Registro de actividad para obtener " +
                     "más información.\n\n" +
-                    "El archivo original no debe considerarse " +
-                    "modificado por esta operación.",
-                    "Ejecución aislada incompleta",
+                    "El archivo original permaneció protegido.",
+                    "Preparación productiva incompleta",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }

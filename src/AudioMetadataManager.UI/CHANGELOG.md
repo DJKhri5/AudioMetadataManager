@@ -116,6 +116,11 @@ Semantic Versioning where applicable.
 - Added controlled cleanup restricted to valid reserved completions.
 - Added controlled coverage for safe `Declined` completion.
 - Added controlled coverage for successful `Approved` promotion over temporary destinations.
+- Added real two-phase productive application integration to `MainWindow`.
+- Added explicit user-facing second confirmation before modifying an original audio file.
+- Added UI handling for `Approved` and `Declined` productive promotion decisions.
+- Added productive completion reporting for successful promotion, safe rejection, and incomplete finalization.
+- Added auditable UI logging for productive backup, promotion, cleanup, and final safety state.
 
 ### Changed
 
@@ -214,6 +219,12 @@ Semantic Versioning where applicable.
   preserved executions, controlled promotion, and automatic rollback.
 - Extended the technical diagnostic with productive coordinator preparation, rejection, approval, promotion, verification, and cleanup evidence.
 - Restricted isolated-environment cleanup so invalid promotion decisions do not consume pending preparations.
+- Replaced direct isolated execution in `ApplyChangesButton_Click` with `MetadataProductiveApplicationCoordinator.PrepareAsync`.
+- Updated the apply workflow to preserve verified working copies until the user completes the second confirmation.
+- Connected the approved-changes action to `MetadataProductiveApplicationCoordinator.CompleteAsync`.
+- Updated the apply button to promote verified copies only after an explicit `Approved` decision.
+- Updated the declined path to remove the preserved environment without modifying the original file.
+- Updated user-facing messages to distinguish productive preparation, successful application, safe cancellation, and incomplete finalization.
 
 ### Fixed
 
