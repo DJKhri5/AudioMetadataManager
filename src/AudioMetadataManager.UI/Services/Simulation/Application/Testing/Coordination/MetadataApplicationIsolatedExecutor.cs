@@ -70,13 +70,37 @@ public sealed class MetadataApplicationIsolatedExecutor
     /// Ejecuta el pipeline sobre una copia temporal y consolida
     /// las comprobaciones funcionales y de seguridad.
     /// </summary>
-    public async Task<MetadataApplicationIsolatedExecutionResult>
+    /// <summary>
+    /// Ejecuta utilizando el comportamiento seguro predeterminado,
+    /// que elimina siempre el entorno temporal al finalizar.
+    /// </summary>
+    public Task<MetadataApplicationIsolatedExecutionResult>
         ExecuteAsync(
             MetadataApplyRequest request,
             CancellationToken cancellationToken = default)
     {
+        return ExecuteAsync(
+            request,
+            MetadataApplicationIsolatedExecutionOptions
+                .SafeCleanupDefault,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Ejecuta el pipeline sobre una copia temporal utilizando la
+    /// política indicada para conservar o eliminar el entorno.
+    /// </summary>
+    public async Task<MetadataApplicationIsolatedExecutionResult>
+        ExecuteAsync(
+            MetadataApplyRequest request,
+            MetadataApplicationIsolatedExecutionOptions options,
+            CancellationToken cancellationToken = default)
+    {
         ArgumentNullException.ThrowIfNull(
             request);
+
+        ArgumentNullException.ThrowIfNull(
+            options);
 
         FileIsolationContext? isolationContext =
             null;
@@ -90,6 +114,9 @@ public sealed class MetadataApplicationIsolatedExecutor
                 null;
 
         bool cleanupWasSuccessful =
+            false;
+
+        bool environmentWasPreserved =
             false;
 
         string errorMessage =
@@ -132,9 +159,41 @@ public sealed class MetadataApplicationIsolatedExecutor
         {
             if (isolationContext is not null)
             {
-                cleanupWasSuccessful =
-                    _isolationHarness.TryCleanup(
-                        isolationContext);
+                bool executionWasSuccessful =
+                    string.IsNullOrWhiteSpace(
+                        errorMessage) &&
+                    isolationContext.IsCreated &&
+                    pipelineResult?.WasSuccessful == true &&
+                    isolationVerification?
+                        .OriginalFileRemainedUnchanged == true &&
+                    isolationVerification?
+                        .WorkingCopyWasModified == true &&
+                    isolationVerification?
+                        .BackupMatchesInitialWorkingCopy == true;
+
+                bool preserveSuccessfulEnvironment =
+                    executionWasSuccessful &&
+                    options.PreserveVerifiedWorkingCopy;
+
+                if (preserveSuccessfulEnvironment)
+                {
+                    environmentWasPreserved =
+                        true;
+                }
+                else
+                {
+                    bool shouldCleanup =
+                        executionWasSuccessful
+                            ? options.CleanupAfterExecution
+                            : options.CleanupAfterFailure;
+
+                    if (shouldCleanup)
+                    {
+                        cleanupWasSuccessful =
+                            _isolationHarness.TryCleanup(
+                                isolationContext);
+                    }
+                }
             }
         }
 
@@ -151,6 +210,9 @@ public sealed class MetadataApplicationIsolatedExecutor
 
             CleanupWasSuccessful =
                 cleanupWasSuccessful,
+
+            EnvironmentWasPreserved =
+                environmentWasPreserved,
 
             ErrorMessage =
                 errorMessage

@@ -92,6 +92,22 @@ Semantic Versioning where applicable.
   `MainWindow`.
 - Added user-facing completion and failure reporting for isolated
   application operations.
+- Added configurable lifecycle options for isolated metadata application
+  executions.
+- Added controlled preservation of successfully verified working copies.
+- Added `MetadataApplicationPromotionResult` for consolidated promotion,
+  backup, verification, rollback, and safety evidence.
+- Added `IMetadataApplicationPromotionService` and
+  `MetadataApplicationPromotionService`.
+- Added reusable `FileSha256Service` for binary file-integrity checks.
+- Added productive backup creation before controlled destination
+  replacement.
+- Added same-directory staging files for controlled promotion and rollback.
+- Added configurable promotion options for normal execution and simulated
+  post-replacement verification failures.
+- Added automatic rollback from a verified productive backup.
+- Added controlled temporary-file coverage for successful promotion and
+  automatic rollback.
 
 ### Changed
 
@@ -177,6 +193,17 @@ Semantic Versioning where applicable.
   progress.
 - Extended the temporary technical diagnostic workflow with coordinated
   isolated-executor validation.
+- Extended `MetadataApplicationIsolatedExecutionResult` to distinguish
+  automatic cleanup from intentional environment preservation.
+- Updated `MetadataApplicationIsolatedExecutor` to support configurable
+  cleanup and successful working-copy preservation.
+- Preserved the existing safe-cleanup behavior for all current callers.
+- Refactored `FileIsolationTestHarness` to use the shared
+  `FileSha256Service`.
+- Extended the promotion service contract with configurable execution
+  options.
+- Updated the temporary technical diagnostic workflow to validate
+  preserved executions, controlled promotion, and automatic rollback.
 
 ### Fixed
 
@@ -222,6 +249,15 @@ Semantic Versioning where applicable.
   execution is in progress.
 - Prevented the approved-changes action from delivering the original file
   path directly to the metadata writer.
+- Prevented preserved successful executions from being reported as failed
+  only because automatic cleanup was intentionally deferred.
+- Prevented a destination replacement from starting before its productive
+  backup was created and verified.
+- Prevented unverified staging files from replacing a destination.
+- Prevented a failed post-replacement verification from leaving the
+  destination without an automatic restoration attempt.
+- Prevented promotion and rollback helper files from remaining after a
+  completed operation whenever cleanup succeeds.
 
 ### Internal
 
@@ -343,3 +379,28 @@ Semantic Versioning where applicable.
 - Validated approved isolated execution from the main-window apply action.
 - Verified five successful stages and one applied field from the
   user-initiated isolated workflow.
+- Added `MetadataApplicationIsolatedExecutionOptions`.
+- Added `MetadataApplicationPreservedExecutionTestResult`.
+- Added `MetadataApplicationPreservedExecutionTestRunner`.
+- Added `MetadataApplicationPromotionOptions`.
+- Added `MetadataApplicationPromotionTestResult`.
+- Added `MetadataApplicationPromotionTestRunner`.
+- Added `MetadataApplicationRollbackTestResult`.
+- Added `MetadataApplicationRollbackTestRunner`.
+- Verified deferred automatic cleanup after a successful isolated
+  execution.
+- Verified that a preserved working copy and its initial backup remained
+  available before explicit cleanup.
+- Verified successful manual cleanup of a preserved isolated environment.
+- Verified productive backup creation and SHA-256 validation.
+- Verified successful replacement of a temporary destination with a
+  verified working copy.
+- Verified that the promoted destination matched the verified copy.
+- Verified that the reference original remained unchanged.
+- Verified simulated post-replacement verification failure handling.
+- Verified automatic rollback from the productive backup.
+- Verified restoration of the destination to its original SHA-256 hash.
+- Verified that promotion and rollback tests removed their temporary
+  environments and temporary backups.
+- Revalidated the complete five-stage pipeline and FLAC artwork
+  preservation after the promotion infrastructure changes.

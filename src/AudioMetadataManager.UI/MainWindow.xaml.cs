@@ -107,6 +107,18 @@ public partial class MainWindow : Window
         MetadataApplicationIsolatedExecutorTestRunner
             _metadataApplicationIsolatedExecutorTestRunner;
 
+    private readonly
+        MetadataApplicationPreservedExecutionTestRunner
+            _metadataApplicationPreservedExecutionTestRunner;
+
+    private readonly
+        MetadataApplicationPromotionTestRunner
+            _metadataApplicationPromotionTestRunner;
+
+    private readonly
+        MetadataApplicationRollbackTestRunner
+            _metadataApplicationRollbackTestRunner;
+
     private readonly MetadataApplicationIsolatedExecutor
             _metadataApplicationIsolatedExecutor;
 
@@ -398,6 +410,15 @@ public partial class MainWindow : Window
 
         _metadataApplicationIsolatedExecutorTestRunner =
             new MetadataApplicationIsolatedExecutorTestRunner();
+
+        _metadataApplicationPreservedExecutionTestRunner =
+            new MetadataApplicationPreservedExecutionTestRunner();
+
+        _metadataApplicationPromotionTestRunner =
+            new MetadataApplicationPromotionTestRunner();
+
+        _metadataApplicationRollbackTestRunner =
+            new MetadataApplicationRollbackTestRunner();
 
         _metadataApplicationIsolatedExecutor =
             new MetadataApplicationIsolatedExecutor();
@@ -1469,6 +1490,331 @@ public partial class MainWindow : Window
 
             AppendLog(
                 "=== Fin de la prueba del ejecutor aislado ===");
+
+            AppendLog(
+                "Iniciando prueba de conservación controlada de una " +
+                "copia verificada.");
+
+            MetadataApplicationPreservedExecutionTestResult
+                preservedExecutionTestResult =
+                    await _metadataApplicationPreservedExecutionTestRunner
+                        .RunAsync(
+                            filePath);
+
+            AppendLog(
+                "=== Conservación controlada de copia verificada ===");
+
+            foreach (string message
+                in preservedExecutionTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Ejecución correcta: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .ExecutionWasSuccessful)}");
+
+            AppendLog(
+                $"Entorno conservado: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .EnvironmentWasPreserved)}");
+
+            AppendLog(
+                $"Limpieza automática pospuesta: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .CleanupWasDeferred)}");
+
+            AppendLog(
+                $"Copia verificada disponible: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .WorkingCopyStillExisted)}");
+
+            AppendLog(
+                $"Respaldo inicial disponible: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .InitialBackupStillExisted)}");
+
+            AppendLog(
+                $"Archivo original intacto: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .OriginalFileRemainedUnchanged)}");
+
+            AppendLog(
+                $"Copia conservada modificada: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .WorkingCopyWasModified)}");
+
+            AppendLog(
+                $"Limpieza manual correcta: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .ManualCleanupWasSuccessful)}");
+
+            AppendLog(
+                $"Carpeta temporal eliminada: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .TemporaryDirectoryWasRemoved)}");
+
+            if (!string.IsNullOrWhiteSpace(
+                    preservedExecutionTestResult.ErrorMessage))
+            {
+                AppendLog(
+                    $"Error de conservación controlada: " +
+                    $"{preservedExecutionTestResult.ErrorMessage}");
+            }
+
+            AppendLog(
+                $"Prueba de conservación correcta: " +
+                $"{ToSpanish(
+                    preservedExecutionTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: " +
+                $"{preservedExecutionTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la prueba de conservación controlada ===");
+
+            AppendLog(
+                "Iniciando prueba de promoción controlada sobre archivos " +
+                "temporales. El archivo seleccionado no será modificado.");
+
+            MetadataApplicationPromotionTestResult
+                promotionTestResult =
+                    await _metadataApplicationPromotionTestRunner
+                        .RunAsync(
+                            filePath);
+
+            AppendLog(
+                "=== Promoción controlada sobre destino temporal ===");
+
+            foreach (string message
+                in promotionTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Entorno temporal preparado: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .TestEnvironmentWasPrepared)}");
+
+            AppendLog(
+                $"Entradas validadas: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .InputsWereValidated)}");
+
+            AppendLog(
+                $"Respaldo productivo creado: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .ProductiveBackupWasCreated)}");
+
+            AppendLog(
+                $"Respaldo productivo verificado: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .ProductiveBackupWasVerified)}");
+
+            AppendLog(
+                $"Sustitución ejecutada: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .ReplacementWasExecuted)}");
+
+            AppendLog(
+                $"Destino promovido verificado: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .PromotedFileWasVerified)}");
+
+            AppendLog(
+                $"Original de referencia intacto: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .ReferenceOriginalRemainedUnchanged)}");
+
+            AppendLog(
+                $"Copia verificada preservada: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .VerifiedCopyWasPreserved)}");
+
+            AppendLog(
+                $"Reversión no requerida: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .RollbackWasNotRequired)}");
+
+            AppendLog(
+                $"Entorno temporal eliminado: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .TestEnvironmentWasRemoved)}");
+
+            AppendLog(
+                $"Respaldo temporal eliminado: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .TemporaryBackupWasRemoved)}");
+
+            if (!string.IsNullOrWhiteSpace(
+                    promotionTestResult.ErrorMessage))
+            {
+                AppendLog(
+                    $"Error de promoción controlada: " +
+                    $"{promotionTestResult.ErrorMessage}");
+            }
+
+            AppendLog(
+                $"Prueba de promoción correcta: " +
+                $"{ToSpanish(
+                    promotionTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {promotionTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la prueba de promoción controlada ===");
+
+            AppendLog(
+                "Iniciando prueba de reversión automática sobre archivos " +
+                "temporales. El archivo seleccionado no será modificado.");
+
+            MetadataApplicationRollbackTestResult
+                rollbackTestResult =
+                    await _metadataApplicationRollbackTestRunner
+                        .RunAsync(
+                            filePath);
+
+            AppendLog(
+                "=== Reversión automática sobre destino temporal ===");
+
+            foreach (string message
+                in rollbackTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Entorno temporal preparado: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .TestEnvironmentWasPrepared)}");
+
+            AppendLog(
+                $"Entradas validadas: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .InputsWereValidated)}");
+
+            AppendLog(
+                $"Respaldo productivo creado: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .ProductiveBackupWasCreated)}");
+
+            AppendLog(
+                $"Respaldo productivo verificado: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .ProductiveBackupWasVerified)}");
+
+            AppendLog(
+                $"Sustitución temporal ejecutada: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .ReplacementWasExecuted)}");
+
+            AppendLog(
+                $"Fallo de verificación simulado: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .VerificationFailureWasSimulated)}");
+
+            AppendLog(
+                $"Reversión iniciada: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .RollbackWasAttempted)}");
+
+            AppendLog(
+                $"Reversión correcta: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .RollbackWasSuccessful)}");
+
+            AppendLog(
+                $"Destino restaurado: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .DestinationWasRestored)}");
+
+            AppendLog(
+                $"Original de referencia intacto: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .ReferenceOriginalRemainedUnchanged)}");
+
+            AppendLog(
+                $"Copia verificada preservada: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .VerifiedCopyWasPreserved)}");
+
+            AppendLog(
+                $"Destino en estado seguro: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .DestinationEndedInSafeState)}");
+
+            AppendLog(
+                $"Entorno temporal eliminado: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .TestEnvironmentWasRemoved)}");
+
+            AppendLog(
+                $"Respaldo temporal eliminado: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .TemporaryBackupWasRemoved)}");
+
+            if (!string.IsNullOrWhiteSpace(
+                    rollbackTestResult.ExpectedErrorMessage))
+            {
+                AppendLog(
+                    $"Error esperado de la simulación: " +
+                    $"{rollbackTestResult.ExpectedErrorMessage}");
+            }
+
+            AppendLog(
+                $"Prueba de reversión correcta: " +
+                $"{ToSpanish(
+                    rollbackTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {rollbackTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la prueba de reversión automática ===");
 
             await RunMetadataApplicationPipelineDiagnosticAsync(
                 filePath);

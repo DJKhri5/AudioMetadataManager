@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Security.Cryptography;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.Infrastructure;
@@ -19,6 +18,30 @@ public sealed class FileIsolationTestHarness
 
     private const string DefaultTestFolderName =
         "FileIsolationTests";
+
+    private readonly FileSha256Service
+        _fileSha256Service;
+
+    /// <summary>
+    /// Crea el harness con el servicio de hash predeterminado.
+    /// </summary>
+    public FileIsolationTestHarness()
+        : this(
+            new FileSha256Service())
+    {
+    }
+
+    /// <summary>
+    /// Crea el harness con el servicio de hash proporcionado.
+    /// </summary>
+    public FileIsolationTestHarness(
+        FileSha256Service fileSha256Service)
+    {
+        _fileSha256Service =
+            fileSha256Service ??
+            throw new ArgumentNullException(
+                nameof(fileSha256Service));
+    }
 
     /// <summary>
     /// Crea una copia aislada y un respaldo independiente antes
@@ -96,17 +119,17 @@ public sealed class FileIsolationTestHarness
             cancellationToken.ThrowIfCancellationRequested();
 
             string originalHashBefore =
-                await ComputeSha256Async(
+                await _fileSha256Service.ComputeAsync(
                     normalizedOriginalPath,
                     cancellationToken);
 
             string workingCopyHashBefore =
-                await ComputeSha256Async(
+                await _fileSha256Service.ComputeAsync(
                     workingCopyPath,
                     cancellationToken);
 
             string workingBackupHash =
-                await ComputeSha256Async(
+                await _fileSha256Service.ComputeAsync(
                     workingBackupPath,
                     cancellationToken);
 
@@ -239,12 +262,12 @@ public sealed class FileIsolationTestHarness
         cancellationToken.ThrowIfCancellationRequested();
 
         string originalHashAfter =
-            await ComputeSha256Async(
+            await _fileSha256Service.ComputeAsync(
                 context.OriginalFilePath,
                 cancellationToken);
 
         string workingCopyHashAfter =
-            await ComputeSha256Async(
+            await _fileSha256Service.ComputeAsync(
                 context.WorkingCopyPath,
                 cancellationToken);
 
@@ -312,33 +335,6 @@ public sealed class FileIsolationTestHarness
 
         return TryDeleteDirectory(
             context.TestDirectoryPath);
-    }
-
-    private static async Task<string> ComputeSha256Async(
-        string filePath,
-        CancellationToken cancellationToken)
-    {
-        await using FileStream stream =
-            new(
-                filePath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                bufferSize:
-                    81920,
-                useAsync:
-                    true);
-
-        using SHA256 sha256 =
-            SHA256.Create();
-
-        byte[] hash =
-            await sha256.ComputeHashAsync(
-                stream,
-                cancellationToken);
-
-        return Convert.ToHexString(
-            hash);
     }
 
     private static string NormalizePath(

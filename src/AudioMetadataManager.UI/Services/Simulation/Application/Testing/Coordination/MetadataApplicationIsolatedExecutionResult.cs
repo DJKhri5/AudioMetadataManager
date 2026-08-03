@@ -39,11 +39,26 @@ public sealed class MetadataApplicationIsolatedExecutionResult
     public bool CleanupWasSuccessful { get; init; }
 
     /// <summary>
+    /// Indica si el entorno temporal se conservó intencionalmente
+    /// después de una ejecución satisfactoria.
+    /// </summary>
+    public bool EnvironmentWasPreserved { get; init; }
+
+    /// <summary>
     /// Mensaje de error capturado durante la preparación,
     /// ejecución, verificación o limpieza.
     /// </summary>
     public string ErrorMessage { get; init; } =
         string.Empty;
+
+    /// <summary>
+    /// Indica si el ciclo de vida del entorno terminó de forma
+    /// controlada, ya sea mediante limpieza o conservación
+    /// intencional.
+    /// </summary>
+    public bool EnvironmentLifecycleWasHandled =>
+        CleanupWasSuccessful ||
+        EnvironmentWasPreserved;
 
     /// <summary>
     /// Indica si el entorno aislado fue creado correctamente.
@@ -91,7 +106,7 @@ public sealed class MetadataApplicationIsolatedExecutionResult
         OriginalFileRemainedUnchanged &&
         WorkingCopyWasModified &&
         InitialBackupWasPreserved &&
-        CleanupWasSuccessful;
+        EnvironmentLifecycleWasHandled;
 
     /// <summary>
     /// Resumen compacto del resultado.
@@ -102,6 +117,15 @@ public sealed class MetadataApplicationIsolatedExecutionResult
         {
             if (WasSuccessful)
             {
+                if (EnvironmentWasPreserved)
+                {
+                    return
+                        "La aplicación aislada terminó correctamente, " +
+                        "el archivo original permaneció intacto y la " +
+                        "copia verificada fue conservada para una " +
+                        "operación posterior.";
+                }
+
                 return
                     "La aplicación aislada terminó correctamente, " +
                     "la copia temporal fue modificada, el respaldo " +
@@ -113,8 +137,8 @@ public sealed class MetadataApplicationIsolatedExecutionResult
                     ErrorMessage))
             {
                 return
-                    $"La aplicación aislada terminó con un error: " +
-                    $"{ErrorMessage}";
+                    "La aplicación aislada terminó con un error: " +
+                    ErrorMessage;
             }
 
             return
