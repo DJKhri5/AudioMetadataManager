@@ -119,6 +119,14 @@ public partial class MainWindow : Window
         MetadataApplicationRollbackTestRunner
             _metadataApplicationRollbackTestRunner;
 
+    private readonly
+        MetadataProductiveApplicationCoordinatorTestRunner
+            _metadataProductiveApplicationCoordinatorTestRunner;
+
+    private readonly
+        MetadataProductiveApplicationApprovedTestRunner
+            _metadataProductiveApplicationApprovedTestRunner;
+
     private readonly MetadataApplicationIsolatedExecutor
             _metadataApplicationIsolatedExecutor;
 
@@ -419,6 +427,12 @@ public partial class MainWindow : Window
 
         _metadataApplicationRollbackTestRunner =
             new MetadataApplicationRollbackTestRunner();
+
+        _metadataProductiveApplicationCoordinatorTestRunner =
+            new MetadataProductiveApplicationCoordinatorTestRunner();
+
+        _metadataProductiveApplicationApprovedTestRunner =
+            new MetadataProductiveApplicationApprovedTestRunner();
 
         _metadataApplicationIsolatedExecutor =
             new MetadataApplicationIsolatedExecutor();
@@ -1815,6 +1829,283 @@ public partial class MainWindow : Window
 
             AppendLog(
                 "=== Fin de la prueba de reversión automática ===");
+
+            AppendLog(
+                "Iniciando prueba controlada del coordinador productivo " +
+                "individual. El archivo seleccionado no será modificado.");
+
+            MetadataProductiveApplicationCoordinatorTestResult
+                productiveCoordinatorTestResult =
+                    await _metadataProductiveApplicationCoordinatorTestRunner
+                        .RunAsync(
+                            filePath);
+
+            AppendLog(
+                "=== Coordinador productivo individual temporal ===");
+
+            foreach (string message
+                in productiveCoordinatorTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Solicitud nula rechazada: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .NullRequestWasRejected)}");
+
+            AppendLog(
+                $"Copia verificada preparada: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .VerifiedCopyWasPrepared)}");
+
+            AppendLog(
+                $"Decisión de promoción pendiente: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .PromotionDecisionWasPending)}");
+
+            AppendLog(
+                $"Destino intacto durante preparación: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .OriginalRemainedUnchangedDuringPreparation)}");
+
+            AppendLog(
+                $"Decisión Declined procesada: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .DeclinedDecisionWasHandled)}");
+
+            AppendLog(
+                $"Promoción omitida tras rechazo: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .DeclinedDecisionSkippedPromotion)}");
+
+            AppendLog(
+                $"Destino seguro después del rechazo: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .DeclinedOriginalEndedInSafeState)}");
+
+            AppendLog(
+                $"Entorno aislado eliminado: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .DeclinedEnvironmentWasCleaned)}");
+
+            AppendLog(
+                $"Rechazo finalizado correctamente: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .DeclinedResultWasSuccessful)}");
+
+            AppendLog(
+                $"Decisión inválida rechazada: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .InvalidDecisionWasRejected)}");
+
+            AppendLog(
+                $"Reutilización de preparación rechazada: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .ReusedPreparationWasRejected)}");
+
+            AppendLog(
+                $"Entorno temporal general eliminado: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .TemporaryEnvironmentWasRemoved)}");
+
+            if (!string.IsNullOrWhiteSpace(
+                    productiveCoordinatorTestResult.ErrorMessage))
+            {
+                AppendLog(
+                    $"Error del coordinador productivo: " +
+                    $"{productiveCoordinatorTestResult.ErrorMessage}");
+            }
+
+            AppendLog(
+                $"Prueba del coordinador productivo correcta: " +
+                $"{ToSpanish(
+                    productiveCoordinatorTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: " +
+                $"{productiveCoordinatorTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la prueba del coordinador productivo ===");
+
+            AppendLog(
+                "Iniciando prueba controlada del camino Approved del " +
+                "coordinador productivo. El archivo seleccionado no será " +
+                "modificado.");
+
+            MetadataProductiveApplicationApprovedTestResult
+                productiveApprovedTestResult =
+                    await _metadataProductiveApplicationApprovedTestRunner
+                        .RunAsync(
+                            filePath);
+
+            AppendLog(
+                "=== Camino Approved del coordinador productivo ===");
+
+            foreach (string message
+                in productiveApprovedTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Entorno temporal preparado: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .TestEnvironmentWasPrepared)}");
+
+            AppendLog(
+                $"Copia verificada preparada: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .VerifiedCopyWasPrepared)}");
+
+            AppendLog(
+                $"Decisión de promoción pendiente: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .PromotionDecisionWasPending)}");
+
+            AppendLog(
+                $"Destino intacto durante preparación: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .DestinationRemainedUnchangedDuringPreparation)}");
+
+            AppendLog(
+                $"Decisión Approved procesada: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .ApprovedDecisionWasHandled)}");
+
+            AppendLog(
+                $"Promoción correcta: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .PromotionWasSuccessful)}");
+
+            AppendLog(
+                $"Respaldo productivo creado: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .ProductiveBackupWasCreated)}");
+
+            AppendLog(
+                $"Respaldo productivo verificado: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .ProductiveBackupWasVerified)}");
+
+            AppendLog(
+                $"Sustitución ejecutada: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .ReplacementWasExecuted)}");
+
+            AppendLog(
+                $"Destino promovido verificado: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .PromotedDestinationWasVerified)}");
+
+            AppendLog(
+                $"Género solicitado persistido: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .RequestedGenreWasPersisted)}");
+
+            AppendLog(
+                $"Género solicitado: " +
+                $"{productiveApprovedTestResult.RequestedGenre}");
+
+            AppendLog(
+                $"Género persistido: " +
+                $"{productiveApprovedTestResult.PersistedGenre}");
+
+            AppendLog(
+                $"Reversión no requerida: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .RollbackWasNotRequired)}");
+
+            AppendLog(
+                $"Original de referencia intacto: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .ReferenceOriginalRemainedUnchanged)}");
+
+            AppendLog(
+                $"Destino en estado seguro: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .DestinationEndedInSafeState)}");
+
+            AppendLog(
+                $"Limpieza final intentada: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .FinalCleanupWasAttempted)}");
+
+            AppendLog(
+                $"Limpieza final correcta: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .FinalCleanupWasSuccessful)}");
+
+            AppendLog(
+                $"Resultado productivo correcto: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .ProductiveResultWasSuccessful)}");
+
+            AppendLog(
+                $"Entorno temporal general eliminado: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .TemporaryEnvironmentWasRemoved)}");
+
+            AppendLog(
+                $"Respaldo productivo temporal eliminado: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .TemporaryProductiveBackupWasRemoved)}");
+
+            if (!string.IsNullOrWhiteSpace(
+                    productiveApprovedTestResult.ErrorMessage))
+            {
+                AppendLog(
+                    $"Error del camino Approved: " +
+                    $"{productiveApprovedTestResult.ErrorMessage}");
+            }
+
+            AppendLog(
+                $"Prueba Approved correcta: " +
+                $"{ToSpanish(
+                    productiveApprovedTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: " +
+                $"{productiveApprovedTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la prueba Approved del coordinador productivo ===");
 
             await RunMetadataApplicationPipelineDiagnosticAsync(
                 filePath);

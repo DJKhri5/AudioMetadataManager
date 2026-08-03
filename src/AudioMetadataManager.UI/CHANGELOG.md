@@ -108,6 +108,14 @@ Semantic Versioning where applicable.
 - Added automatic rollback from a verified productive backup.
 - Added controlled temporary-file coverage for successful promotion and
   automatic rollback.
+- Added `MetadataPromotionDecision` to represent the second-confirmation state.
+- Added `MetadataProductiveApplicationResult` to consolidate isolated preparation, promotion decisions, cleanup, and final safety evidence.
+- Added `IMetadataProductiveApplicationCoordinator` and `MetadataProductiveApplicationCoordinator`.
+- Added two-phase productive application coordination through `PrepareAsync` and `CompleteAsync`.
+- Added single-use protection for preserved productive preparations.
+- Added controlled cleanup restricted to valid reserved completions.
+- Added controlled coverage for safe `Declined` completion.
+- Added controlled coverage for successful `Approved` promotion over temporary destinations.
 
 ### Changed
 
@@ -204,6 +212,8 @@ Semantic Versioning where applicable.
   options.
 - Updated the temporary technical diagnostic workflow to validate
   preserved executions, controlled promotion, and automatic rollback.
+- Extended the technical diagnostic with productive coordinator preparation, rejection, approval, promotion, verification, and cleanup evidence.
+- Restricted isolated-environment cleanup so invalid promotion decisions do not consume pending preparations.
 
 ### Fixed
 
