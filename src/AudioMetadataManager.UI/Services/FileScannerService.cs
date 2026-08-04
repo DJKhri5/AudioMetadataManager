@@ -28,6 +28,98 @@ public class FileScannerService
     private readonly MusicAnalysisEngine _analysisEngine = new();
     private readonly AudioQualityAnalyzerService _qualityAnalyzer = new();
     private readonly FileSimulationService _simulationService = new();
+
+    /// <summary>
+    /// Lee un archivo compatible y construye su modelo completo
+    /// utilizando los mismos servicios empleados por el escaneo de
+    /// una biblioteca.
+    /// </summary>
+    public AudioFile? ScanFile(
+        string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(
+                filePath))
+        {
+            return null;
+        }
+
+        string normalizedFilePath;
+
+        try
+        {
+            normalizedFilePath =
+                Path.GetFullPath(
+                    filePath.Trim());
+        }
+        catch
+        {
+            return null;
+        }
+
+        if (!File.Exists(
+                normalizedFilePath))
+        {
+            return null;
+        }
+
+        string extension =
+            Path.GetExtension(
+                    normalizedFilePath)
+                .ToLowerInvariant();
+
+        if (!SupportedExtensions.Contains(
+                extension))
+        {
+            return null;
+        }
+
+        FileInfo info =
+            new(normalizedFilePath);
+
+        AudioFile audioFile =
+            new()
+            {
+                FileName =
+                    info.Name,
+
+                FullPath =
+                    info.FullName,
+
+                Extension =
+                    extension,
+
+                FileSizeBytes =
+                    info.Length,
+
+                Status =
+                    "Encontrado"
+            };
+
+        _metadataReader.ReadMetadata(
+            audioFile);
+
+        audioFile.QualityAnalysis =
+            _qualityAnalyzer.Analyze(
+                audioFile);
+
+        audioFile.ParsedName =
+            _fileNameParser.Parse(
+                audioFile);
+
+        audioFile.Comparison =
+            _metadataComparer.Compare(
+                audioFile);
+
+        audioFile.Analysis =
+            _analysisEngine.Analyze(
+                audioFile);
+
+        audioFile.Simulation =
+            _simulationService.Build(
+                audioFile);
+
+        return audioFile;
+    }
     public List<AudioFile> ScanFolder(string folderPath)
     {
         List<AudioFile> result = new();
@@ -40,40 +132,26 @@ public class FileScannerService
                      "*.*",
                      SearchOption.AllDirectories))
         {
-            string extension = Path.GetExtension(file).ToLower();
+            string extension =
+                Path.GetExtension(
+                        file)
+                    .ToLowerInvariant();
 
-            if (!SupportedExtensions.Contains(extension))
-                continue;
-
-            FileInfo info = new(file);
-
-            AudioFile audioFile = new()
+            if (!SupportedExtensions.Contains(
+                    extension))
             {
-                FileName = info.Name,
-                FullPath = info.FullName,
-                Extension = extension,
-                FileSizeBytes = info.Length,
-                Status = "Encontrado"
-            };
+                continue;
+            }
 
-            _metadataReader.ReadMetadata(audioFile);
+            AudioFile? audioFile =
+                ScanFile(
+                    file);
 
-            audioFile.QualityAnalysis =
-                _qualityAnalyzer.Analyze(audioFile);
-
-            audioFile.ParsedName =
-                _fileNameParser.Parse(audioFile);
-
-            audioFile.Comparison =
-                _metadataComparer.Compare(audioFile);
-
-            audioFile.Analysis =
-                _analysisEngine.Analyze(audioFile);
-
-            audioFile.Simulation =
-                _simulationService.Build(audioFile);
-
-            result.Add(audioFile);
+            if (audioFile is not null)
+            {
+                result.Add(
+                    audioFile);
+            }
         }
 
         return result;

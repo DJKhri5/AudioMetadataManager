@@ -138,6 +138,22 @@ public partial class MainWindow : Window
         _currentSimulationPlan;
 
     /// <summary>
+    /// Define el origen de una solicitud de análisis individual.
+    /// </summary>
+    private enum FileAnalysisInvocation
+    {
+        /// <summary>
+        /// El análisis fue solicitado explícitamente por el usuario.
+        /// </summary>
+        UserRequested,
+
+        /// <summary>
+        /// El análisis se ejecuta automáticamente después de aplicar cambios.
+        /// </summary>
+        PostApplicationRefresh
+    }
+
+    /// <summary>
     /// Sustituye el plan activo y mantiene sincronizado el estado
     /// de las acciones productivas de la interfaz.
     /// </summary>
@@ -547,12 +563,73 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Solicita confirmación explícita antes de iniciar una
-    /// aplicación productiva de metadatos.
-    ///
-    /// Este incremento todavía no ejecuta el coordinador ni modifica
-    /// archivos.
+    /// Vuelve a leer un archivo aplicado productivamente y actualiza
+    /// solamente su fila, su selección y su panel de detalles.
     /// </summary>
+    private bool RefreshAppliedAudioFile(
+        string filePath)
+    {
+        AudioFile? refreshedAudioFile =
+            _fileScannerService.ScanFile(
+                filePath);
+
+        if (refreshedAudioFile is null)
+        {
+            AppendLog(
+                "No fue posible volver a leer el archivo aplicado.");
+
+            return false;
+        }
+
+        if (AudioFilesDataGrid.ItemsSource is not
+            List<AudioFile> audioFiles)
+        {
+            AppendLog(
+                "La lista visible de archivos no está disponible.");
+
+            return false;
+        }
+
+        int existingIndex =
+            audioFiles.FindIndex(
+                audioFile =>
+                    string.Equals(
+                        audioFile.FullPath,
+                        refreshedAudioFile.FullPath,
+                        StringComparison.OrdinalIgnoreCase));
+
+        if (existingIndex < 0)
+        {
+            AppendLog(
+                "El archivo aplicado no fue encontrado en la tabla.");
+
+            return false;
+        }
+
+        audioFiles[existingIndex] =
+            refreshedAudioFile;
+
+        AudioFilesDataGrid.ItemsSource =
+            null;
+
+        AudioFilesDataGrid.ItemsSource =
+            audioFiles;
+
+        AudioFilesDataGrid.SelectedItem =
+            null;
+
+        AudioFilesDataGrid.SelectedItem =
+            refreshedAudioFile;
+
+        AudioFilesDataGrid.ScrollIntoView(
+            refreshedAudioFile);
+
+        AppendLog(
+            "La fila aplicada fue actualizada desde el archivo real.");
+
+        return true;
+    }
+
     /// <summary>
     /// Confirma los cambios aprobados y ejecuta el pipeline completo
     /// exclusivamente sobre una copia temporal aislada.
@@ -828,6 +905,25 @@ public partial class MainWindow : Window
 
                 if (completedResult.WasSuccessfullyPromoted)
                 {
+                    bool interfaceWasRefreshed =
+                        RefreshAppliedAudioFile(
+                            request.FilePath);
+
+                    AppendLog(
+                        $"Interfaz actualizada desde el archivo aplicado: " +
+                        $"{ToSpanish(
+                            interfaceWasRefreshed)}");
+
+                    if (interfaceWasRefreshed)
+                    {
+                        await AnalyzeSelectedFileAsync(
+                            FileAnalysisInvocation.PostApplicationRefresh);
+
+                        AppendLog(
+                            "El plan de simulación fue reconstruido desde " +
+                            "el archivo aplicado.");
+                    }
+
                     MessageBox.Show(
                         this,
                         "Los cambios fueron aplicados correctamente.\n\n" +
@@ -916,6 +1012,20 @@ public partial class MainWindow : Window
         object sender,
         RoutedEventArgs e)
     {
+        await AnalyzeSelectedFileAsync(
+            FileAnalysisInvocation.UserRequested);
+    }
+
+    /// <summary>
+    /// Analiza el archivo seleccionado y reconstruye su plan de simulación.
+    /// </summary>
+    private async Task AnalyzeSelectedFileAsync(
+        FileAnalysisInvocation invocation)
+    {
+        bool isPostApplicationRefresh =
+            invocation ==
+            FileAnalysisInvocation.PostApplicationRefresh;
+
         AudioFile? audioFile =
             GetSelectedAudioFile();
 
@@ -996,7 +1106,7 @@ public partial class MainWindow : Window
 
                     TaggedArtist =
                         audioFile.Artist,
-        
+
                     TaggedTitle =
                         audioFile.Title,
 
@@ -1028,10 +1138,13 @@ public partial class MainWindow : Window
                 MetadataSearchPipelineDiagnostics.BuildReport(
                     pipelineResult);
 
-            LogTextBox.AppendText(
-                Environment.NewLine +
-                pipelineReport +
-                Environment.NewLine);
+            if (!isPostApplicationRefresh)
+            {
+                LogTextBox.AppendText(
+                    Environment.NewLine +
+                    pipelineReport +
+                    Environment.NewLine);
+            }
 
             // Identidad local y ranking.
             LocalMetadataComparisonInputFactory
@@ -1057,10 +1170,13 @@ public partial class MainWindow : Window
                 MetadataCandidateEvaluationDiagnostics.BuildReport(
                     candidateEvaluationBatch);
 
-            LogTextBox.AppendText(
-                Environment.NewLine +
-                candidateRankingReport +
-                Environment.NewLine);
+            if (!isPostApplicationRefresh)
+            {
+                LogTextBox.AppendText(
+                    Environment.NewLine +
+                    candidateRankingReport +
+                    Environment.NewLine);
+            }
 
             // Nuevo consenso.
             MetadataConsensusOrchestrator
@@ -1075,10 +1191,13 @@ public partial class MainWindow : Window
                 MetadataConsensusDiagnostics.BuildReport(
                     consensusResult);
 
-            LogTextBox.AppendText(
-                Environment.NewLine +
-                consensusReport +
-                Environment.NewLine);
+            if (!isPostApplicationRefresh)
+            {
+                LogTextBox.AppendText(
+                    Environment.NewLine +
+                    consensusReport +
+                    Environment.NewLine);
+            }
 
             MetadataChangeDecisionEngine
                 changeDecisionEngine =
@@ -1101,12 +1220,13 @@ public partial class MainWindow : Window
                 MetadataChangePlanDiagnostics.BuildReport(
                     changePlan);
 
-            LogTextBox.AppendText(
-                Environment.NewLine +
-                changePlanReport +
-                Environment.NewLine);
-
-            LogTextBox.ScrollToEnd();
+            if (!isPostApplicationRefresh)
+            {
+                LogTextBox.AppendText(
+                    Environment.NewLine +
+                    changePlanReport +
+                    Environment.NewLine);
+            }
 
             LogTextBox.ScrollToEnd();
 

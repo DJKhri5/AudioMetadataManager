@@ -121,6 +121,10 @@ Semantic Versioning where applicable.
 - Added UI handling for `Approved` and `Declined` productive promotion decisions.
 - Added productive completion reporting for successful promotion, safe rejection, and incomplete finalization.
 - Added auditable UI logging for productive backup, promotion, cleanup, and final safety state.
+- Added automatic post-application analysis after a successful productive metadata promotion.
+- Added `FileAnalysisInvocation` to distinguish user-requested analysis from post-application interface refresh.
+- Added automatic simulation-plan reconstruction from the metadata persisted in the promoted audio file.
+- Added compact activity reporting for successful post-application simulation refresh.
 
 ### Changed
 
@@ -225,6 +229,13 @@ Semantic Versioning where applicable.
 - Updated the apply button to promote verified copies only after an explicit `Approved` decision.
 - Updated the declined path to remove the preserved environment without modifying the original file.
 - Updated user-facing messages to distinguish productive preparation, successful application, safe cancellation, and incomplete finalization.
+- Refactored the selected-file analysis workflow into the reusable `AnalyzeSelectedFileAsync` method.
+- Updated `AnalyzeSelectedFileButton_Click` to invoke the shared analysis workflow as a user-requested operation.
+- Updated successful productive application handling to re-read, reselect, and reanalyze the promoted audio file.
+- Updated the simulation panel to reflect persisted metadata immediately after productive application.
+- Preserved unapplied metadata proposals when rebuilding the simulation plan after a successful promotion.
+- Suppressed repeated pipeline, candidate-ranking, consensus, and change-plan diagnostic reports during automatic post-application refresh.
+- Updated productive application reporting to confirm that the simulation plan was reconstructed from the applied file.
 
 ### Fixed
 
