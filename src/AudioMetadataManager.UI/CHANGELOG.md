@@ -125,6 +125,26 @@ Semantic Versioning where applicable.
 - Added `FileAnalysisInvocation` to distinguish user-requested analysis from post-application interface refresh.
 - Added automatic simulation-plan reconstruction from the metadata persisted in the promoted audio file.
 - Added compact activity reporting for successful post-application simulation refresh.
+- Added `MetadataApplyBatchRequest` for structurally validated productive
+  metadata application batches.
+- Added `MetadataApplyBatchResult` for consolidated batch execution,
+  timing, result, failure, and audit evidence.
+- Added `IMetadataProductiveApplicationBatchCoordinator` and
+  `MetadataProductiveApplicationBatchCoordinator`.
+- Added sequential productive batch execution through the existing
+  individual productive application coordinator.
+- Added fail-fast batch behavior for preparation and completion failures.
+- Added auditable preservation of partial batch results and unexpected
+  individual coordinator exceptions.
+- Added controlled detection of failures returned through
+  `MetadataProductiveApplicationResult.ErrorMessage`.
+- Added reporting for valid requests that remain unexecuted after an early
+  batch stop.
+- Added mid-batch cancellation coverage.
+- Added multi-request `Approved` and `Declined` decision forwarding.
+- Added controlled batch coverage for preparation failures, completion
+  failures, cancellation, multi-request approval, and partial-result
+  preservation.
 
 ### Changed
 
@@ -236,6 +256,20 @@ Semantic Versioning where applicable.
 - Preserved unapplied metadata proposals when rebuilding the simulation plan after a successful promotion.
 - Suppressed repeated pipeline, candidate-ranking, consensus, and change-plan diagnostic reports during automatic post-application refresh.
 - Updated productive application reporting to confirm that the simulation plan was reconstructed from the applied file.
+- Extended productive metadata application from individual coordination to
+  reusable sequential batch orchestration.
+- Reused `IMetadataProductiveApplicationCoordinator` as the only productive
+  execution authority for every batch item.
+- Updated batch execution to stop immediately after the first controlled or
+  unexpected individual failure.
+- Updated unexpected individual exceptions to be preserved as auditable
+  `MetadataProductiveApplicationResult` entries.
+- Preserved `OperationCanceledException` semantics during pre-execution and
+  mid-batch cancellation.
+- Defined batch rollback semantics so completed earlier items are preserved
+  while rollback remains an individual-file responsibility.
+- Extended the technical diagnostic with productive batch request, result,
+  fail-fast, cancellation, multi-Approved, and partial-failure evidence.
 
 ### Fixed
 
@@ -290,6 +324,15 @@ Semantic Versioning where applicable.
   destination without an automatic restoration attempt.
 - Prevented promotion and rollback helper files from remaining after a
   completed operation whenever cleanup succeeds.
+- Prevented later batch requests from starting after a preparation or
+  completion failure.
+- Prevented unsupported promotion decisions from entering productive batch
+  execution.
+- Prevented partial batch failures from losing already completed individual
+  results.
+- Prevented unexpected individual coordinator exceptions from escaping
+  without auditable batch failure evidence.
+- Prevented a mid-batch cancellation from starting the next request.
 
 ### Internal
 

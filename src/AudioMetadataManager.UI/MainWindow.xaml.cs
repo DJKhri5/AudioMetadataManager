@@ -128,6 +128,15 @@ public partial class MainWindow : Window
         MetadataProductiveApplicationApprovedTestRunner
             _metadataProductiveApplicationApprovedTestRunner;
 
+    private readonly MetadataApplyBatchRequestTestRunner
+            _metadataApplyBatchRequestTestRunner;
+
+    private readonly MetadataApplyBatchResultTestRunner
+            _metadataApplyBatchResultTestRunner;
+
+    private readonly MetadataProductiveApplicationBatchCoordinatorTestRunner
+            _metadataProductiveApplicationBatchCoordinatorTestRunner;
+
     private readonly MetadataApplicationIsolatedExecutor
             _metadataApplicationIsolatedExecutor;
 
@@ -453,6 +462,15 @@ public partial class MainWindow : Window
 
         _metadataProductiveApplicationApprovedTestRunner =
             new MetadataProductiveApplicationApprovedTestRunner();
+
+        _metadataApplyBatchRequestTestRunner =
+            new MetadataApplyBatchRequestTestRunner();
+
+        _metadataApplyBatchResultTestRunner =
+            new MetadataApplyBatchResultTestRunner();
+
+        _metadataProductiveApplicationBatchCoordinatorTestRunner =
+            new MetadataProductiveApplicationBatchCoordinatorTestRunner();
 
         _metadataApplicationIsolatedExecutor =
             new MetadataApplicationIsolatedExecutor();
@@ -1608,6 +1626,402 @@ public partial class MainWindow : Window
 
             AppendLog(
                 "=== Fin de las pruebas del coordinador ===");
+
+            AppendLog(
+                "Iniciando pruebas estructurales de la solicitud productiva por lote.");
+
+            MetadataApplyBatchRequestTestResult
+                batchRequestTestResult =
+                    _metadataApplyBatchRequestTestRunner.Run();
+
+            AppendLog(
+                "=== Solicitud productiva por lote ===");
+
+            foreach (string message
+                in batchRequestTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Lote vacío rechazado: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .EmptyBatchWasRejected)}");
+
+            AppendLog(
+                $"Lote válido aceptado: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .ValidBatchWasAccepted)}");
+
+            AppendLog(
+                $"Solicitudes válidas contabilizadas: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .ValidRequestsWereCounted)}");
+
+            AppendLog(
+                $"Cambios válidos contabilizados: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .ValidChangesWereCounted)}");
+
+            AppendLog(
+                $"Solicitudes inválidas ignoradas: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .InvalidRequestsWereIgnored)}");
+
+            AppendLog(
+                $"Rutas duplicadas detectadas: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .DuplicatePathsWereDetected)}");
+
+            AppendLog(
+                $"Lote duplicado rechazado: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .DuplicateBatchWasRejected)}");
+
+            AppendLog(
+                $"Identidad del lote creada: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .BatchIdentityWasCreated)}");
+
+            AppendLog(
+                $"Fecha de creación registrada: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .CreationTimeWasRecorded)}");
+
+            AppendLog(
+                $"Prueba de solicitud por lote correcta: " +
+                $"{ToSpanish(
+                    batchRequestTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {batchRequestTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de las pruebas de solicitud productiva por lote ===");
+
+            AppendLog(
+                "Iniciando pruebas estructurales del resultado " +
+                "productivo por lote.");
+
+            MetadataApplyBatchResultTestResult
+                batchResultTestResult =
+                    _metadataApplyBatchResultTestRunner.Run();
+
+            AppendLog(
+                "=== Resultado productivo por lote ===");
+
+            foreach (string message
+                in batchResultTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Resultado vacío rechazado: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .EmptyResultWasRejected)}");
+
+            AppendLog(
+                $"Resultados correctos contabilizados: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .SuccessfulResultsWereCounted)}");
+
+            AppendLog(
+                $"Resultados fallidos contabilizados: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .FailedResultsWereCounted)}");
+
+            AppendLog(
+                $"Lote exitoso detectado: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .SuccessfulBatchWasDetected)}");
+
+            AppendLog(
+                $"Fallo parcial detectado: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .PartialFailureWasDetected)}");
+
+            AppendLog(
+                $"Identidad del lote preservada: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .BatchIdentityWasPreserved)}");
+
+            AppendLog(
+                $"Tiempos preservados: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .TimesWerePreserved)}");
+
+            AppendLog(
+                $"Duración calculada correctamente: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .DurationWasCalculated)}");
+
+            AppendLog(
+                $"Mensajes preservados: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .MessagesWerePreserved)}");
+
+            AppendLog(
+                $"Resumen generado: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .SummaryWasGenerated)}");
+
+            AppendLog(
+                $"Prueba de resultado por lote correcta: " +
+                $"{ToSpanish(
+                    batchResultTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {batchResultTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de las pruebas del resultado productivo por lote ===");
+
+            AppendLog(
+                "Iniciando pruebas estructurales del coordinador " +
+                "productivo por lote.");
+
+            MetadataProductiveApplicationBatchCoordinatorTestResult
+                batchCoordinatorTestResult =
+                    await _metadataProductiveApplicationBatchCoordinatorTestRunner
+                        .RunAsync();
+
+            AppendLog(
+                "=== Coordinador productivo por lote ===");
+
+            foreach (string message
+                in batchCoordinatorTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Dependencia individual nula rechazada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .NullCoordinatorWasRejected)}");
+
+            AppendLog(
+                $"Solicitud por lote nula rechazada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .NullBatchWasRejected)}");
+
+            AppendLog(
+                $"Cancelación previa respetada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .PreCancellationWasRespected)}");
+
+            AppendLog(
+                $"Resultado controlado creado: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ControlledResultWasCreated)}");
+
+            AppendLog(
+                $"Identidad del lote creada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .BatchIdentityWasCreated)}");
+
+            AppendLog(
+                $"Tiempos registrados: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .TimesWereRecorded)}");
+
+            AppendLog(
+                $"Resultado vacío sin éxito falso: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .EmptyResultWasNotSuccessful)}");
+
+            AppendLog(
+                $"Identidad del lote preservada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .BatchIdentityWasPreserved)}");
+
+            AppendLog(
+                $"Lote inválido rechazado: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .InvalidBatchWasRejected)}");
+
+            AppendLog(
+                $"Solicitudes válidas inspeccionadas: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ValidRequestsWereInspected)}");
+
+            AppendLog(
+                $"Resultados productivos creados: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ProductiveResultsWereCreated)}");
+
+            AppendLog(
+                $"PrepareAsync ejecutado una vez: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .IndividualPrepareWasCalledOnce)}");
+
+            AppendLog(
+                $"CompleteAsync ejecutado una vez: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .IndividualCompleteWasCalledOnce)}");
+
+            AppendLog(
+                $"Decisión Declined reenviada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .DeclinedDecisionWasForwarded)}");
+
+            AppendLog(
+                $"Resultados Approved creados: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ApprovedResultsWereCreated)}");
+
+            AppendLog(
+                $"CompleteAsync Approved ejecutado una vez: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ApprovedCompleteWasCalledOnce)}");
+
+            AppendLog(
+                $"Decisión Approved reenviada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ApprovedDecisionWasForwarded)}");
+
+            AppendLog(
+                $"Decisión no admitida rechazada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .UnsupportedDecisionWasRejected)}");
+
+            AppendLog(
+                $"Fail-fast tras fallo en segunda preparación: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .FailFastStoppedAfterSecondPrepare)}");
+
+            AppendLog(
+                $"Resultado de fallo parcial devuelto: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .PartialFailureResultWasReturned)}");
+
+            AppendLog(
+                $"Fallo parcial preservado en el lote: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .PartialFailureWasPreserved)}");
+
+            AppendLog(
+                $"Fail-fast tras fallo en segunda finalización: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .FailFastStoppedAfterSecondComplete)}");
+
+            AppendLog(
+                $"Excepción de finalización preservada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .CompleteExceptionWasPreserved)}");
+
+            AppendLog(
+                $"Fallo devuelto por PrepareAsync controlado: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ReturnedPrepareFailureStoppedBatch)}");
+
+            AppendLog(
+                $"Fallo devuelto por CompleteAsync controlado: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ReturnedCompleteFailureStoppedBatch)}");
+
+            AppendLog(
+                $"Solicitudes restantes registradas: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .RemainingRequestsWereReported)}");
+
+            AppendLog(
+                $"Cancelación durante el lote respetada: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .MidBatchCancellationWasRespected)}");
+
+            AppendLog(
+                $"Lote Approved múltiple ejecutado: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .MultiApprovedBatchWasExecuted)}");
+
+            AppendLog(
+                $"Approved reenviado a todo el lote: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .MultiApprovedDecisionWasForwarded)}");
+
+            AppendLog(
+                $"Fallo Approved detuvo el lote: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ApprovedFailureStoppedBatch)}");
+
+            AppendLog(
+                $"Resultado Approved previo preservado: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .ApprovedFailurePreservedPreviousResult)}");
+
+            AppendLog(
+                $"Mensajes registrados: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .MessagesWereRecorded)}");
+
+            AppendLog(
+                $"Prueba del coordinador por lote correcta: " +
+                $"{ToSpanish(
+                    batchCoordinatorTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {batchCoordinatorTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de las pruebas del coordinador productivo por lote ===");
 
             AppendLog(
                 "Iniciando prueba de la fábrica de solicitudes " +
