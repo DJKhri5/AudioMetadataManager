@@ -171,6 +171,10 @@ Semantic Versioning where applicable.
   after a successful batch promotion.
 - Added `DiagnosticMetadataTestValues` for repeatable diagnostic writes that
   always produce a real metadata change.
+- Added `AudioDiagnosticsOrchestrator` and
+  `IAudioDiagnosticsOrchestrator` as the dedicated component for the
+  full audio diagnostics sequence (technical analysis, structural
+  tests, MP3 inspection, and MP3/FLAC isolated write tests).
 
 ### Changed
 
@@ -311,6 +315,13 @@ Semantic Versioning where applicable.
 - Updated productive diagnostics to use runtime-generated metadata values
   instead of assuming a fixed genre is always different from the source
   file.
+- Extracted the audio diagnostics sequence out of `MainWindow`'s
+  code-behind into `AudioDiagnosticsOrchestrator`, reducing
+  `RunAudioDiagnosticButton_Click` from roughly 1,856 lines to about
+  20, with no change in observable behavior.
+- Reduced `MainWindow.xaml.cs` from 4,436 to 2,171 lines by removing
+  the 18 TestRunner fields and their constructor wiring, now owned
+  by `AudioDiagnosticsOrchestrator`.
 
 ### Fixed
 
@@ -547,3 +558,8 @@ Semantic Versioning where applicable.
 - Revalidated isolated execution, preserved execution, promotion, rollback,
   productive coordination, the Approved path, the integral pipeline, and
   isolated MP3 writing with dynamically generated diagnostic metadata.
+- Verified that the full audio diagnostics sequence (technical
+  analysis, structural tests, MP3 inspection, and MP3/FLAC isolated
+  write tests) produced identical results after being moved to
+  `AudioDiagnosticsOrchestrator`, using a real MP3 file from the test
+  library.
