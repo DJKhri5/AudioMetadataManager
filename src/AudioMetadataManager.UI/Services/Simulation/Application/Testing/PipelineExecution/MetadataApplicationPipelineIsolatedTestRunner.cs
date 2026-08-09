@@ -148,7 +148,7 @@ public sealed class
                     effectiveRequestedGenre))
             {
                 effectiveRequestedGenre =
-                    "Electronic";
+                    DiagnosticMetadataTestValues.CreateGenre();
             }
 
             /*

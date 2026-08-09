@@ -1,4 +1,5 @@
 ﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
+using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
 
 namespace AudioMetadataManager.UI.Services.MetadataSources.Matching;
 
@@ -203,7 +204,7 @@ public static class MetadataMatchEngineDiagnostics
             Version = "Extended Mix",
 
             ReleaseTitle = "Relax My Eyes",
-            Genre = "Electronic",
+            Genre = DiagnosticMetadataTestValues.CreateGenre(),
 
             Year = 2023,
 

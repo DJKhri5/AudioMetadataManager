@@ -1,4 +1,6 @@
-﻿namespace AudioMetadataManager.UI.Services.MetadataSources.Consensus;
+﻿using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
+
+namespace AudioMetadataManager.UI.Services.MetadataSources.Consensus;
 
 /// <summary>
 /// Ejecuta pruebas controladas del MetadataConsensusCalculator.
@@ -123,7 +125,7 @@ public static class MetadataConsensusCalculatorDiagnostics
                 "Progressive Trance",
 
             ["Spotify"] =
-                "Electronic"
+                DiagnosticMetadataTestValues.CreateGenre()
         };
 
         return calculator.Calculate(

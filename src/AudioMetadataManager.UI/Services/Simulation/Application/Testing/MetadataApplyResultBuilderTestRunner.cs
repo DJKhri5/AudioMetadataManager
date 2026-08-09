@@ -8,6 +8,7 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Finalization;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
+using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Validation;
 using AudioMetadataManager.UI.Services.Simulation
@@ -88,7 +89,7 @@ public sealed class MetadataApplyResultBuilderTestRunner
                         MetadataField.Genre,
 
                     OriginalValue =
-                        "Electronic",
+                        DiagnosticMetadataTestValues.CreateGenre(),
 
                     NewValue =
                         "Trance",
@@ -217,7 +218,7 @@ public sealed class MetadataApplyResultBuilderTestRunner
                         {
                             CreateWriteResult(
                                 MetadataField.Genre,
-                                "Electronic",
+                                DiagnosticMetadataTestValues.CreateGenre(),
                                 "Trance"),
 
                             CreateWriteResult(

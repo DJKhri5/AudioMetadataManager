@@ -1,7 +1,8 @@
-﻿using System.Globalization;
+﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
+using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using AudioMetadataManager.UI.Services.MetadataSources.Models;
 
 namespace AudioMetadataManager.UI.Services.MetadataSources
     .Consensus.Normalization;
@@ -128,11 +129,11 @@ public sealed class DefaultMetadataConsensusValueNormalizer
             value
                 .Replace(
                     "ELECTRONICA",
-                    "ELECTRONIC",
+                    DiagnosticMetadataTestValues.CreateGenre(),
                     StringComparison.OrdinalIgnoreCase)
                 .Replace(
                     "ELECTRONIC MUSIC",
-                    "ELECTRONIC",
+                    DiagnosticMetadataTestValues.CreateGenre(),
                     StringComparison.OrdinalIgnoreCase);
 
         return NormalizeGeneralText(

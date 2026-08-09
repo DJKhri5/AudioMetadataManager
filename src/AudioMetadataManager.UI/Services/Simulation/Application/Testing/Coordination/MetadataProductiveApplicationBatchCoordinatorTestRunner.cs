@@ -1,8 +1,9 @@
-﻿using AudioMetadataManager.UI.Services.Simulation
+﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Coordination;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
-using AudioMetadataManager.UI.Services.MetadataSources.Models;
+using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.Coordination;
@@ -160,7 +161,7 @@ public sealed class MetadataProductiveApplicationBatchCoordinatorTestRunner
                         string.Empty,
 
                     NewValue =
-                        "Electronic",
+                        DiagnosticMetadataTestValues.CreateGenre(),
 
                     WasManuallyApproved =
                         true,
@@ -891,174 +892,5 @@ public sealed class MetadataProductiveApplicationBatchCoordinatorTestRunner
                 Messages =
                     messages
             };
-    }
-
-    /// <summary>
-    /// Coordinador individual controlado utilizado exclusivamente
-    /// para comprobar la coordinación por lote.
-    ///
-    /// No accede al sistema de archivos ni ejecuta el pipeline real.
-    /// </summary>
-    private sealed class RecordingProductiveApplicationCoordinator :
-        IMetadataProductiveApplicationCoordinator
-    {
-        public int PrepareCallCount { get; private set; }
-
-        public int CompleteCallCount { get; private set; }
-
-        public int? ThrowOnPrepareCall { get; init; }
-
-        public int? ThrowOnCompleteCall { get; init; }
-
-        public int? ReturnPrepareErrorOnCall { get; init; }
-
-        public int? ReturnCompleteErrorOnCall { get; init; }
-
-        private readonly List<MetadataPromotionDecision>
-            _promotionDecisions =
-                new();
-
-        public IReadOnlyList<MetadataPromotionDecision>
-            PromotionDecisions =>
-                _promotionDecisions;
-
-        public CancellationTokenSource?
-            CancellationSource
-        { get; init; }
-
-        public int?
-            CancelAfterCompleteCall
-        { get; init; }
-
-        public MetadataPromotionDecision
-            LastPromotionDecision
-        { get; private set; } =
-            MetadataPromotionDecision.NotRequested;
-
-        public Task<MetadataProductiveApplicationResult>
-            PrepareAsync(
-                MetadataApplyRequest request,
-                CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(
-                request);
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            PrepareCallCount++;
-
-            if (ThrowOnPrepareCall == PrepareCallCount)
-            {
-                throw new InvalidOperationException(
-                    "Fallo simulado durante PrepareAsync.");
-            }
-
-            if (ReturnPrepareErrorOnCall == PrepareCallCount)
-            {
-                return Task.FromResult(
-                    new MetadataProductiveApplicationResult
-                    {
-                        PromotionDecision =
-                            MetadataPromotionDecision.Unavailable,
-
-                        ErrorMessage =
-                            "Fallo controlado durante PrepareAsync.",
-
-                        Messages =
-                            new[]
-                            {
-                    "Fallo controlado devuelto durante PrepareAsync."
-                            }
-                    });
-            }
-
-            MetadataProductiveApplicationResult result =
-                new()
-                {
-                    Messages =
-                        new[]
-                        {
-                        "Preparación individual simulada."
-                        }
-                };
-
-            return
-                Task.FromResult(
-                    result);
-        }
-
-        public Task<MetadataProductiveApplicationResult>
-            CompleteAsync(
-                MetadataProductiveApplicationResult preparedResult,
-                MetadataPromotionDecision promotionDecision,
-                CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(
-                preparedResult);
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            CompleteCallCount++;
-
-            LastPromotionDecision =
-                promotionDecision;
-
-            _promotionDecisions.Add(
-                promotionDecision);
-
-            if (ThrowOnCompleteCall == CompleteCallCount)
-            {
-                throw new InvalidOperationException(
-                    "Fallo simulado durante CompleteAsync.");
-            }
-
-            if (ReturnCompleteErrorOnCall == CompleteCallCount)
-            {
-                return Task.FromResult(
-                    new MetadataProductiveApplicationResult
-                    {
-                        PromotionDecision =
-                            promotionDecision,
-
-                        ErrorMessage =
-                            "Fallo controlado durante CompleteAsync.",
-
-                        Messages =
-                            new[]
-                            {
-                                "Fallo controlado devuelto durante CompleteAsync."
-                            }
-                    });
-            }
-
-            MetadataProductiveApplicationResult result =
-                new()
-                {
-                    PromotionDecision =
-                        promotionDecision,
-
-                    FinalCleanupWasAttempted =
-                        true,
-
-                    FinalCleanupWasSuccessful =
-                        true,
-
-                    Messages =
-                        new[]
-                        {
-                        "Finalización individual simulada."
-                        }
-                };
-
-            if (CancelAfterCompleteCall ==
-                CompleteCallCount)
-            {
-                CancellationSource?.Cancel();
-            }
-
-            return
-                Task.FromResult(
-                    result);
-        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
+using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
 using System.IO;
 
 namespace AudioMetadataManager.UI.Services.Simulation
@@ -40,7 +41,7 @@ public sealed class MetadataApplyBatchRequestTestRunner
                 @"C:\BatchTests\FirstTrack.flac",
                 MetadataField.Genre,
                 "Dance",
-                "Electronic");
+                DiagnosticMetadataTestValues.CreateGenre());
 
         MetadataApplyRequest secondValidRequest =
             CreateValidRequest(

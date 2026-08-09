@@ -36,6 +36,7 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.Coordination;
+using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.PipelineComposition;
 using AudioMetadataManager.UI.Services.Simulation
@@ -137,11 +138,32 @@ public partial class MainWindow : Window
     private readonly MetadataProductiveApplicationBatchCoordinatorTestRunner
             _metadataProductiveApplicationBatchCoordinatorTestRunner;
 
+    private readonly ProductiveBatchSelectionTestRunner
+            _productiveBatchSelectionTestRunner;
+
+    private readonly
+            MetadataProductiveTwoPhaseBatchPreparationTestRunner
+                _metadataProductiveTwoPhaseBatchPreparationTestRunner;
+
+    private readonly
+            MetadataProductiveTwoPhaseBatchCompletionTestRunner
+                _metadataProductiveTwoPhaseBatchCompletionTestRunner;
+
     private readonly MetadataApplicationIsolatedExecutor
             _metadataApplicationIsolatedExecutor;
 
     private readonly MetadataProductiveApplicationCoordinator
             _metadataProductiveApplicationCoordinator;
+
+    private readonly MetadataProductiveTwoPhaseBatchCoordinator
+            _metadataProductiveTwoPhaseBatchCoordinator;
+
+    private readonly ProductiveBatchSelection
+            _productiveBatchSelection =
+                new();
+
+    private bool
+    _isProductiveBatchOperationInProgress;
 
     private SimulationPlanViewModel?
         _currentSimulationPlan;
@@ -169,6 +191,13 @@ public partial class MainWindow : Window
     private void SetCurrentSimulationPlan(
         SimulationPlanViewModel? simulationPlan)
     {
+        /*
+         * Antes de abandonar el plan actual conservamos su estado
+         * aprobado dentro de la selección productiva por lote.
+         */
+        SynchronizePlanWithProductiveBatchSelection(
+            _currentSimulationPlan);
+
         if (_currentSimulationPlan is not null)
         {
             _currentSimulationPlan.PropertyChanged -=
@@ -184,10 +213,48 @@ public partial class MainWindow : Window
                 CurrentSimulationPlan_PropertyChanged;
         }
 
+        /*
+         * También sincronizamos el nuevo plan. Esto es importante
+         * cuando un reanálisis elimina cambios que antes estaban
+         * aprobados: la entrada batch anterior debe desaparecer.
+         */
+        SynchronizePlanWithProductiveBatchSelection(
+            _currentSimulationPlan);
+
         AudioFileDetailsViewControl.SimulationPlan =
             _currentSimulationPlan;
 
         UpdateApplyChangesButtonState();
+    }
+
+    /// <summary>
+    /// Sincroniza el plan visual indicado con la selección
+    /// productiva persistente por lote.
+    ///
+    /// Un plan con cambios aprobados se agrega o reemplaza.
+    /// Un plan sin cambios aprobados elimina cualquier selección
+    /// anterior correspondiente al mismo archivo.
+    /// </summary>
+    private void SynchronizePlanWithProductiveBatchSelection(
+        SimulationPlanViewModel? simulationPlan)
+    {
+        if (simulationPlan is null)
+        {
+            UpdateProductiveBatchUiState();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(
+                simulationPlan.FilePath))
+        {
+            UpdateProductiveBatchUiState();
+            return;
+        }
+
+        _productiveBatchSelection.AddOrReplace(
+            simulationPlan);
+
+        UpdateProductiveBatchUiState();
     }
 
     /// <summary>
@@ -213,18 +280,51 @@ public partial class MainWindow : Window
                 StringComparison.Ordinal))
         {
             UpdateApplyChangesButtonState();
+
+            SynchronizePlanWithProductiveBatchSelection(
+                _currentSimulationPlan);
+
+            AppendLog(
+                $"Selección productiva por lote: " +
+                $"{_productiveBatchSelection.Summary}");
         }
     }
 
     /// <summary>
-    /// Habilita la aplicación productiva únicamente cuando existe
-    /// un plan activo con al menos un cambio aprobado.
+    /// Habilita la aplicación productiva individual únicamente
+    /// cuando existe un plan activo con cambios aprobados y no
+    /// existe una operación productiva batch en curso.
     /// </summary>
     private void UpdateApplyChangesButtonState()
     {
         ApplyChangesButton.IsEnabled =
+            !_isProductiveBatchOperationInProgress &&
             _currentSimulationPlan?.HasApprovedChanges ==
-            true;
+                true;
+    }
+
+    /// <summary>
+    /// Mantiene sincronizado el resumen y la disponibilidad
+    /// de las acciones productivas por lote.
+    /// </summary>
+    private void UpdateProductiveBatchUiState()
+    {
+        bool hasBatchItems =
+            _productiveBatchSelection.HasItems;
+
+        ReviewProductiveBatchButton.IsEnabled =
+            hasBatchItems &&
+            !_isProductiveBatchOperationInProgress;
+
+        ProductiveBatchSummaryTextBlock.Text =
+            _isProductiveBatchOperationInProgress
+                ? $"Lote productivo: operación en curso · " +
+                  $"{_productiveBatchSelection.FileCount} archivo(s)"
+                : hasBatchItems
+                    ? $"Lote productivo: " +
+                      $"{_productiveBatchSelection.FileCount} archivo(s) · " +
+                      $"{_productiveBatchSelection.ApprovedChangeCount} cambio(s)"
+                    : "Lote productivo: ningún archivo seleccionado";
     }
 
     /// <summary>
@@ -472,11 +572,25 @@ public partial class MainWindow : Window
         _metadataProductiveApplicationBatchCoordinatorTestRunner =
             new MetadataProductiveApplicationBatchCoordinatorTestRunner();
 
+        _productiveBatchSelectionTestRunner =
+            new ProductiveBatchSelectionTestRunner();
+
+        _metadataProductiveTwoPhaseBatchPreparationTestRunner =
+            new MetadataProductiveTwoPhaseBatchPreparationTestRunner();
+
+        _metadataProductiveTwoPhaseBatchCompletionTestRunner =
+            new MetadataProductiveTwoPhaseBatchCompletionTestRunner();
+
         _metadataApplicationIsolatedExecutor =
             new MetadataApplicationIsolatedExecutor();
 
         _metadataProductiveApplicationCoordinator =
             new MetadataProductiveApplicationCoordinator();
+
+        _metadataProductiveTwoPhaseBatchCoordinator =
+            new MetadataProductiveTwoPhaseBatchCoordinator();
+
+        UpdateProductiveBatchUiState();
     }
 
     /// <summary>
@@ -508,6 +622,14 @@ public partial class MainWindow : Window
 
         SetCurrentSimulationPlan(
             null);
+
+        _productiveBatchSelection.Clear();
+
+        UpdateProductiveBatchUiState();
+
+        AppendLog(
+            "La selección productiva por lote fue limpiada " +
+            "al volver a escanear la biblioteca.");
 
         UpdateSelectedFileButtons();
 
@@ -563,6 +685,14 @@ public partial class MainWindow : Window
 
         SetCurrentSimulationPlan(
             null);
+
+        _productiveBatchSelection.Clear();
+
+        UpdateProductiveBatchUiState();
+
+        AppendLog(
+            "La selección productiva por lote fue limpiada " +
+            "al seleccionar una biblioteca diferente.");
 
         UpdateSelectedFileButtons();
 
@@ -646,6 +776,671 @@ public partial class MainWindow : Window
             "La fila aplicada fue actualizada desde el archivo real.");
 
         return true;
+    }
+
+    /// <summary>
+    /// Vuelve a leer desde disco todos los archivos promovidos
+    /// correctamente por una operación productiva batch.
+    ///
+    /// Las filas se actualizan en una sola operación para evitar
+    /// cambiar repetidamente la selección del DataGrid.
+    ///
+    /// Si el archivo que estaba seleccionado fue promovido,
+    /// conserva esa selección utilizando la instancia recién leída.
+    /// </summary>
+    private IReadOnlyList<string>
+        RefreshSuccessfullyPromotedBatchFiles(
+            MetadataApplyBatchRequest batchRequest,
+            MetadataProductiveBatchCompletionResult completionResult)
+    {
+        ArgumentNullException.ThrowIfNull(
+            batchRequest);
+
+        ArgumentNullException.ThrowIfNull(
+            completionResult);
+
+        List<string> refreshedFilePaths =
+            new();
+
+        if (AudioFilesDataGrid.ItemsSource is not
+            List<AudioFile> audioFiles)
+        {
+            AppendLog(
+                "La lista visible de archivos no está disponible " +
+                "para el refresco productivo por lote.");
+
+            return refreshedFilePaths;
+        }
+
+        AudioFile? selectedAudioFile =
+            GetSelectedAudioFile();
+
+        string selectedFilePath =
+            selectedAudioFile?.FullPath ??
+            string.Empty;
+
+        AudioFile? refreshedSelectedAudioFile =
+            null;
+
+        int comparableCount =
+            Math.Min(
+                batchRequest.ValidRequests.Count,
+                completionResult.DecisionResults.Count);
+
+        for (int index = 0;
+            index < comparableCount;
+            index++)
+        {
+            MetadataProductiveApplicationResult
+                productiveResult =
+                    completionResult.DecisionResults[index];
+
+            if (!productiveResult.WasSuccessfullyPromoted)
+            {
+                continue;
+            }
+
+            MetadataApplyRequest request =
+                batchRequest.ValidRequests[index];
+
+            AudioFile? refreshedAudioFile =
+                _fileScannerService.ScanFile(
+                    request.FilePath);
+
+            if (refreshedAudioFile is null)
+            {
+                AppendLog(
+                    $"No fue posible volver a leer el archivo " +
+                    $"promovido: {request.FileName}.");
+
+                continue;
+            }
+
+            int existingIndex =
+                audioFiles.FindIndex(
+                    audioFile =>
+                        string.Equals(
+                            audioFile.FullPath,
+                            refreshedAudioFile.FullPath,
+                            StringComparison.OrdinalIgnoreCase));
+
+            if (existingIndex < 0)
+            {
+                AppendLog(
+                    $"El archivo promovido no fue encontrado en " +
+                    $"la tabla: {request.FileName}.");
+
+                continue;
+            }
+
+            audioFiles[existingIndex] =
+                refreshedAudioFile;
+
+            refreshedFilePaths.Add(
+                refreshedAudioFile.FullPath);
+
+            AppendLog(
+                $"Fila actualizada desde el archivo promovido: " +
+                $"{refreshedAudioFile.FileName}.");
+
+            if (string.Equals(
+                    selectedFilePath,
+                    refreshedAudioFile.FullPath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                refreshedSelectedAudioFile =
+                    refreshedAudioFile;
+            }
+        }
+
+        /*
+         * Actualizamos ItemsSource una sola vez después de sustituir
+         * todas las instancias afectadas.
+         */
+        AudioFilesDataGrid.ItemsSource =
+            null;
+
+        AudioFilesDataGrid.ItemsSource =
+            audioFiles;
+
+        if (refreshedSelectedAudioFile is not null)
+        {
+            AudioFilesDataGrid.SelectedItem =
+                refreshedSelectedAudioFile;
+
+            AudioFilesDataGrid.ScrollIntoView(
+                refreshedSelectedAudioFile);
+
+            AppendLog(
+                "La selección actual fue restaurada usando los " +
+                "metadatos recién leídos del archivo promovido.");
+        }
+        else if (!string.IsNullOrWhiteSpace(
+                     selectedFilePath))
+        {
+            AudioFile? preservedSelection =
+                audioFiles.FirstOrDefault(
+                    audioFile =>
+                        string.Equals(
+                            audioFile.FullPath,
+                            selectedFilePath,
+                            StringComparison.OrdinalIgnoreCase));
+
+            if (preservedSelection is not null)
+            {
+                AudioFilesDataGrid.SelectedItem =
+                    preservedSelection;
+            }
+        }
+
+        AppendLog(
+            $"Refresco batch completado: " +
+            $"{refreshedFilePaths.Count} archivo(s) releído(s).");
+
+        return refreshedFilePaths;
+    }
+
+    /// <summary>
+    /// Reconstruye el plan visual después de una promoción batch
+    /// solamente cuando el archivo actualmente seleccionado fue uno
+    /// de los archivos promovidos y releídos correctamente.
+    ///
+    /// Los demás archivos ya quedan actualizados en la tabla y serán
+    /// analizados normalmente cuando el usuario los seleccione.
+    /// </summary>
+    private async Task
+        RefreshCurrentSimulationPlanAfterBatchAsync(
+            IReadOnlyList<string> refreshedFilePaths)
+    {
+        ArgumentNullException.ThrowIfNull(
+            refreshedFilePaths);
+
+        AudioFile? selectedAudioFile =
+            GetSelectedAudioFile();
+
+        if (selectedAudioFile is null)
+        {
+            SetCurrentSimulationPlan(
+                null);
+
+            AppendLog(
+                "No existe una fila seleccionada después del " +
+                "refresco productivo por lote.");
+
+            return;
+        }
+
+        bool selectedFileWasRefreshed =
+            refreshedFilePaths.Any(
+                filePath =>
+                    string.Equals(
+                        filePath,
+                        selectedAudioFile.FullPath,
+                        StringComparison.OrdinalIgnoreCase));
+
+        if (!selectedFileWasRefreshed)
+        {
+            /*
+             * El archivo actualmente visible no fue promovido.
+             * Conservamos su plan sin volver a ejecutar búsquedas ni
+             * alterar posibles aprobaciones pendientes.
+             */
+            AppendLog(
+                "El archivo actualmente seleccionado no fue " +
+                "promovido; su plan visual fue conservado.");
+
+            return;
+        }
+
+        AppendLog(
+            "Reconstruyendo el plan del archivo seleccionado " +
+            "desde los metadatos promovidos.");
+
+        await AnalyzeSelectedFileAsync(
+            FileAnalysisInvocation.PostApplicationRefresh);
+
+        AppendLog(
+            "El plan seleccionado fue reconstruido después de " +
+            "la aplicación productiva por lote.");
+    }
+
+    /// <summary>
+    /// Revisa, prepara y finaliza de forma controlada la selección
+    /// productiva actual utilizando el coordinador batch en dos fases.
+    ///
+    /// La primera confirmación autoriza exclusivamente la creación
+    /// de copias verificadas.
+    ///
+    /// Después de una preparación completa se solicita una segunda
+    /// confirmación antes de modificar cualquier archivo original.
+    /// </summary>
+    private async void ReviewProductiveBatchButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_isProductiveBatchOperationInProgress)
+        {
+            AppendLog(
+                "Ya existe una operación productiva por lote en curso.");
+
+            return;
+        }
+
+        if (!_productiveBatchSelection.HasItems)
+        {
+            AppendLog(
+                "No existen archivos seleccionados para aplicación " +
+                "productiva por lote.");
+
+            UpdateProductiveBatchUiState();
+            return;
+        }
+
+        MetadataApplyBatchRequestFactory
+            batchRequestFactory =
+                new();
+
+        MetadataApplyBatchRequest
+            batchRequest;
+
+        try
+        {
+            batchRequest =
+                batchRequestFactory.Create(
+                    _productiveBatchSelection);
+        }
+        catch (Exception exception)
+        {
+            AppendLog(
+                "No fue posible construir la solicitud productiva " +
+                $"por lote. Detalle: {exception.Message}");
+
+            MessageBox.Show(
+                this,
+                "No fue posible construir el lote productivo.\n\n" +
+                "Ningún archivo fue modificado.\n\n" +
+                "Revise el Registro de actividad.",
+                "Error al preparar lote",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+
+            return;
+        }
+
+        if (!batchRequest.IsStructurallyValid)
+        {
+            AppendLog(
+                "La selección actual no produjo una solicitud batch " +
+                "estructuralmente válida.");
+
+            MessageBox.Show(
+                this,
+                "La selección actual no puede ejecutarse como un " +
+                "lote productivo válido.\n\n" +
+                "Ningún archivo fue modificado.",
+                "Lote productivo no válido",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
+            return;
+        }
+
+        string fileList =
+            string.Join(
+                Environment.NewLine,
+                batchRequest.ValidRequests
+                    .Select(
+                        request =>
+                            $"• {request.FileName} " +
+                            $"({request.ValidChangeCount} cambio(s))"));
+
+        MessageBoxResult preparationConfirmation =
+            MessageBox.Show(
+                this,
+                $"Se prepararán copias verificadas de los archivos " +
+                $"seleccionados.\n\n" +
+                $"Archivos: {batchRequest.ValidRequestCount}\n" +
+                $"Cambios aprobados: {batchRequest.ValidChangeCount}\n\n" +
+                $"{fileList}\n\n" +
+                "En esta primera fase los archivos originales NO " +
+                "serán modificados.\n\n" +
+                "¿Desea preparar el lote?",
+                "Preparar lote productivo",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+        if (preparationConfirmation !=
+            MessageBoxResult.Yes)
+        {
+            AppendLog(
+                "La preparación productiva por lote fue cancelada " +
+                "antes de crear copias verificadas.");
+
+            return;
+        }
+
+        _isProductiveBatchOperationInProgress =
+            true;
+
+        UpdateProductiveBatchUiState();
+        UpdateApplyChangesButtonState();
+
+        MetadataProductiveBatchPreparationResult?
+            preparationResult =
+                null;
+
+        try
+        {
+            AppendLog(
+                "=== Preparación productiva real por lote ===");
+
+            AppendLog(
+                $"Lote: {batchRequest.BatchId}");
+
+            AppendLog(
+                $"Solicitudes: {batchRequest.ValidRequestCount}");
+
+            AppendLog(
+                $"Cambios aprobados: {batchRequest.ValidChangeCount}");
+
+            preparationResult =
+                await _metadataProductiveTwoPhaseBatchCoordinator
+                    .PrepareAsync(
+                        batchRequest);
+
+            foreach (string message
+                in preparationResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Preparaciones verificadas: " +
+                $"{preparationResult.VerifiedPreparationCount} de " +
+                $"{preparationResult.RequestedCount}");
+
+            AppendLog(
+                $"Lista para decisión global: " +
+                $"{ToSpanish(
+                    preparationResult.IsReadyForDecision)}");
+
+            AppendLog(
+                $"Resumen de preparación: " +
+                $"{preparationResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la preparación productiva real por lote ===");
+
+            if (!preparationResult.IsReadyForDecision)
+            {
+                MessageBox.Show(
+                    this,
+                    "No fue posible preparar de forma segura todos " +
+                    "los archivos del lote.\n\n" +
+                    "Las preparaciones pendientes fueron descartadas " +
+                    "automáticamente.\n\n" +
+                    "Ningún archivo pendiente será promovido.\n\n" +
+                    "Revise el Registro de actividad.",
+                    "Preparación del lote incompleta",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return;
+            }
+
+            MessageBoxResult promotionConfirmation =
+                MessageBox.Show(
+                    this,
+                    $"Las {preparationResult.RequestedCount} copias " +
+                    "fueron preparadas y verificadas correctamente.\n\n" +
+                    "HASTA ESTE MOMENTO ningún archivo original ha " +
+                    "sido modificado.\n\n" +
+                    "La siguiente acción reemplazará secuencialmente " +
+                    "los archivos originales utilizando respaldos " +
+                    "productivos y verificación posterior.\n\n" +
+                    "Si selecciona No, todas las preparaciones serán " +
+                    "descartadas sin modificar los originales.\n\n" +
+                    "¿Desea aplicar realmente el lote?",
+                    "Confirmación final del lote productivo",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+            MetadataPromotionDecision
+                promotionDecision =
+                    promotionConfirmation ==
+                        MessageBoxResult.Yes
+                        ? MetadataPromotionDecision.Approved
+                        : MetadataPromotionDecision.Declined;
+
+            if (promotionDecision ==
+                MetadataPromotionDecision.Declined)
+            {
+                AppendLog(
+                    "El usuario rechazó la promoción global. " +
+                    "Todas las preparaciones serán descartadas.");
+            }
+            else
+            {
+                AppendLog(
+                    "El usuario aprobó la promoción global del lote.");
+            }
+
+            MetadataProductiveBatchCompletionResult
+                completionResult =
+                    await _metadataProductiveTwoPhaseBatchCoordinator
+                        .CompleteAsync(
+                            preparationResult,
+                            promotionDecision);
+
+            AppendLog(
+                "=== Finalización productiva real por lote ===");
+
+            foreach (string message
+                in completionResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Decisión global: " +
+                $"{completionResult.PromotionDecision}");
+
+            AppendLog(
+                $"Resultados procesados: " +
+                $"{completionResult.DecisionResultCount} de " +
+                $"{completionResult.RequestedCount}");
+
+            AppendLog(
+                $"Resultados correctos según decisión: " +
+                $"{completionResult.SuccessfulDecisionCount}");
+
+            AppendLog(
+                $"Resultados fallidos: " +
+                $"{completionResult.FailedDecisionCount}");
+
+            AppendLog(
+                $"Limpiezas de recuperación: " +
+                $"{completionResult.CleanupResultCount}");
+
+            AppendLog(
+                $"Limpieza de recuperación correcta: " +
+                $"{ToSpanish(
+                    completionResult.CleanupWasSuccessful)}");
+
+            AppendLog(
+                $"Originales en estado seguro: " +
+                $"{ToSpanish(
+                    completionResult.OriginalsEndedInSafeState)}");
+
+            AppendLog(
+                $"Resultado global correcto: " +
+                $"{ToSpanish(
+                    completionResult.WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen final: {completionResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la finalización productiva real por lote ===");
+
+            if (promotionDecision ==
+                MetadataPromotionDecision.Declined)
+            {
+                MessageBox.Show(
+                    this,
+                    "La promoción del lote fue rechazada.\n\n" +
+                    "Las copias preparadas fueron descartadas y los " +
+                    "archivos originales permanecieron sin cambios.",
+                    "Lote productivo descartado",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return;
+            }
+
+            RemoveSuccessfullyPromotedBatchItems(
+                batchRequest,
+                completionResult);
+
+            IReadOnlyList<string>
+                refreshedBatchFilePaths =
+                    RefreshSuccessfullyPromotedBatchFiles(
+                        batchRequest,
+                        completionResult);
+
+            AppendLog(
+                $"Archivos promovidos releídos desde disco: " +
+                $"{refreshedBatchFilePaths.Count}.");
+
+            await RefreshCurrentSimulationPlanAfterBatchAsync(
+                refreshedBatchFilePaths);
+
+            UpdateProductiveBatchUiState();
+            UpdateApplyChangesButtonState();
+
+            if (completionResult.WasSuccessful)
+            {
+                MessageBox.Show(
+                    this,
+                    $"El lote productivo terminó correctamente.\n\n" +
+                    $"Archivos aplicados: " +
+                    $"{completionResult.SuccessfulDecisionCount}\n" +
+                    $"Archivos releídos desde disco: " +
+                    $"{refreshedBatchFilePaths.Count}\n\n" +
+                    "Los elementos completados fueron retirados de " +
+                    "la selección productiva y la interfaz fue " +
+                    "actualizada desde los archivos reales.",
+                    "Lote productivo completado",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    this,
+                    "La aplicación del lote se detuvo antes de " +
+                    "completar todos los archivos.\n\n" +
+                    $"Aplicaciones correctas: " +
+                    $"{completionResult.SuccessfulDecisionCount}\n" +
+                    $"Resultados fallidos: " +
+                    $"{completionResult.FailedDecisionCount}\n" +
+                    $"Preparaciones descartadas: " +
+                    $"{completionResult.CleanupResultCount}\n\n" +
+                    "Los elementos que no fueron promovidos " +
+                    "permanecen seleccionados para revisión.\n\n" +
+                    "Revise el Registro de actividad.",
+                    "Lote productivo incompleto",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog(
+                "La operación productiva por lote fue cancelada.");
+
+            MessageBox.Show(
+                this,
+                "La operación productiva por lote fue cancelada.\n\n" +
+                "El coordinador intentó descartar cualquier " +
+                "preparación todavía pendiente.",
+                "Operación cancelada",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception exception)
+        {
+            AppendLog(
+                "La operación productiva por lote produjo un error " +
+                $"inesperado: {exception.Message}");
+
+            MessageBox.Show(
+                this,
+                "La operación productiva por lote no pudo completarse.\n\n" +
+                "Revise el Registro de actividad antes de volver a " +
+                "intentarlo.",
+                "Error productivo por lote",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            _isProductiveBatchOperationInProgress =
+                false;
+
+            UpdateProductiveBatchUiState();
+            UpdateApplyChangesButtonState();
+        }
+    }
+
+    /// <summary>
+    /// Elimina de la selección productiva exclusivamente los
+    /// archivos que fueron promovidos correctamente.
+    ///
+    /// Los fallidos y los no ejecutados permanecen seleccionados
+    /// para revisión o reintento.
+    /// </summary>
+    private void RemoveSuccessfullyPromotedBatchItems(
+        MetadataApplyBatchRequest batchRequest,
+        MetadataProductiveBatchCompletionResult completionResult)
+    {
+        int comparableCount =
+            Math.Min(
+                batchRequest.ValidRequests.Count,
+                completionResult.DecisionResults.Count);
+
+        for (int index = 0;
+            index < comparableCount;
+            index++)
+        {
+            MetadataProductiveApplicationResult
+                result =
+                    completionResult.DecisionResults[index];
+
+            if (!result.WasSuccessfullyPromoted)
+            {
+                continue;
+            }
+
+            MetadataApplyRequest
+                request =
+                    batchRequest.ValidRequests[index];
+
+            bool removed =
+                _productiveBatchSelection.Remove(
+                    request.FilePath);
+
+            AppendLog(
+                removed
+                    ? $"Archivo promovido retirado del lote: " +
+                      $"{request.FileName}."
+                    : $"El archivo promovido ya no estaba presente " +
+                      $"en la selección: {request.FileName}.");
+        }
+
+        UpdateProductiveBatchUiState();
     }
 
     /// <summary>
@@ -2024,6 +2819,315 @@ public partial class MainWindow : Window
                 "=== Fin de las pruebas del coordinador productivo por lote ===");
 
             AppendLog(
+                "=== Estado productivo batch de la interfaz ===");
+
+            AppendLog(
+                $"Archivos actualmente seleccionados: " +
+                $"{_productiveBatchSelection.FileCount}");
+
+            AppendLog(
+                $"Cambios actualmente seleccionados: " +
+                $"{_productiveBatchSelection.ApprovedChangeCount}");
+
+            AppendLog(
+                $"Resumen actual: " +
+                $"{_productiveBatchSelection.Summary}");
+
+            AppendLog(
+                "=== Fin del estado productivo batch de la interfaz ===");
+
+            AppendLog(
+                "Iniciando pruebas estructurales de la selección " +
+                "productiva por lote.");
+
+            ProductiveBatchSelectionTestResult
+                productiveBatchSelectionTestResult =
+                    _productiveBatchSelectionTestRunner.Run();
+
+            AppendLog(
+                "=== Selección productiva por lote ===");
+
+            foreach (string message
+                in productiveBatchSelectionTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Selección vacía creada: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .EmptySelectionWasCreated)}");
+
+            AppendLog(
+                $"Plan aprobado agregado: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .ApprovedPlanWasAdded)}");
+
+            AppendLog(
+                $"Ruta existente reemplazada sin duplicar: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .DuplicatePathWasReplaced)}");
+
+            AppendLog(
+                $"Segundo plan agregado: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .SecondPlanWasAdded)}");
+
+            AppendLog(
+                $"Conteos actualizados: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .CountsWereUpdated)}");
+
+            AppendLog(
+                $"Elemento eliminado: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .ItemWasRemoved)}");
+
+            AppendLog(
+                $"Plan sin aprobación eliminó selección previa: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .PlanWithoutApprovalRemovedExistingItem)}");
+
+            AppendLog(
+                $"Solicitud batch creada: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .BatchRequestWasCreated)}");
+
+            AppendLog(
+                $"Solicitud batch estructuralmente válida: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .BatchRequestWasStructurallyValid)}");
+
+            AppendLog(
+                $"Conteos preservados en solicitud batch: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .BatchCountsWerePreserved)}");
+
+            AppendLog(
+                $"Selección limpiada correctamente: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .SelectionWasCleared)}");
+
+            AppendLog(
+                $"Prueba de selección productiva por lote correcta: " +
+                $"{ToSpanish(
+                    productiveBatchSelectionTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: " +
+                $"{productiveBatchSelectionTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de las pruebas de selección productiva por lote ===");
+
+            AppendLog(
+                "Iniciando pruebas de preparación productiva batch " +
+                "en dos fases.");
+
+            MetadataProductiveTwoPhaseBatchPreparationTestResult
+                twoPhasePreparationTestResult =
+                    await _metadataProductiveTwoPhaseBatchPreparationTestRunner
+                        .RunAsync();
+
+            AppendLog(
+                "=== Preparación productiva batch en dos fases ===");
+
+            foreach (string message
+                in twoPhasePreparationTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Dependencia nula rechazada: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .NullCoordinatorWasRejected)}");
+
+            AppendLog(
+                $"Lote nulo rechazado: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .NullBatchWasRejected)}");
+
+            AppendLog(
+                $"Lote inválido rechazado: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .InvalidBatchWasRejected)}");
+
+            AppendLog(
+                $"Todas las solicitudes preparadas: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .AllRequestsWerePrepared)}");
+
+            AppendLog(
+                $"Preparaciones pendientes de decisión: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .PreparationsWerePending)}");
+
+            AppendLog(
+                $"Lote listo para decisión global: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .BatchWasReadyForDecision)}");
+
+            AppendLog(
+                $"Fallo de preparación detuvo el lote: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .PreparationFailureStoppedBatch)}");
+
+            AppendLog(
+                $"Preparaciones pendientes limpiadas: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .PendingPreparationsWereCleanedUp)}");
+
+            AppendLog(
+                $"Lote fallido bloqueado para promoción: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .FailedBatchWasNotReadyForDecision)}");
+
+            AppendLog(
+                $"Prueba de preparación batch en dos fases correcta: " +
+                $"{ToSpanish(
+                    twoPhasePreparationTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {twoPhasePreparationTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la preparación productiva batch en dos fases ===");
+
+            AppendLog(
+                "Iniciando pruebas de finalización productiva batch " +
+                "en dos fases.");
+
+            MetadataProductiveTwoPhaseBatchCompletionTestResult
+                twoPhaseCompletionTestResult =
+                    await _metadataProductiveTwoPhaseBatchCompletionTestRunner
+                        .RunAsync();
+
+            AppendLog(
+                "=== Finalización productiva batch en dos fases ===");
+
+            foreach (string message
+                in twoPhaseCompletionTestResult.Messages)
+            {
+                AppendLog(
+                    $"- {message}");
+            }
+
+            AppendLog(
+                $"Preparación nula rechazada: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .NullPreparationWasRejected)}");
+
+            AppendLog(
+                $"Decisión global inválida rechazada: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .UnsupportedDecisionWasRejected)}");
+
+            AppendLog(
+                $"Preparación no lista rechazada: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .InvalidPreparationWasRejected)}");
+
+            AppendLog(
+                $"Declined finalizó todo el lote: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .DeclinedCompletedAllPreparations)}");
+
+            AppendLog(
+                $"Declined reenviado a todo el lote: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .DeclinedWasForwardedToAll)}");
+
+            AppendLog(
+                $"Lote Declined correcto: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .DeclinedBatchWasSuccessful)}");
+
+            AppendLog(
+                $"Approved finalizó todo el lote: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .ApprovedCompletedAllPreparations)}");
+
+            AppendLog(
+                $"Approved reenviado a todo el lote: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .ApprovedWasForwardedToAll)}");
+
+            AppendLog(
+                $"Lote Approved correcto: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .ApprovedBatchWasSuccessful)}");
+
+            AppendLog(
+                $"Fallo Approved detuvo nuevas promociones: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .ApprovedFailureStoppedFurtherPromotion)}");
+
+            AppendLog(
+                $"Preparaciones restantes descartadas: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .RemainingPreparationsWereDeclined)}");
+
+            AppendLog(
+                $"Lote Approved fallido sin éxito falso: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .FailedApprovedBatchWasNotSuccessful)}");
+
+            AppendLog(
+                $"Cancelación limpió preparaciones pendientes: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .CancellationCleanedPendingPreparations)}");
+
+            AppendLog(
+                $"Prueba de finalización batch en dos fases correcta: " +
+                $"{ToSpanish(
+                    twoPhaseCompletionTestResult
+                        .WasSuccessful)}");
+
+            AppendLog(
+                $"Resumen: {twoPhaseCompletionTestResult.Summary}");
+
+            AppendLog(
+                "=== Fin de la finalización productiva batch en dos fases ===");
+
+            AppendLog(
                 "Iniciando prueba de la fábrica de solicitudes " +
                 "aisladas.");
 
@@ -2862,7 +3966,7 @@ public partial class MainWindow : Window
             await testRunner.RunAsync(
                 filePath,
                 requestedGenre:
-                    "Electronic");
+                    DiagnosticMetadataTestValues.CreateGenre());
 
         AppendLog(
             "=== Pipeline integral aislado ===");
@@ -3006,7 +4110,7 @@ public partial class MainWindow : Window
             await isolatedTestRunner.RunAsync(
                 filePath,
                 requestedGenre:
-                    "Electronic");
+                    DiagnosticMetadataTestValues.CreateGenre());
 
         string isolatedTestReport =
             TagLibMp3IsolatedWriteTestDiagnostics.BuildReport(
@@ -3061,7 +4165,7 @@ public partial class MainWindow : Window
             await isolatedTestRunner.RunAsync(
                 filePath,
                 requestedGenre:
-                    "Electronic");
+                    DiagnosticMetadataTestValues.CreateGenre());
 
         AppendLog(
             "=== Prueba aislada de escritura FLAC ===");

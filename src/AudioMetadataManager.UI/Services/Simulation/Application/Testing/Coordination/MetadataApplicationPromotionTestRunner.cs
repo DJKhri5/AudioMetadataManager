@@ -14,8 +14,8 @@ public sealed class MetadataApplicationPromotionTestRunner
     private const string TestFolderName =
         "MetadataApplicationPromotionTests";
 
-    private const string PromotedGenre =
-        "Electronic";
+    private static readonly string PromotedGenre =
+        DiagnosticMetadataTestValues.CreateGenre();
 
     private readonly IMetadataApplicationPromotionService
         _promotionService;

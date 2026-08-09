@@ -1,6 +1,7 @@
 ﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
+using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
 using System.IO;
 
 namespace AudioMetadataManager.UI.Services.Simulation
@@ -74,7 +75,7 @@ public sealed class MetadataApplyRequestIsolationFactoryTestRunner
                                 "House",
 
                             NewValue =
-                                "Electronic",
+                                DiagnosticMetadataTestValues.CreateGenre(),
 
                             WasManuallyApproved =
                                 true,

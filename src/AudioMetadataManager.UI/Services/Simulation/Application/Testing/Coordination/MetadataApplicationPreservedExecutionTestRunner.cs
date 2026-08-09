@@ -18,8 +18,8 @@ namespace AudioMetadataManager.UI.Services.Simulation
 public sealed class
     MetadataApplicationPreservedExecutionTestRunner
 {
-    private const string TestGenre =
-        "Electronic";
+    private static readonly string TestGenre =
+        DiagnosticMetadataTestValues.CreateGenre();
 
     public async Task<
         MetadataApplicationPreservedExecutionTestResult>

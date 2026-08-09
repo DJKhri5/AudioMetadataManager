@@ -14,8 +14,8 @@ public sealed class MetadataApplicationRollbackTestRunner
     private const string TestFolderName =
         "MetadataApplicationRollbackTests";
 
-    private const string ModifiedGenre =
-        "Electronic";
+    private static readonly string ModifiedGenre =
+        DiagnosticMetadataTestValues.CreateGenre();
 
     private const string ExpectedFailureText =
         "Fallo de verificación posterior simulado";

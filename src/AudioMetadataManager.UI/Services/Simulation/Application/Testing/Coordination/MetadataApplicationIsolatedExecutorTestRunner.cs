@@ -1,8 +1,9 @@
 ﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
-using TagLib;
+using AudioMetadataManager.UI.Services.Simulation.Application.Testing.Infrastructure;
 using System.IO;
+using TagLib;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.Coordination;
@@ -13,8 +14,8 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// </summary>
 public sealed class MetadataApplicationIsolatedExecutorTestRunner
 {
-    private const string TestGenre =
-        "Electronic";
+    private static readonly string TestGenre =
+        DiagnosticMetadataTestValues.CreateGenre();
 
     private readonly MetadataApplicationIsolatedExecutor
         _isolatedExecutor;

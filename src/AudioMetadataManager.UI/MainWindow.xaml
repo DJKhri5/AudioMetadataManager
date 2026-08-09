@@ -262,32 +262,62 @@
             </GroupBox>
 
             <!-- Acciones inferiores -->
-            <StackPanel Grid.Row="6"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Right">
+            <Grid Grid.Row="6">
 
-                <Button x:Name="SaveProjectButton"
-                        Content="Guardar proyecto"
-                        MinWidth="130"
-                        Padding="12,7"
-                        Margin="0,0,10,0"
-                        IsEnabled="False"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <Button x:Name="ExportButton"
-                        Content="Exportar simulación"
-                        MinWidth="140"
-                        Padding="12,7"
-                        Margin="0,0,10,0"
-                        IsEnabled="False"/>
+                <!-- Estado y revisión del lote productivo -->
+                <StackPanel Grid.Column="0"
+                Orientation="Horizontal"
+                VerticalAlignment="Center">
 
-                <Button x:Name="ApplyChangesButton"
-                        Content="Respaldar y aplicar cambios"
-                        MinWidth="190"
-                        Padding="12,7"
-                        IsEnabled="False"
-                        Click="ApplyChangesButton_Click"/>
+                    <TextBlock x:Name="ProductiveBatchSummaryTextBlock"
+                   Text="Lote productivo: ningún archivo seleccionado"
+                   VerticalAlignment="Center"
+                   FontWeight="SemiBold"
+                   Margin="0,0,12,0"/>
 
-            </StackPanel>
+                    <Button x:Name="ReviewProductiveBatchButton"
+                Content="Revisar lote"
+                MinWidth="110"
+                Padding="12,7"
+                IsEnabled="False"
+                Click="ReviewProductiveBatchButton_Click"/>
+
+                </StackPanel>
+
+                <!-- Acciones existentes -->
+                <StackPanel Grid.Column="1"
+                Orientation="Horizontal"
+                HorizontalAlignment="Right">
+
+                    <Button x:Name="SaveProjectButton"
+                Content="Guardar proyecto"
+                MinWidth="130"
+                Padding="12,7"
+                Margin="0,0,10,0"
+                IsEnabled="False"/>
+
+                    <Button x:Name="ExportButton"
+                Content="Exportar simulación"
+                MinWidth="140"
+                Padding="12,7"
+                Margin="0,0,10,0"
+                IsEnabled="False"/>
+
+                    <Button x:Name="ApplyChangesButton"
+                Content="Respaldar y aplicar cambios"
+                MinWidth="190"
+                Padding="12,7"
+                IsEnabled="False"
+                Click="ApplyChangesButton_Click"/>
+
+                </StackPanel>
+
+            </Grid>
 
         </Grid>
     </DockPanel>

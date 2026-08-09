@@ -20,8 +20,8 @@ public sealed class
     private const string TestFolderName =
         "MetadataProductiveApplicationCoordinatorTests";
 
-    private const string TestGenre =
-        "Electronic";
+    private static readonly string TestGenre =
+        DiagnosticMetadataTestValues.CreateGenre();
 
     private readonly FileSha256Service
         _fileSha256Service;

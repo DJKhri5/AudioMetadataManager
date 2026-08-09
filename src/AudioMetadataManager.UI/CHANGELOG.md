@@ -145,6 +145,32 @@ Semantic Versioning where applicable.
 - Added controlled batch coverage for preparation failures, completion
   failures, cancellation, multi-request approval, and partial-result
   preservation.
+- Added persistent `ProductiveBatchSelection` and
+  `ProductiveBatchSelectionItem` state for accumulating approved plans across
+  multiple files.
+- Added `MetadataApplyBatchRequestFactory` for converting productive UI
+  selections into validated technical batch requests.
+- Added productive batch status and the `Review batch` action to the main
+  window.
+- Added `MetadataProductiveBatchPreparationResult` for auditable first-phase
+  batch preparation state.
+- Added `MetadataProductiveBatchCompletionResult` for consolidated global
+  decision, cleanup, safety, and completion evidence.
+- Added `IMetadataProductiveTwoPhaseBatchCoordinator` and
+  `MetadataProductiveTwoPhaseBatchCoordinator`.
+- Added two-phase batch preparation followed by an explicit global
+  `Approved` or `Declined` decision.
+- Added automatic cleanup of pending verified preparations after batch
+  failures and cancellation.
+- Added controlled coverage for two-phase batch preparation and completion.
+- Added reusable `RecordingProductiveApplicationCoordinator` testing
+  infrastructure.
+- Added productive batch post-application refresh for successfully promoted
+  files.
+- Added automatic reconstruction of the currently selected simulation plan
+  after a successful batch promotion.
+- Added `DiagnosticMetadataTestValues` for repeatable diagnostic writes that
+  always produce a real metadata change.
 
 ### Changed
 
@@ -270,6 +296,21 @@ Semantic Versioning where applicable.
   while rollback remains an individual-file responsibility.
 - Extended the technical diagnostic with productive batch request, result,
   fail-fast, cancellation, multi-Approved, and partial-failure evidence.
+- Extended productive batch execution from a preselected per-batch decision
+  to a true prepare-then-confirm two-phase workflow.
+- Updated the main window to accumulate approved plans independently of the
+  currently selected DataGrid row.
+- Updated productive UI state so individual and batch application actions
+  cannot overlap.
+- Updated successful batch completion to remove only files that were
+  actually promoted.
+- Updated batch post-application handling to re-read all successfully
+  promoted files from disk in one UI refresh.
+- Reused the existing `PostApplicationRefresh` analysis workflow to rebuild
+  the currently selected plan after batch promotion.
+- Updated productive diagnostics to use runtime-generated metadata values
+  instead of assuming a fixed genre is always different from the source
+  file.
 
 ### Fixed
 
@@ -333,6 +374,18 @@ Semantic Versioning where applicable.
 - Prevented unexpected individual coordinator exceptions from escaping
   without auditable batch failure evidence.
 - Prevented a mid-batch cancellation from starting the next request.
+- Prevented productive batch preparation failures from leaving earlier
+  verified working copies pending.
+- Prevented cancellation during batch completion from leaving unprocessed
+  preparations without cleanup.
+- Prevented a failed `Approved` batch item from allowing later pending items
+  to be promoted.
+- Prevented successful batch promotion from leaving stale rows or stale
+  simulation proposals visible in the interface.
+- Prevented successfully promoted files from remaining in the productive
+  batch selection.
+- Prevented repeated technical diagnostics from failing when the selected
+  audio file already contains the previously fixed test genre.
 
 ### Internal
 
@@ -479,3 +532,18 @@ Semantic Versioning where applicable.
   environments and temporary backups.
 - Revalidated the complete five-stage pipeline and FLAC artwork
   preservation after the promotion infrastructure changes.
+- Added controlled preparation tests for the two-phase productive batch
+  coordinator.
+- Added controlled completion tests for global `Approved` and `Declined`
+  batch decisions.
+- Verified fail-fast promotion behavior and automatic cleanup of remaining
+  pending preparations.
+- Verified real two-file productive batch promotion over isolated test
+  copies.
+- Verified real two-file `Declined` completion without modifying original
+  files.
+- Verified batch row refresh and selected-plan reconstruction from persisted
+  metadata.
+- Revalidated isolated execution, preserved execution, promotion, rollback,
+  productive coordination, the Approved path, the integral pipeline, and
+  isolated MP3 writing with dynamically generated diagnostic metadata.
