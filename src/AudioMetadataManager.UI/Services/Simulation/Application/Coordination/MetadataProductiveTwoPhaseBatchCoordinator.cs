@@ -88,13 +88,13 @@ public sealed class MetadataProductiveTwoPhaseBatchCoordinator :
         foreach (MetadataApplyRequest request
             in batchRequest.ValidRequests)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             MetadataProductiveApplicationResult
                 preparedResult;
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 preparedResult =
                     await _individualCoordinator
                         .PrepareAsync(

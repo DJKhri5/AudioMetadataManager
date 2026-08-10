@@ -175,6 +175,10 @@ Semantic Versioning where applicable.
   `IAudioDiagnosticsOrchestrator` as the dedicated component for the
   full audio diagnostics sequence (technical analysis, structural
   tests, MP3 inspection, and MP3/FLAC isolated write tests).
+- Added `ProductiveBatchRequestMapper` as the dedicated mapping boundary
+  between `ProductiveBatchSelection` and `MetadataApplyBatchRequest`.
+- Added xUnit coverage for null, empty, single-item, and ordered multi-item
+  productive batch request mapping.
 
 ### Changed
 
@@ -322,6 +326,16 @@ Semantic Versioning where applicable.
 - Reduced `MainWindow.xaml.cs` from 4,436 to 2,171 lines by removing
   the 18 TestRunner fields and their constructor wiring, now owned
   by `AudioDiagnosticsOrchestrator`.
+- Moved structural metadata-application test coverage out of the productive
+  UI architecture and into the dedicated `AudioMetadataManager.Tests`
+  project.
+- Removed obsolete TestRunner and TestResult dependencies from the productive
+  diagnostics and main-window composition.
+- Simplified productive batch request construction by reusing the
+  `MetadataApplyRequest` instances already prepared by
+  `ProductiveBatchSelectionItem`.
+- Preserved productive request identity and selection order while mapping UI
+  batch state to the technical batch model.
 
 ### Fixed
 

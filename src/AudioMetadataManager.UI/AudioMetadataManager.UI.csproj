@@ -18,6 +18,9 @@
     <Folder Include="Documentation\Decisions\" />
     <Folder Include="Documentation\Roadmap\" />
     <Folder Include="Documentation\Releases\" />
+    <Folder Include="Services\Simulation\Application\Testing\Context\" />
+    <Folder Include="Services\Simulation\Application\Testing\PipelineComposition\" />
+    <Folder Include="Services\Simulation\Application\Testing\PipelineStages\Verification\" />
   </ItemGroup>
 
 </Project>

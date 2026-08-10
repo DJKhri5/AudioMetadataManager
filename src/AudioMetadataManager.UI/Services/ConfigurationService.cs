@@ -65,12 +65,15 @@ namespace AudioMetadataManager.UI.Services
         /// <summary>
         /// Clase raíz que representa la estructura completa del archivo appsettings.json.
         /// </summary>
-        private class ConfigurationRoot
+        private sealed class ConfigurationRoot
         {
-            public BackupSettings Backup { get; set; }
-            public ScanSettings Scan { get; set; }
-            public NamingSettings Naming { get; set; }
-            public ApplicationSettings Application { get; set; }
+            public BackupSettings? Backup { get; set; }
+
+            public ScanSettings? Scan { get; set; }
+
+            public NamingSettings? Naming { get; set; }
+
+            public ApplicationSettings? Application { get; set; }
         }
     }
 
