@@ -21,6 +21,7 @@ using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.MetadataSources.Pipeline;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Pipeline.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation.Application.BatchWorkflow;
 using AudioMetadataManager.UI.Services.Simulation.Application.Coordination;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Mapping;
@@ -80,8 +81,8 @@ public partial class MainWindow : Window
     private readonly MetadataProductiveApplicationCoordinator
             _metadataProductiveApplicationCoordinator;
 
-    private readonly MetadataProductiveTwoPhaseBatchCoordinator
-            _metadataProductiveTwoPhaseBatchCoordinator;
+    private readonly ProductiveBatchWorkflowService
+            _productiveBatchWorkflowService;
 
     private readonly ProductiveBatchSelection
             _productiveBatchSelection =
@@ -253,12 +254,12 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Prepara y completa la aplicación productiva de todos los
-    /// archivos actualmente incluidos en la selección batch.
+    /// Ejecuta el workflow productivo por lote.
     ///
-    /// La operación utiliza el coordinador productivo two-phase:
-    /// primero prepara todos los archivos sin promocionarlos y sólo
-    /// después solicita una única decisión al usuario.
+    /// La ventana mantiene únicamente las responsabilidades de
+    /// interacción con el usuario y actualización visual.
+    /// La preparación, finalización y coordinación productiva se
+    /// delegan al ProductiveBatchWorkflowService.
     /// </summary>
     private async void ReviewProductiveBatchButton_Click(
         object sender,
@@ -303,15 +304,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!batchRequest.IsStructurallyValid)
-        {
-            AppendLog(
-                "La solicitud productiva por lote no superó la " +
-                "validación estructural.");
-
-            return;
-        }
-
         MessageBoxResult initialConfirmation =
             MessageBox.Show(
                 $"Se prepararán " +
@@ -341,35 +333,35 @@ public partial class MainWindow : Window
         UpdateApplyChangesButtonState();
         UpdateProductiveBatchUiState();
 
-        AppendLog(
-            "Iniciando preparación productiva por lote.");
-
-        AppendLog(
-            $"Archivos del lote: " +
-            $"{batchRequest.ValidRequestCount}.");
-
-        AppendLog(
-            $"Cambios aprobados del lote: " +
-            $"{batchRequest.ValidChangeCount}.");
-
         try
         {
-            var preparationResult =
-                await _metadataProductiveTwoPhaseBatchCoordinator
+            AppendLog(
+                "Iniciando preparación productiva por lote.");
+
+            AppendLog(
+                $"Archivos del lote: " +
+                $"{batchRequest.ValidRequestCount}.");
+
+            AppendLog(
+                $"Cambios aprobados del lote: " +
+                $"{batchRequest.ValidChangeCount}.");
+
+            ProductiveBatchPreparation preparation =
+                await _productiveBatchWorkflowService
                     .PrepareAsync(
                         batchRequest);
 
             AppendLog(
-                preparationResult.Summary);
+                preparation.Summary);
 
             foreach (string message in
-                     preparationResult.Messages)
+                     preparation.PreparationResult.Messages)
             {
                 AppendLog(
                     message);
             }
 
-            if (!preparationResult.IsReadyForDecision)
+            if (!preparation.IsReadyForDecision)
             {
                 AppendLog(
                     "El lote no quedó preparado para una decisión " +
@@ -382,7 +374,8 @@ public partial class MainWindow : Window
                 MessageBox.Show(
                     $"La preparación del lote ha finalizado.\n\n" +
                     $"Archivos preparados: " +
-                    $"{batchRequest.ValidRequestCount}\n\n" +
+                    $"{preparation.PreparationResult.RequestedCount}" +
+                    "\n\n" +
                     "Todos los archivos han superado la fase de " +
                     "preparación y todavía permanecen aislados de " +
                     "los originales.\n\n" +
@@ -405,11 +398,12 @@ public partial class MainWindow : Window
                     : "El usuario rechazó la promoción productiva " +
                       "del lote.");
 
-            var completionResult =
-                await _metadataProductiveTwoPhaseBatchCoordinator
-                    .CompleteAsync(
-                        preparationResult,
-                        decision);
+            MetadataProductiveBatchCompletionResult
+                completionResult =
+                    await _productiveBatchWorkflowService
+                        .CompleteAsync(
+                            preparation,
+                            decision);
 
             AppendLog(
                 completionResult.Summary);
@@ -678,8 +672,8 @@ public partial class MainWindow : Window
         _metadataProductiveApplicationCoordinator =
             new MetadataProductiveApplicationCoordinator();
 
-        _metadataProductiveTwoPhaseBatchCoordinator =
-            new MetadataProductiveTwoPhaseBatchCoordinator();
+        _productiveBatchWorkflowService =
+            new ProductiveBatchWorkflowService();
 
         UpdateProductiveBatchUiState();
     }
