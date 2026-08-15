@@ -60,6 +60,29 @@ public sealed class ProductiveBatchSelection
         _items.Count > 0;
 
     /// <summary>
+    /// Indica si la selección puede ejecutarse actualmente
+    /// como un lote productivo válido.
+    /// </summary>
+    public bool IsReadyForExecution =>
+        HasItems &&
+        _items.All(
+            item =>
+                item.IsValid);
+
+    /// <summary>
+    /// Indica si la selección está completamente vacía.
+    /// </summary>
+    public bool IsEmpty =>
+        _items.Count == 0;
+
+    /// <summary>
+    /// Indica si la selección ya no puede ejecutar
+    /// ninguna solicitud productiva.
+    /// </summary>
+    public bool IsExecutionUnavailable =>
+        !IsReadyForExecution;
+
+    /// <summary>
     /// Agrega o actualiza un plan.
     ///
     /// Si el plan ya no contiene cambios aprobados,
@@ -221,11 +244,28 @@ public sealed class ProductiveBatchSelection
     /// <summary>
     /// Resumen compacto de la selección.
     /// </summary>
-    public string Summary =>
-        HasItems
-            ? $"{FileCount} archivo(s) y " +
-              $"{ApprovedChangeCount} cambio(s) aprobado(s) " +
-              "seleccionados para aplicación por lote."
-            : "No existen archivos seleccionados para " +
-              "aplicación productiva por lote.";
+    public string Summary
+    {
+        get
+        {
+            if (!HasItems)
+            {
+                return
+                    "No existen archivos seleccionados para " +
+                    "aplicación productiva por lote.";
+            }
+
+            if (!IsReadyForExecution)
+            {
+                return
+                    $"{FileCount} archivo(s) seleccionados, pero " +
+                    "la selección productiva contiene elementos no válidos.";
+            }
+
+            return
+                $"{FileCount} archivo(s) y " +
+                $"{ApprovedChangeCount} cambio(s) aprobado(s) " +
+                "seleccionados para aplicación por lote.";
+        }
+    }
 }

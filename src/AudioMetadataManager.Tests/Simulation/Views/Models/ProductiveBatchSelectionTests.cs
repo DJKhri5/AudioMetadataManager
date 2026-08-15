@@ -198,6 +198,80 @@ public sealed class ProductiveBatchSelectionTests
             selection.ApprovedChangeCount);
     }
 
+    [Fact]
+    public void EmptySelection_IsNotReadyForExecution()
+    {
+        ProductiveBatchSelection selection =
+            new();
+
+        Assert.False(
+            selection.IsReadyForExecution);
+    }
+
+    [Fact]
+    public void ValidSelectedPlan_IsReadyForExecution()
+    {
+        SimulationPlanViewModel plan =
+            CreateApprovedPlan(
+                Guid.NewGuid(),
+                @"C:\Tests\ready-for-execution.flac",
+                "ready-for-execution.flac",
+                "House");
+
+        ProductiveBatchSelection selection =
+            new();
+
+        bool wasAdded =
+            selection.AddOrReplace(
+                plan);
+
+        Assert.True(
+            wasAdded);
+
+        Assert.True(
+            selection.IsReadyForExecution);
+    }
+
+    [Fact]
+    public void EmptySelection_IsExecutionUnavailable()
+    {
+        ProductiveBatchSelection selection =
+            new();
+
+        Assert.True(
+            selection.IsEmpty);
+
+        Assert.True(
+            selection.IsExecutionUnavailable);
+    }
+
+    [Fact]
+    public void ValidSelectedPlan_IsExecutionAvailable()
+    {
+        SimulationPlanViewModel plan =
+            CreateApprovedPlan(
+                Guid.NewGuid(),
+                @"C:\Tests\execution-available.flac",
+                "execution-available.flac",
+                "House");
+
+        ProductiveBatchSelection selection =
+            new();
+
+        Assert.True(
+            selection.AddOrReplace(
+                plan));
+
+        Assert.False(
+            selection.IsEmpty);
+
+        Assert.False(
+            selection.IsExecutionUnavailable);
+
+        Assert.True(
+            selection.IsReadyForExecution);
+    }
+
     private static SimulationPlanViewModel
         CreateApprovedPlan(
             Guid planId,
