@@ -171,6 +171,17 @@ public sealed class MetadataApplicationIsolatedExecutor
                     isolationVerification?
                         .BackupMatchesInitialWorkingCopy == true;
 
+                if (!executionWasSuccessful &&
+                    string.IsNullOrWhiteSpace(
+                        errorMessage))
+                {
+                    errorMessage =
+                        BuildFailureDiagnostic(
+                            isolationContext,
+                            pipelineResult,
+                            isolationVerification);
+                }
+
                 bool preserveSuccessfulEnvironment =
                     executionWasSuccessful &&
                     options.PreserveVerifiedWorkingCopy;
@@ -217,5 +228,73 @@ public sealed class MetadataApplicationIsolatedExecutor
             ErrorMessage =
                 errorMessage
         };
+    }
+
+    private static string BuildFailureDiagnostic(
+        FileIsolationContext isolationContext,
+        MetadataApplicationPipelineResult? pipelineResult,
+        FileIsolationVerificationResult? isolationVerification)
+    {
+        List<string> reasons =
+            new();
+
+        if (!isolationContext.IsCreated)
+        {
+            reasons.Add(
+                "el entorno aislado no quedó creado correctamente");
+        }
+
+        if (pipelineResult is null)
+        {
+            reasons.Add(
+                "el pipeline no produjo un resultado");
+        }
+        else if (!pipelineResult.WasSuccessful)
+        {
+            reasons.Add(
+                $"el pipeline no terminó correctamente " +
+                $"(motivo: {pipelineResult.StopReason})");
+        }
+
+        if (isolationVerification is null)
+        {
+            reasons.Add(
+                "no se obtuvo una verificación del entorno aislado");
+        }
+        else
+        {
+            if (!isolationVerification.OriginalFileRemainedUnchanged)
+            {
+                reasons.Add(
+                    "el archivo original cambió durante la ejecución aislada");
+            }
+
+            if (!isolationVerification.WorkingCopyWasModified)
+            {
+                reasons.Add(
+                    "la copia de trabajo no registró modificaciones");
+            }
+
+            if (!isolationVerification.BackupMatchesInitialWorkingCopy)
+            {
+                reasons.Add(
+                    "el respaldo inicial no coincide con la copia de trabajo original");
+            }
+        }
+
+        if (reasons.Count == 0)
+        {
+            return
+                "La ejecución aislada no cumplió todos los criterios " +
+                "de éxito requeridos.";
+        }
+
+        return
+            "La ejecución aislada no pudo conservar una copia " +
+            "verificada promovible porque " +
+            string.Join(
+                "; ",
+                reasons) +
+            ".";
     }
 }
