@@ -42,7 +42,8 @@ public partial class SimulationPlanView : UserControl
 
     /// <summary>
     /// Selecciona únicamente las propuestas consideradas
-    /// elegibles para aplicación automática.
+    /// elegibles para aplicación automática y que además cuentan
+    /// con soporte de escritura productiva.
     /// </summary>
     private void SelectAutomaticButton_Click(
         object sender,
@@ -59,7 +60,7 @@ public partial class SimulationPlanView : UserControl
             in viewModel.Proposals)
         {
             proposal.IsSelected =
-                proposal.CanSelect &&
+                proposal.CanSelectForProductiveApplication &&
                 proposal.IsAutomaticApplyEligible;
         }
 
