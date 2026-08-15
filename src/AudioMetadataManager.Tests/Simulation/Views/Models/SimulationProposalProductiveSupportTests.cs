@@ -8,12 +8,16 @@ namespace AudioMetadataManager.Tests
 
 public sealed class SimulationProposalProductiveSupportTests
 {
-    [Fact]
-    public void SupportedGenre_IsProductivelySelectable()
+    [Theory]
+    [InlineData(MetadataField.Genre)]
+    [InlineData(MetadataField.Version)]
+    [InlineData(MetadataField.Label)]
+    public void SupportedField_IsProductivelySelectable(
+        MetadataField field)
     {
         SimulationProposalViewModel proposal =
             CreateProposal(
-                MetadataField.Genre);
+                field);
 
         Assert.True(
             proposal.IsProductiveApplicationSupported);
@@ -24,14 +28,23 @@ public sealed class SimulationProposalProductiveSupportTests
         Assert.Equal(
             "Disponible",
             proposal.ProductiveApplicationStatus);
+
+        proposal.IsSelected =
+            true;
+
+        Assert.True(
+            proposal.IsSelected);
+
+        Assert.True(
+            proposal.IsApprovedForSimulation);
     }
 
     [Fact]
-    public void UnsupportedLabel_IsNotProductivelySelectable()
+    public void UnknownField_IsNotProductivelySelectable()
     {
         SimulationProposalViewModel proposal =
             CreateProposal(
-                MetadataField.Label);
+                MetadataField.Unknown);
 
         Assert.False(
             proposal.IsProductiveApplicationSupported);
@@ -42,37 +55,12 @@ public sealed class SimulationProposalProductiveSupportTests
         Assert.Equal(
             "No disponible",
             proposal.ProductiveApplicationStatus);
-    }
-
-    [Fact]
-    public void UnsupportedVersion_IsNotProductivelySelectable()
-    {
-        SimulationProposalViewModel proposal =
-            CreateProposal(
-                MetadataField.Version);
-
-        Assert.False(
-            proposal.IsProductiveApplicationSupported);
-
-        Assert.False(
-            proposal.CanSelectForProductiveApplication);
-    }
-
-    [Fact]
-    public void UnsupportedField_CannotRemainSelected()
-    {
-        SimulationProposalViewModel proposal =
-            CreateProposal(
-                MetadataField.Label);
 
         proposal.IsSelected =
             true;
 
         Assert.False(
             proposal.IsSelected);
-
-        Assert.False(
-            proposal.IsApprovedForSimulation);
     }
 
     private static SimulationProposalViewModel
