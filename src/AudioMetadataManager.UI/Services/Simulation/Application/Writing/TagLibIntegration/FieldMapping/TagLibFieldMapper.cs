@@ -18,9 +18,11 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// Implementa la traducción común entre MetadataField y
 /// TagLib.Tag.
 ///
-/// Esta primera versión administra artista, título, álbum y
-/// género. Los campos Version y Label continuarán pendientes
-/// hasta que definamos una estrategia estable para cada formato.
+/// Version se almacena mediante TagLib.Tag.Subtitle, que en ID3v2
+/// corresponde al frame TIT3. Label se almacena mediante
+/// TagLib.Tag.Publisher, que en ID3v2 corresponde al frame TPUB.
+/// De esta forma ambos campos participan en la misma escritura y
+/// verificación posterior que los campos productivos existentes.
 /// </summary>
 public sealed class TagLibFieldMapper
     : ITagLibFieldMapper
@@ -51,9 +53,17 @@ public sealed class TagLibFieldMapper
                 NormalizeValue(
                     tag.Title),
 
+            MetadataField.Version =>
+                NormalizeValue(
+                    tag.Subtitle),
+
             MetadataField.Album =>
                 NormalizeValue(
                     tag.Album),
+
+            MetadataField.Label =>
+                NormalizeValue(
+                    tag.Publisher),
 
             MetadataField.Genre =>
                 JoinValues(
@@ -201,8 +211,18 @@ public sealed class TagLibFieldMapper
                     value;
                 break;
 
+            case MetadataField.Version:
+                tag.Subtitle =
+                    value;
+                break;
+
             case MetadataField.Album:
                 tag.Album =
+                    value;
+                break;
+
+            case MetadataField.Label:
+                tag.Publisher =
                     value;
                 break;
 
