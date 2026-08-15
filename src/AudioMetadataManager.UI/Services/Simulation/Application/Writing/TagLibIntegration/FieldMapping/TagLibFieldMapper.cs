@@ -2,6 +2,8 @@
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Validation;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration
     .FieldMapping.Interfaces;
 using AudioMetadataManager.UI.Services.Simulation
@@ -27,11 +29,8 @@ public sealed class TagLibFieldMapper
     public bool IsSupported(
         MetadataField field)
     {
-        return field is
-            MetadataField.Artist or
-            MetadataField.Title or
-            MetadataField.Album or
-            MetadataField.Genre;
+        return MetadataProductiveFieldSupport.IsSupported(
+            field);
     }
 
     /// <inheritdoc />
