@@ -1,5 +1,7 @@
 ﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Validation;
+using AudioMetadataManager.UI.Services.Simulation
     .Planning.Models;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -37,7 +39,7 @@ public sealed class SimulationProposalViewModel
     public bool IsApprovedForSimulation =>
         HasActualChange &&
         IsSelected &&
-        CanSelect;
+        CanSelectForProductiveApplication;
 
     /// <summary>
     /// Campo de metadatos evaluado.
@@ -125,10 +127,44 @@ public sealed class SimulationProposalViewModel
     public bool IsAutomaticApplyEligible { get; init; }
 
     /// <summary>
+    /// Indica si el pipeline productivo puede escribir actualmente
+    /// este campo de metadatos.
+    /// </summary>
+    public bool IsProductiveApplicationSupported =>
+        MetadataProductiveFieldSupport.IsSupported(
+            Field);
+
+    /// <summary>
+    /// Indica si la propuesta puede seleccionarse para una futura
+    /// aplicación productiva.
+    /// </summary>
+    public bool CanSelectForProductiveApplication =>
+        CanSelect &&
+        IsProductiveApplicationSupported;
+
+    /// <summary>
+    /// Estado legible del soporte productivo del campo.
+    /// </summary>
+    public string ProductiveApplicationStatus =>
+        IsProductiveApplicationSupported
+            ? "Disponible"
+            : "No disponible";
+
+    /// <summary>
+    /// Explicación mostrada por la interfaz para la capacidad
+    /// productiva del campo.
+    /// </summary>
+    public string ProductiveApplicationToolTip =>
+        IsProductiveApplicationSupported
+            ? "Este campo puede incluirse en una aplicación productiva."
+            : "Este campo todavía no tiene soporte de escritura productiva segura.";
+
+    /// <summary>
     /// Indica si la propuesta fue seleccionada por el usuario.
     ///
     /// Al cambiar la selección también se actualiza el estado
-    /// visible de revisión.
+    /// visible de revisión. Los campos sin soporte productivo no
+    /// pueden quedar seleccionados.
     /// </summary>
     public bool IsSelected
     {
@@ -137,13 +173,17 @@ public sealed class SimulationProposalViewModel
 
         set
         {
-            if (_isSelected == value)
+            bool normalizedValue =
+                value &&
+                CanSelectForProductiveApplication;
+
+            if (_isSelected == normalizedValue)
             {
                 return;
             }
 
             _isSelected =
-                value;
+                normalizedValue;
 
             UpdateReviewStateFromSelection();
 
@@ -188,7 +228,8 @@ public sealed class SimulationProposalViewModel
     }
 
     /// <summary>
-    /// Indica si la fila debe mostrarse como modificable.
+    /// Indica si la fila debe mostrarse como modificable según
+    /// la decisión técnica de simulación.
     /// </summary>
     public bool CanSelect =>
         HasActualChange &&
@@ -212,6 +253,14 @@ public sealed class SimulationProposalViewModel
 
         if (!CanSelect)
         {
+            return;
+        }
+
+        if (!IsProductiveApplicationSupported)
+        {
+            ReviewState =
+                "Sin soporte productivo";
+
             return;
         }
 

@@ -1,5 +1,7 @@
 ﻿using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Validation;
 using AudioMetadataManager.UI.Views.Models.Simulation;
 
 namespace AudioMetadataManager.UI.Services.Simulation
@@ -9,8 +11,9 @@ namespace AudioMetadataManager.UI.Services.Simulation
 /// Convierte un plan visual revisado por el usuario en una
 /// solicitud técnica de aplicación.
 ///
-/// Sólo incluye propuestas aprobadas, seleccionables y que
-/// representan cambios reales.
+/// Sólo incluye propuestas aprobadas, seleccionables, que
+/// representan cambios reales y cuyo campo dispone actualmente
+/// de soporte productivo de escritura y verificación.
 /// </summary>
 public sealed class MetadataApplyRequestFactory
 {
@@ -63,7 +66,9 @@ public sealed class MetadataApplyRequestFactory
             proposal is not null &&
             proposal.IsApprovedForSimulation &&
             proposal.HasActualChange &&
-            proposal.CanSelect;
+            proposal.CanSelect &&
+            MetadataProductiveFieldSupport.IsSupported(
+                proposal.Field);
     }
 
     private static MetadataFieldChange CreateFieldChange(

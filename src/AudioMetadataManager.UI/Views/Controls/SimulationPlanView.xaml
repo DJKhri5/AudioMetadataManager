@@ -109,7 +109,8 @@
                                           IsChecked="{Binding IsSelected,
                                                               Mode=TwoWay,
                                                               UpdateSourceTrigger=PropertyChanged}"
-                                          IsEnabled="{Binding CanSelect}" />
+                                          IsEnabled="{Binding CanSelectForProductiveApplication}"
+                                          ToolTip="{Binding ProductiveApplicationToolTip}" />
 
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -144,6 +145,11 @@
                     <DataGridTextColumn Header="Fuentes"
                                         Width="150"
                                         Binding="{Binding SourcesDisplay}"
+                                        IsReadOnly="True" />
+
+                    <DataGridTextColumn Header="Aplicación productiva"
+                                        Width="165"
+                                        Binding="{Binding ProductiveApplicationStatus}"
                                         IsReadOnly="True" />
 
                     <DataGridTextColumn Header="Estado de revisión"

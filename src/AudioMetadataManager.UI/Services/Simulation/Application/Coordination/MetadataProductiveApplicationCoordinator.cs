@@ -114,9 +114,18 @@ public sealed class MetadataProductiveApplicationCoordinator :
             if (!string.IsNullOrWhiteSpace(
                     isolatedExecutionResult.ErrorMessage))
             {
+                errorMessage =
+                    isolatedExecutionResult.ErrorMessage;
+
                 messages.Add(
                     "La ejecución aislada informó: " +
                     isolatedExecutionResult.ErrorMessage);
+            }
+            else if (!isolatedExecutionResult.WasSuccessful)
+            {
+                errorMessage =
+                    "La ejecución aislada no produjo una copia " +
+                    "verificada promovible.";
             }
         }
         catch (OperationCanceledException)

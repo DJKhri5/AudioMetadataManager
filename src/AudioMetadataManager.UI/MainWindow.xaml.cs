@@ -209,10 +209,6 @@ public partial class MainWindow : Window
 
             SynchronizePlanWithProductiveBatchSelection(
                 _currentSimulationPlan);
-
-            AppendLog(
-                $"Selección productiva por lote: " +
-                $"{_productiveBatchSelection.Summary}");
         }
     }
 
@@ -235,22 +231,43 @@ public partial class MainWindow : Window
     /// </summary>
     private void UpdateProductiveBatchUiState()
     {
-        bool hasBatchItems =
-            _productiveBatchSelection.HasItems;
+        bool isReadyForExecution =
+            _productiveBatchSelection
+                .IsReadyForExecution;
 
         ReviewProductiveBatchButton.IsEnabled =
-            hasBatchItems &&
+            isReadyForExecution &&
             !_isProductiveBatchOperationInProgress;
 
+        if (_isProductiveBatchOperationInProgress)
+        {
+            ProductiveBatchSummaryTextBlock.Text =
+                $"Lote productivo: operación en curso · " +
+                $"{_productiveBatchSelection.FileCount} archivo(s)";
+
+            return;
+        }
+
+        if (_productiveBatchSelection.IsEmpty)
+        {
+            ProductiveBatchSummaryTextBlock.Text =
+                "Lote productivo: ningún archivo seleccionado";
+
+            return;
+        }
+
+        if (isReadyForExecution)
+        {
+            ProductiveBatchSummaryTextBlock.Text =
+                $"Lote productivo: " +
+                $"{_productiveBatchSelection.FileCount} archivo(s) · " +
+                $"{_productiveBatchSelection.ApprovedChangeCount} cambio(s)";
+
+            return;
+        }
+
         ProductiveBatchSummaryTextBlock.Text =
-            _isProductiveBatchOperationInProgress
-                ? $"Lote productivo: operación en curso · " +
-                  $"{_productiveBatchSelection.FileCount} archivo(s)"
-                : hasBatchItems
-                    ? $"Lote productivo: " +
-                      $"{_productiveBatchSelection.FileCount} archivo(s) · " +
-                      $"{_productiveBatchSelection.ApprovedChangeCount} cambio(s)"
-                    : "Lote productivo: ningún archivo seleccionado";
+            "Lote productivo: selección no disponible para ejecución";
     }
 
     /// <summary>
@@ -273,11 +290,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!_productiveBatchSelection.HasItems)
+        if (!_productiveBatchSelection.IsReadyForExecution)
         {
             AppendLog(
-                "No existen archivos seleccionados para aplicación " +
-                "productiva por lote.");
+                "No existe un lote productivo válido listo para ejecutar.");
 
             UpdateProductiveBatchUiState();
 
@@ -423,20 +439,8 @@ public partial class MainWindow : Window
                     "La aplicación productiva por lote finalizó " +
                     "correctamente.");
 
-                /*
-                 * La preparación productiva ya fue consumida.
-                 * No debe permanecer disponible para una segunda
-                 * ejecución desde la interfaz.
-                 */
-                _productiveBatchSelection.Clear();
-
-                /*
-                 * Los archivos originales sí cambiaron.
-                 * Invalidamos el plan activo para impedir que la UI
-                 * siga mostrando metadatos anteriores a la promoción.
-                 */
-                SetCurrentSimulationPlan(
-                    null);
+                FinalizeProductiveBatchUiState(
+                    productiveFilesWereModified: true);
             }
             else if (decision ==
                      MetadataPromotionDecision.Declined)
@@ -445,12 +449,8 @@ public partial class MainWindow : Window
                     "El lote fue descartado de forma segura. " +
                     "Los archivos originales no fueron modificados.");
 
-                /*
-                 * Aunque no hubo promoción, la preparación ya fue
-                 * finalizada y limpiada por el coordinador two-phase.
-                 * Por tanto tampoco puede reutilizarse.
-                 */
-                _productiveBatchSelection.Clear();
+                FinalizeProductiveBatchUiState(
+                    productiveFilesWereModified: false);
             }
             else
             {
@@ -459,21 +459,16 @@ public partial class MainWindow : Window
                     "completamente. Revisa el diagnóstico anterior.");
 
                 /*
-                 * Un resultado parcial también consume la preparación.
-                 * El coordinador ya se responsabiliza de limpiar las
-                 * preparaciones pendientes después del fallo.
+                 * La preparación ya fue consumida aunque el resultado
+                 * global sea parcial. Por seguridad no puede volver
+                 * a ejecutarse desde la interfaz.
                  *
-                 * Mantener la selección aquí permitiría intentar volver
-                 * a ejecutar solicitudes asociadas a una preparación
-                 * que ya no existe.
+                 * El plan visual se conserva porque un resultado parcial
+                 * no permite asumir que todos los archivos originales
+                 * fueron modificados.
                  */
-                _productiveBatchSelection.Clear();
-
-                /*
-                 * No eliminamos automáticamente el plan visual.
-                 * Puede existir un resultado parcial y necesitamos
-                 * conservar el contexto visible para el usuario.
-                 */
+                FinalizeProductiveBatchUiState(
+                    productiveFilesWereModified: false);
             }
         }
         catch (OperationCanceledException)
@@ -495,6 +490,33 @@ public partial class MainWindow : Window
             UpdateApplyChangesButtonState();
             UpdateProductiveBatchUiState();
         }
+    }
+
+    /// <summary>
+    /// Finaliza el estado visual asociado a una ejecución
+    /// productiva por lote ya consumida.
+    /// </summary>
+    private void FinalizeProductiveBatchUiState(
+        bool productiveFilesWereModified)
+    {
+        /*
+         * Una preparación two-phase finalizada no puede
+         * reutilizarse desde la interfaz.
+         */
+        _productiveBatchSelection.Clear();
+
+        /*
+         * Si hubo promoción productiva, cualquier plan construido
+         * antes de la escritura puede contener metadatos obsoletos.
+         */
+        if (productiveFilesWereModified)
+        {
+            SetCurrentSimulationPlan(
+                null);
+        }
+
+        UpdateApplyChangesButtonState();
+        UpdateProductiveBatchUiState();
     }
 
     /// <summary>

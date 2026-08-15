@@ -190,6 +190,13 @@ Semantic Versioning where applicable.
   more than once.
 - Added automated workflow coverage for invalid batches, supported promotion
   decisions, preparation consumption, and duplicate completion prevention.
+- Added centralized productive metadata field support policy through
+  `MetadataProductiveFieldSupport`.
+- Added productive support information to simulation proposals.
+- Added automated coverage for supported and unsupported productive metadata
+  fields.
+- Added detailed isolated-execution and pipeline failure diagnostics for
+  productive batch preparation.
 
 ### Changed
 
@@ -353,6 +360,18 @@ Semantic Versioning where applicable.
 - Simplified productive batch UI orchestration while preserving the existing
   backup, verification, promotion, rollback, cleanup, and cancellation
   infrastructure.
+- Updated productive batch post-execution handling to refresh successfully
+  promoted files while preserving remaining batch selections.
+- Updated productive batch preparation to propagate detailed isolated pipeline
+  failures through the workflow and activity log.
+- Updated `MetadataApplyRequestFactory` to exclude metadata fields that the
+  productive writer cannot currently persist.
+- Updated TagLibSharp field mapping to use the centralized productive field
+  support policy.
+- Updated simulation proposals so unsupported productive fields cannot be
+  selected for application.
+- Updated the simulation UI to display productive availability and disable
+  unsupported fields before they reach the batch workflow.
 
 ### Fixed
 
@@ -428,6 +447,10 @@ Semantic Versioning where applicable.
   batch selection.
 - Prevented repeated technical diagnostics from failing when the selected
   audio file already contains the previously fixed test genre.
+- Prevented unsupported metadata fields such as `Label` and `Version` from
+  reaching the productive writing pipeline.
+- Prevented productive batch preparation failures from being reported only as
+  generic errors by propagating their underlying pipeline diagnostics.
 
 ### Internal
 
