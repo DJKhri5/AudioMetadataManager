@@ -23,7 +23,9 @@ public static class MetadataProductiveFieldSupport
         return field is
             MetadataField.Artist or
             MetadataField.Title or
+            MetadataField.Version or
             MetadataField.Album or
+            MetadataField.Label or
             MetadataField.Genre;
     }
 }
