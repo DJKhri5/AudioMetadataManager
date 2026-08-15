@@ -98,10 +98,16 @@ public sealed class ProductiveBatchWorkflowService :
                 "Declined.");
         }
 
+        MetadataProductiveBatchCompletionResult
+            completionResult =
+                await _batchCoordinator.CompleteAsync(
+                    preparation.PreparationResult,
+                    promotionDecision,
+                    cancellationToken);
+
+        preparation.MarkAsConsumed();
+
         return
-            await _batchCoordinator.CompleteAsync(
-                preparation.PreparationResult,
-                promotionDecision,
-                cancellationToken);
+            completionResult;
     }
 }

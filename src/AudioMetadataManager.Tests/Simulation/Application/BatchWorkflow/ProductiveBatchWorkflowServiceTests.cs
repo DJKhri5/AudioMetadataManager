@@ -147,6 +147,76 @@ public sealed class ProductiveBatchWorkflowServiceTests
             coordinator.CompleteCallCount);
     }
 
+    [Fact]
+    public async Task CompleteAsync_ConsumesPreparation()
+    {
+        MetadataApplyBatchRequest batchRequest =
+            CreateValidBatch();
+
+        FakeTwoPhaseCoordinator coordinator =
+            new();
+
+        ProductiveBatchWorkflowService service =
+            new(
+                coordinator);
+
+        ProductiveBatchPreparation preparation =
+            await service.PrepareAsync(
+                batchRequest);
+
+        Assert.True(
+            preparation.IsReadyForDecision);
+
+        Assert.False(
+            preparation.WasConsumed);
+
+        await service.CompleteAsync(
+            preparation,
+            MetadataPromotionDecision.Approved);
+
+        Assert.True(
+            preparation.WasConsumed);
+
+        Assert.False(
+            preparation.IsReadyForDecision);
+
+        Assert.Equal(
+            1,
+            coordinator.CompleteCallCount);
+    }
+
+    [Fact]
+    public async Task ConsumedPreparation_CannotBeCompletedTwice()
+    {
+        MetadataApplyBatchRequest batchRequest =
+            CreateValidBatch();
+
+        FakeTwoPhaseCoordinator coordinator =
+            new();
+
+        ProductiveBatchWorkflowService service =
+            new(
+                coordinator);
+
+        ProductiveBatchPreparation preparation =
+            await service.PrepareAsync(
+                batchRequest);
+
+        await service.CompleteAsync(
+            preparation,
+            MetadataPromotionDecision.Approved);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            async () =>
+                await service.CompleteAsync(
+                    preparation,
+                    MetadataPromotionDecision.Approved));
+
+        Assert.Equal(
+            1,
+            coordinator.CompleteCallCount);
+    }
+
     private static MetadataApplyBatchRequest
         CreateValidBatch()
     {

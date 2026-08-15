@@ -423,8 +423,18 @@ public partial class MainWindow : Window
                     "La aplicación productiva por lote finalizó " +
                     "correctamente.");
 
+                /*
+                 * La preparación productiva ya fue consumida.
+                 * No debe permanecer disponible para una segunda
+                 * ejecución desde la interfaz.
+                 */
                 _productiveBatchSelection.Clear();
 
+                /*
+                 * Los archivos originales sí cambiaron.
+                 * Invalidamos el plan activo para impedir que la UI
+                 * siga mostrando metadatos anteriores a la promoción.
+                 */
                 SetCurrentSimulationPlan(
                     null);
             }
@@ -434,12 +444,36 @@ public partial class MainWindow : Window
                 AppendLog(
                     "El lote fue descartado de forma segura. " +
                     "Los archivos originales no fueron modificados.");
+
+                /*
+                 * Aunque no hubo promoción, la preparación ya fue
+                 * finalizada y limpiada por el coordinador two-phase.
+                 * Por tanto tampoco puede reutilizarse.
+                 */
+                _productiveBatchSelection.Clear();
             }
             else
             {
                 AppendLog(
                     "La aplicación productiva por lote no terminó " +
                     "completamente. Revisa el diagnóstico anterior.");
+
+                /*
+                 * Un resultado parcial también consume la preparación.
+                 * El coordinador ya se responsabiliza de limpiar las
+                 * preparaciones pendientes después del fallo.
+                 *
+                 * Mantener la selección aquí permitiría intentar volver
+                 * a ejecutar solicitudes asociadas a una preparación
+                 * que ya no existe.
+                 */
+                _productiveBatchSelection.Clear();
+
+                /*
+                 * No eliminamos automáticamente el plan visual.
+                 * Puede existir un resultado parcial y necesitamos
+                 * conservar el contexto visible para el usuario.
+                 */
             }
         }
         catch (OperationCanceledException)
