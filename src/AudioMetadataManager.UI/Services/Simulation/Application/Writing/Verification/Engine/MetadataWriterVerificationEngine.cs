@@ -226,7 +226,9 @@ public sealed class MetadataWriterVerificationEngine :
         return field is
             MetadataField.Artist or
             MetadataField.Title or
+            MetadataField.Version or
             MetadataField.Album or
+            MetadataField.Label or
             MetadataField.Genre;
     }
 
@@ -244,9 +246,17 @@ public sealed class MetadataWriterVerificationEngine :
                 NormalizeValue(
                     tag.Title),
 
+            MetadataField.Version =>
+                NormalizeValue(
+                    tag.Subtitle),
+
             MetadataField.Album =>
                 NormalizeValue(
                     tag.Album),
+
+            MetadataField.Label =>
+                NormalizeValue(
+                    tag.Publisher),
 
             MetadataField.Genre =>
                 JoinValues(
