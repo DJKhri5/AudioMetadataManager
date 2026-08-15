@@ -13,15 +13,21 @@ namespace AudioMetadataManager.Tests
 
 public sealed class MetadataApplyRequestFactoryProductiveSupportTests
 {
-    [Fact]
-    public void SupportedGenre_IsIncluded()
+    [Theory]
+    [InlineData(MetadataField.Genre, "House", "Electronic")]
+    [InlineData(MetadataField.Version, "Original Mix", "Extended Mix")]
+    [InlineData(MetadataField.Label, "", "Afterlife")]
+    public void SupportedField_IsIncluded(
+        MetadataField field,
+        string currentValue,
+        string proposedValue)
     {
         SimulationPlanViewModel plan =
             CreatePlan(
                 CreateApprovedProposal(
-                    MetadataField.Genre,
-                    "House",
-                    "Electronic"));
+                    field,
+                    currentValue,
+                    proposedValue));
 
         MetadataApplyRequestFactory factory =
             new();
@@ -37,60 +43,12 @@ public sealed class MetadataApplyRequestFactoryProductiveSupportTests
             request.Changes);
 
         Assert.Equal(
-            MetadataField.Genre,
+            field,
             request.Changes[0].Field);
     }
 
     [Fact]
-    public void UnsupportedLabel_IsExcluded()
-    {
-        SimulationPlanViewModel plan =
-            CreatePlan(
-                CreateApprovedProposal(
-                    MetadataField.Label,
-                    string.Empty,
-                    "Afterlife"));
-
-        MetadataApplyRequestFactory factory =
-            new();
-
-        var request =
-            factory.Create(
-                plan);
-
-        Assert.Empty(
-            request.Changes);
-
-        Assert.False(
-            request.IsStructurallyValid);
-    }
-
-    [Fact]
-    public void UnsupportedVersion_IsExcluded()
-    {
-        SimulationPlanViewModel plan =
-            CreatePlan(
-                CreateApprovedProposal(
-                    MetadataField.Version,
-                    string.Empty,
-                    "Extended Mix"));
-
-        MetadataApplyRequestFactory factory =
-            new();
-
-        var request =
-            factory.Create(
-                plan);
-
-        Assert.Empty(
-            request.Changes);
-
-        Assert.False(
-            request.IsStructurallyValid);
-    }
-
-    [Fact]
-    public void MixedSupportedAndUnsupportedChanges_KeepOnlySupportedChanges()
+    public void MultipleSupportedChanges_ArePreserved()
     {
         SimulationPlanViewModel plan =
             CreatePlan(
@@ -101,7 +59,11 @@ public sealed class MetadataApplyRequestFactoryProductiveSupportTests
                 CreateApprovedProposal(
                     MetadataField.Label,
                     string.Empty,
-                    "Afterlife"));
+                    "Afterlife"),
+                CreateApprovedProposal(
+                    MetadataField.Version,
+                    "Original Mix",
+                    "Extended Mix"));
 
         MetadataApplyRequestFactory factory =
             new();
@@ -113,12 +75,24 @@ public sealed class MetadataApplyRequestFactoryProductiveSupportTests
         Assert.True(
             request.IsStructurallyValid);
 
-        Assert.Single(
-            request.Changes);
-
         Assert.Equal(
-            MetadataField.Genre,
-            request.Changes[0].Field);
+            3,
+            request.Changes.Count);
+
+        Assert.Contains(
+            request.Changes,
+            change =>
+                change.Field == MetadataField.Genre);
+
+        Assert.Contains(
+            request.Changes,
+            change =>
+                change.Field == MetadataField.Label);
+
+        Assert.Contains(
+            request.Changes,
+            change =>
+                change.Field == MetadataField.Version);
     }
 
     private static SimulationPlanViewModel CreatePlan(
