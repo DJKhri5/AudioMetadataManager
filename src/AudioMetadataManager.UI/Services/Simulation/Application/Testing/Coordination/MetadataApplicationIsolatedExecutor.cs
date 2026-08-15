@@ -251,9 +251,44 @@ public sealed class MetadataApplicationIsolatedExecutor
         }
         else if (!pipelineResult.WasSuccessful)
         {
-            reasons.Add(
+            string pipelineFailure =
                 $"el pipeline no terminó correctamente " +
-                $"(motivo: {pipelineResult.StopReason})");
+                $"(motivo: {pipelineResult.StopReason})";
+
+            if (!string.IsNullOrWhiteSpace(
+                    pipelineResult.ErrorMessage))
+            {
+                pipelineFailure +=
+                    $": {pipelineResult.ErrorMessage}";
+            }
+
+            reasons.Add(
+                pipelineFailure);
+
+            MetadataApplicationStageResult? failedStage =
+                pipelineResult.StageResults
+                    .LastOrDefault(
+                        result =>
+                            result.IsBlockingFailure);
+
+            if (failedStage is not null)
+            {
+                string stageFailure =
+                    $"la etapa {failedStage.StageDisplay} falló: " +
+                    failedStage.Message;
+
+                if (failedStage.Details.Count > 0)
+                {
+                    stageFailure +=
+                        " Detalle: " +
+                        string.Join(
+                            " | ",
+                            failedStage.Details);
+                }
+
+                reasons.Add(
+                    stageFailure);
+            }
         }
 
         if (isolationVerification is null)
