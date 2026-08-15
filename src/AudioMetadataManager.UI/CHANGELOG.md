@@ -179,6 +179,17 @@ Semantic Versioning where applicable.
   between `ProductiveBatchSelection` and `MetadataApplyBatchRequest`.
 - Added xUnit coverage for null, empty, single-item, and ordered multi-item
   productive batch request mapping.
+- Added `ProductiveBatchWorkflowService` as the application-level workflow
+  between the productive batch UI and the existing two-phase batch
+  coordinator.
+- Added explicit productive batch preparation state through
+  `ProductiveBatchPreparation`.
+- Added reusable two-phase batch workflow operations with separate
+  preparation and completion steps.
+- Added protection against completing the same productive batch preparation
+  more than once.
+- Added automated workflow coverage for invalid batches, supported promotion
+  decisions, preparation consumption, and duplicate completion prevention.
 
 ### Changed
 
@@ -336,6 +347,12 @@ Semantic Versioning where applicable.
   `ProductiveBatchSelectionItem`.
 - Preserved productive request identity and selection order while mapping UI
   batch state to the technical batch model.
+- Updated productive batch execution in `MainWindow` to use the dedicated
+  application workflow instead of coordinating the two-phase batch process
+  directly.
+- Simplified productive batch UI orchestration while preserving the existing
+  backup, verification, promotion, rollback, cleanup, and cancellation
+  infrastructure.
 
 ### Fixed
 
