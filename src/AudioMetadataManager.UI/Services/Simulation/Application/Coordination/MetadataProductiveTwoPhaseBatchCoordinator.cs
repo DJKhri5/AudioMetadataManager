@@ -135,6 +135,14 @@ public sealed class MetadataProductiveTwoPhaseBatchCoordinator :
                     $"La preparación de '{request.FileName}' " +
                     "no produjo una copia verificada pendiente.");
 
+                if (!string.IsNullOrWhiteSpace(
+                        preparedResult.ErrorMessage))
+                {
+                    messages.Add(
+                        "Detalle de preparación: " +
+                        preparedResult.ErrorMessage);
+                }
+
                 preparationFailed =
                     true;
 
