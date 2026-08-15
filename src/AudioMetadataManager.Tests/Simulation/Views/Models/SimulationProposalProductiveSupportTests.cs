@@ -1,5 +1,5 @@
 ﻿using AudioMetadataManager.UI.Services.MetadataSources.Models;
-using AudioMetadataManager.UI.Services.Simulation.Planning.Decision;
+using AudioMetadataManager.UI.Services.Simulation.Planning.Models;
 using AudioMetadataManager.UI.Views.Models.Simulation;
 using Xunit;
 
