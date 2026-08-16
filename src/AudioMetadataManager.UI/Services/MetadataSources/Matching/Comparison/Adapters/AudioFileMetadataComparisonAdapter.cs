@@ -52,16 +52,17 @@ public sealed class AudioFileMetadataComparisonAdapter
                     parsedTitle),
 
             /*
-            * Algunas etiquetas almacenan la versión dentro
-            * del título, por ejemplo:
-            * "Verknipt Nochmal (Original Mix)".
-            *
-            * Separamos ambos valores únicamente para realizar
-            * una comparación justa. AudioFile no se modifica.
+            * Se prioriza la versión explícita almacenada en
+            * la etiqueta. El valor interpretado desde el
+            * título se conserva como compatibilidad para
+            * archivos que todavía no utilizan TIT3.
             */
             Version =
                 NormalizeOptionalValue(
-                    parsedVersion),
+                    string.IsNullOrWhiteSpace(
+                        audioFile.Version)
+                        ? parsedVersion
+                        : audioFile.Version),
 
             Album =
                 NormalizeOptionalValue(
@@ -71,12 +72,9 @@ public sealed class AudioFileMetadataComparisonAdapter
                 NormalizeOptionalValue(
                     audioFile.Genre),
 
-            /*
-             * AudioFile todavía no contiene una propiedad
-             * específica para el sello discográfico.
-             */
             Label =
-                null
+                NormalizeOptionalValue(
+                    audioFile.Label)
         };
     }
 

@@ -16,11 +16,17 @@ public class MetadataReaderService
             audioFile.Artist =
                 file.Tag.FirstPerformer ?? "";
 
+            audioFile.Version =
+                file.Tag.Subtitle ?? "";
+
             audioFile.Album =
                 file.Tag.Album ?? "";
 
             audioFile.Genre =
                 file.Tag.FirstGenre ?? "";
+
+            audioFile.Label =
+                file.Tag.Publisher ?? "";
 
             audioFile.Year =
                 file.Tag.Year;

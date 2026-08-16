@@ -11,8 +11,10 @@ public class AudioFile
     // Metadatos
     public string Title { get; set; } = string.Empty;
     public string Artist { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
     public string Album { get; set; } = string.Empty;
     public string Genre { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
     public uint Year { get; set; }
 
     // Audio

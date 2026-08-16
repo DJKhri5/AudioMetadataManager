@@ -462,6 +462,10 @@ public sealed class MetadataChangeDecisionEngine
             _versionParser.Parse(
                 taggedTitle);
 
+        string storedVersion =
+            NormalizeText(
+                audioFile.Version);
+
         return field switch
         {
             MetadataField.Artist =>
@@ -473,8 +477,11 @@ public sealed class MetadataChangeDecisionEngine
                     parsedTitle),
 
             MetadataField.Version =>
-                NormalizeText(
-                    parsedVersion),
+                string.IsNullOrWhiteSpace(
+                    storedVersion)
+                    ? NormalizeText(
+                        parsedVersion)
+                    : storedVersion,
 
             MetadataField.Album =>
                 NormalizeText(
@@ -485,7 +492,8 @@ public sealed class MetadataChangeDecisionEngine
                     audioFile.Genre),
 
             MetadataField.Label =>
-                string.Empty,
+                NormalizeText(
+                    audioFile.Label),
 
             _ =>
                 string.Empty

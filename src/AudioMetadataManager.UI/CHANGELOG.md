@@ -9,6 +9,13 @@ Semantic Versioning where applicable.
 
 ### Added
 
+- Added productive metadata support for `Version` and `Label` through the
+  centralized field-support policy.
+- Added explicit `AudioFile.Version` and `AudioFile.Label` values for local
+  metadata analysis and post-application plan reconstruction.
+- Added controlled physical MP3 persistence coverage for ID3v2 `TIT3` and
+  `TPUB`, including SHA-256 change detection and reopen verification.
+- Added decision-engine coverage for stored version and label values.
 - Reusable file isolation testing infrastructure.
 - Shared test context for original files, working copies, and backups.
 - SHA-256 verification for isolated file operations.
@@ -200,6 +207,14 @@ Semantic Versioning where applicable.
 
 ### Changed
 
+- Extended `ITagLibFieldMapper` and `TagLibFieldMapper` with file-aware change
+  preparation for format-specific metadata writing.
+- Updated the TagLibSharp writer to provide the complete `TagLib.File` to the
+  field mapper before saving.
+- Updated local metadata reading, comparison adapters, and planning to reuse
+  persisted `Subtitle` and `Publisher` values.
+- Updated version planning to prefer explicit stored metadata while retaining
+  title parsing as a compatibility fallback.
 - Prepared the testing architecture to share file isolation logic
   between writer tests and application pipeline tests.
 - Refactored `TagLibIsolatedWriteTestRunner` to use the shared
@@ -375,6 +390,13 @@ Semantic Versioning where applicable.
 
 ### Fixed
 
+- Fixed MP3 label persistence by writing the ID3v2 `TPUB` frame explicitly.
+- Prevented a persisted label from being displayed as missing and proposed
+  again after productive promotion.
+- Prevented productive preparation from attempting to rewrite an identical
+  label only because the change plan discarded the stored local value.
+- Prevented persisted `TIT3` version values from being ignored by local
+  analysis and the change-decision engine.
 - No user-facing defects were addressed in this milestone.
 - Removed duplicated file-isolation and hash-verification logic from
   the TagLibSharp isolated writer test runner.
@@ -454,6 +476,11 @@ Semantic Versioning where applicable.
 
 ### Internal
 
+- Verified `Label = Chrome Red` through productive preparation, promotion,
+  physical persistence, post-application analysis, and no-change planning.
+- Verified `Version = Extended Mix` through controlled MP3 persistence,
+  `TIT3` reopening, local reading, and decision-engine evaluation.
+- Expanded the automated suite to 109 passing tests with no failures.
 - Added `FileIsolationContext`.
 - Added `FileIsolationVerificationResult`.
 - Added `FileIsolationTestHarness`.

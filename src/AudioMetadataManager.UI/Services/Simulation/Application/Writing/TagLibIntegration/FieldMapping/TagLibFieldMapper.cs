@@ -9,6 +9,7 @@ using AudioMetadataManager.UI.Services.Simulation
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration
     .FieldMapping.Models;
+using System.IO;
 
 namespace AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration
@@ -33,6 +34,132 @@ public sealed class TagLibFieldMapper
     {
         return MetadataProductiveFieldSupport.IsSupported(
             field);
+    }
+
+    /// <inheritdoc />
+    public TagLibFieldMappingResult PrepareChange(
+        TagLib.File file,
+        MetadataFieldChange change)
+    {
+        ArgumentNullException.ThrowIfNull(
+            file);
+
+        ArgumentNullException.ThrowIfNull(
+            change);
+
+        bool requiresExplicitId3v2Label =
+            change.Field == MetadataField.Label &&
+            string.Equals(
+                Path.GetExtension(
+                    file.Name),
+                ".mp3",
+                StringComparison.OrdinalIgnoreCase);
+
+        if (!requiresExplicitId3v2Label)
+        {
+            return PrepareChange(
+                file.Tag,
+                change);
+        }
+
+        TagLib.Id3v2.Tag? id3v2Tag =
+            file.GetTag(
+                TagLib.TagTypes.Id3v2,
+                true)
+            as TagLib.Id3v2.Tag;
+
+        if (id3v2Tag is null)
+        {
+            return new TagLibFieldMappingResult
+            {
+                Field =
+                    change.Field,
+
+                OriginalValue =
+                    string.Empty,
+
+                RequestedValue =
+                    NormalizeValue(
+                        change.NewValue),
+
+                PreparedValue =
+                    string.Empty,
+
+                IsSupported =
+                    true,
+
+                ValuePrepared =
+                    false,
+
+                Message =
+                    "No fue posible obtener o crear " +
+                    "la etiqueta ID3v2 del archivo."
+            };
+        }
+
+        string requestedValue =
+            NormalizeValue(
+                change.NewValue);
+
+        TagLib.Id3v2.TextInformationFrame frame =
+            TagLib.Id3v2.TextInformationFrame.Get(
+                id3v2Tag,
+                "TPUB",
+                true);
+
+        string originalValue =
+            frame.Text is { Length: > 0 }
+                ? NormalizeValue(
+                    frame.Text[0])
+                : string.Empty;
+
+        frame.Text =
+            string.IsNullOrWhiteSpace(
+                requestedValue)
+                ? Array.Empty<string>()
+                : new[]
+                {
+                    requestedValue
+                };
+
+        string preparedValue =
+            frame.Text is { Length: > 0 }
+                ? NormalizeValue(
+                    frame.Text[0])
+                : string.Empty;
+
+        bool valuePrepared =
+            ValuesEqual(
+                preparedValue,
+                requestedValue);
+
+        return new TagLibFieldMappingResult
+        {
+            Field =
+                change.Field,
+
+            OriginalValue =
+                originalValue,
+
+            RequestedValue =
+                requestedValue,
+
+            PreparedValue =
+                preparedValue,
+
+            IsSupported =
+                true,
+
+            ValuePrepared =
+                valuePrepared,
+
+            Message =
+                valuePrepared
+                    ? "El sello fue preparado mediante " +
+                      "el frame ID3v2 TPUB."
+                    : "El frame TPUB no conservó " +
+                      "el valor solicitado."
+        };
     }
 
     /// <inheritdoc />

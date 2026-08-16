@@ -160,15 +160,13 @@ public sealed class LocalMetadataComparisonInputFactory
     }
 
     /// <summary>
-    /// Lee el sello si AudioFile ya dispone de esa propiedad.
-    ///
-    /// Actualmente devuelve vacío hasta que el modelo local
-    /// incorpore Label de forma explícita.
+    /// Lee el sello almacenado en las etiquetas locales.
     /// </summary>
     private static string ReadLabel(
         AudioFile audioFile)
     {
-        return string.Empty;
+        return Normalize(
+            audioFile.Label);
     }
 
     private static string? FirstAvailable(

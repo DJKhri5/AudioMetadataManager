@@ -199,7 +199,7 @@ public abstract class TagLibMetadataWriterBase
 
                     preparedFields.Add(
                         _fieldMapper.PrepareChange(
-                            tag,
+                            tagFile,
                             change));
                 }
 

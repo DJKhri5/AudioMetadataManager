@@ -41,6 +41,17 @@ public interface ITagLibFieldMapper
         MetadataFieldChange change);
 
     /// <summary>
+    /// Prepara un cambio utilizando el archivo TagLibSharp
+    /// completo cuando el formato requiere una etiqueta
+    /// específica.
+    ///
+    /// Este método no ejecuta Save().
+    /// </summary>
+    TagLibFieldMappingResult PrepareChange(
+        TagLib.File file,
+        MetadataFieldChange change);
+
+    /// <summary>
     /// Normaliza un valor para lectura, escritura y comparación.
     /// </summary>
     string NormalizeValue(
