@@ -1,6 +1,9 @@
-# Audio Metadata Manager v0.2 — Visual Studio 2022 / .NET 8 WPF
+# Audio Metadata Manager v0.4 — Visual Studio 2022 / .NET 8 WPF
 
-Aplicación Windows en **Modo Simulación**. Esta versión analiza la biblioteca y puede crear respaldos verificados, pero no renombra, mueve ni escribe etiquetas.
+Aplicación Windows para analizar, revisar y corregir metadatos de bibliotecas
+musicales. Cada modificación productiva pasa por simulación, aprobación del
+usuario, copia aislada, respaldo verificado, comprobación posterior y una
+segunda confirmación antes de reemplazar el archivo original.
 
 ## Funciones incluidas
 
@@ -12,21 +15,30 @@ Aplicación Windows en **Modo Simulación**. Esta versión analiza la biblioteca
 - Lectura técnica: duración, bitrate, sample rate, bits, canales, códec, tamaño y carátula.
 - Conflictos nombre/etiqueta y revisión manual.
 - Duplicados probables agrupados sin eliminar nada.
+- Consulta de Discogs y evaluación de coincidencias con confianza auditable.
+- Revisión manual de propuestas y valores introducidos por el usuario cuando
+  las fuentes externas no aportan evidencia suficiente.
+- Escritura productiva de artista, título, versión, álbum, sello y género.
+- Preparación y aplicación por lotes con detención segura ante errores.
 - Proyectos `.ammproj` guardables y reanudables.
 - Exportación CSV.
-- Respaldo en `_Respaldo Audio` con verificación SHA-256 y manifiesto JSON.
+- Respaldo, promoción, rollback y verificación SHA-256.
 
 ## Abrir en Visual Studio
 
 1. Visual Studio 2022 17.8 o posterior.
 2. Carga de trabajo **Desarrollo de escritorio de .NET**.
-3. Abrir `AudioMetadataManager.sln`.
+3. Abrir `src/AudioMetadataManager.slnx`.
 4. Restaurar paquetes NuGet y ejecutar.
 
 ## Publicar versión portátil
 
 Ejecutar `build-windows.ps1` desde PowerShell con .NET 8 SDK. El resultado queda en `publish/AudioMetadataManager`.
 
-## Límite deliberado de la v0.2
+## Límites actuales de la v0.4
 
-El análisis espectral para detectar MP3 transcodificados y las búsquedas Discogs/Beatport/Spotify/SoundCloud no están activas aún. Se muestran como requisitos del roadmap y no se simulan con datos inventados.
+El programa todavía no renombra ni mueve archivos y no modifica carátulas.
+Beatport, Spotify y SoundCloud permanecen como integraciones futuras. Cuando
+no existe evidencia externa suficiente, la aplicación no inventa metadatos:
+permite introducir un valor manual que debe aprobarse y verificarse mediante
+el mismo flujo productivo protegido.

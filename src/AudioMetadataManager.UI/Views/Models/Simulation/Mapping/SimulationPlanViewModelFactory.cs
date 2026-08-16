@@ -47,12 +47,16 @@ public sealed class SimulationPlanViewModelFactory
             proposalViewModel.PropertyChanged +=
                 (_, eventArgs) =>
                 {
-                    if (string.Equals(
-                            eventArgs.PropertyName,
-                            nameof(
-                                SimulationProposalViewModel
-                                    .IsSelected),
-                            StringComparison.Ordinal))
+                    if (eventArgs.PropertyName is
+                        nameof(
+                            SimulationProposalViewModel
+                                .IsSelected) or
+                        nameof(
+                            SimulationProposalViewModel
+                                .HasSelectableChange) or
+                        nameof(
+                            SimulationProposalViewModel
+                                .HasManualOverride))
                     {
                         viewModel.RefreshSummary();
                     }

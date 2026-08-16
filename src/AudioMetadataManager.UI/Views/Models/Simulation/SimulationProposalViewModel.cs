@@ -17,6 +17,8 @@ public sealed class SimulationProposalViewModel
 {
     private bool _isSelected;
 
+    private string? _manualProposedValue;
+
     private string _reviewState =
         "Pendiente";
 
@@ -28,8 +30,8 @@ public sealed class SimulationProposalViewModel
     /// selección del usuario.
     /// </summary>
     public bool IsManuallyApproved =>
-        HasActualChange &&
-        RequiresManualReview &&
+        HasSelectableChange &&
+        (RequiresManualReview || HasManualOverride) &&
         IsSelected;
 
     /// <summary>
@@ -37,7 +39,7 @@ public sealed class SimulationProposalViewModel
     /// futuro lote de aplicación.
     /// </summary>
     public bool IsApprovedForSimulation =>
-        HasActualChange &&
+        HasSelectableChange &&
         IsSelected &&
         CanSelectForProductiveApplication;
 
@@ -66,6 +68,22 @@ public sealed class SimulationProposalViewModel
         string.Empty;
 
     /// <summary>
+    /// Indica si el usuario sustituyó explícitamente la propuesta
+    /// técnica por un valor manual.
+    /// </summary>
+    public bool HasManualOverride =>
+        _manualProposedValue is not null;
+
+    /// <summary>
+    /// Valor que se mostrará y, tras aprobación, se enviará al
+    /// pipeline productivo.
+    /// </summary>
+    public string EffectiveProposedValue =>
+        HasManualOverride
+            ? _manualProposedValue!
+            : ProposedValue;
+
+    /// <summary>
     /// Decisión técnica original.
     /// </summary>
     public MetadataChangeDecision Decision { get; init; } =
@@ -76,6 +94,15 @@ public sealed class SimulationProposalViewModel
     /// </summary>
     public string DecisionDisplay { get; init; } =
         string.Empty;
+
+    /// <summary>
+    /// Decisión visible después de considerar una intervención
+    /// manual explícita del usuario.
+    /// </summary>
+    public string EffectiveDecisionDisplay =>
+        HasManualOverride
+            ? "Valor manual del usuario"
+            : DecisionDisplay;
 
     /// <summary>
     /// Explicación técnica de la propuesta.
@@ -92,7 +119,9 @@ public sealed class SimulationProposalViewModel
     /// Confianza preparada para la interfaz.
     /// </summary>
     public string ConfidenceDisplay =>
-        $"{Math.Clamp(Confidence, 0, 1) * 100:0.00}%";
+        HasManualOverride
+            ? "Manual"
+            : $"{Math.Clamp(Confidence, 0, 1) * 100:0.00}%";
 
     /// <summary>
     /// Fuentes que respaldan la propuesta.
@@ -105,16 +134,38 @@ public sealed class SimulationProposalViewModel
     /// Fuentes preparadas para mostrarse.
     /// </summary>
     public string SourcesDisplay =>
-        SupportingSources.Count == 0
+        HasManualOverride
+            ? "Usuario"
+            : SupportingSources.Count == 0
             ? "(sin fuentes)"
             : string.Join(
                 ", ",
                 SupportingSources);
 
     /// <summary>
+    /// Fuentes auditables que acompañarán el cambio efectivo.
+    /// </summary>
+    public IReadOnlyList<string> EffectiveSupportingSources =>
+        HasManualOverride
+            ? new[] { "Usuario" }
+            : SupportingSources;
+
+    /// <summary>
     /// Indica si existe una modificación real.
     /// </summary>
     public bool HasActualChange { get; init; }
+
+    /// <summary>
+    /// Indica si el valor efectivo representa una modificación
+    /// real. Para propuestas técnicas conserva el cálculo original;
+    /// para valores manuales vuelve a comparar ambos textos.
+    /// </summary>
+    public bool HasSelectableChange =>
+        HasManualOverride
+            ? HasValueChange(
+                CurrentValue,
+                EffectiveProposedValue)
+            : HasActualChange;
 
     /// <summary>
     /// Indica si requiere revisión manual.
@@ -141,6 +192,19 @@ public sealed class SimulationProposalViewModel
     public bool CanSelectForProductiveApplication =>
         CanSelect &&
         IsProductiveApplicationSupported;
+
+    /// <summary>
+    /// Indica si la interfaz puede solicitar un valor manual para
+    /// este campo. Una regla de rechazo técnico sigue siendo final.
+    /// </summary>
+    public bool CanProvideManualValue =>
+        IsProductiveApplicationSupported &&
+        Decision != MetadataChangeDecision.Rejected;
+
+    public string ManualValueActionDisplay =>
+        HasManualOverride
+            ? "Editar manual"
+            : "Ingresar valor";
 
     /// <summary>
     /// Estado legible del soporte productivo del campo.
@@ -232,18 +296,78 @@ public sealed class SimulationProposalViewModel
     /// la decisión técnica de simulación.
     /// </summary>
     public bool CanSelect =>
-        HasActualChange &&
-        Decision is not
-            MetadataChangeDecision.Conflict and not
-            MetadataChangeDecision.InsufficientEvidence and not
-            MetadataChangeDecision.Rejected;
+        HasSelectableChange &&
+        Decision != MetadataChangeDecision.Rejected &&
+        (
+            HasManualOverride ||
+            Decision is not
+                MetadataChangeDecision.Conflict and not
+                MetadataChangeDecision.InsufficientEvidence
+        );
+
+    /// <summary>
+    /// Sustituye la propuesta técnica por un valor introducido de
+    /// forma explícita por el usuario. El cambio permanece pendiente
+    /// hasta que también se seleccione la casilla Aplicar.
+    /// </summary>
+    public bool TryApplyManualValue(
+        string? value,
+        out string validationError)
+    {
+        if (!CanProvideManualValue)
+        {
+            validationError =
+                "Este campo no admite una modificación manual segura.";
+
+            return false;
+        }
+
+        string normalizedValue =
+            NormalizeStoredValue(
+                value);
+
+        if (string.IsNullOrWhiteSpace(
+                normalizedValue))
+        {
+            validationError =
+                "El valor manual no puede estar vacío.";
+
+            return false;
+        }
+
+        validationError =
+            string.Empty;
+
+        if (string.Equals(
+                _manualProposedValue,
+                normalizedValue,
+                StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        _manualProposedValue =
+            normalizedValue;
+
+        IsSelected =
+            false;
+
+        ReviewState =
+            HasSelectableChange
+                ? "Valor manual pendiente"
+                : "Sin cambios";
+
+        NotifyManualValueProperties();
+
+        return true;
+    }
 
     /// <summary>
     /// Sincroniza el estado de revisión con la selección actual.
     /// </summary>
     private void UpdateReviewStateFromSelection()
     {
-        if (!HasActualChange)
+        if (!HasSelectableChange)
         {
             ReviewState =
                 "Sin cambios";
@@ -267,7 +391,8 @@ public sealed class SimulationProposalViewModel
         if (_isSelected)
         {
             ReviewState =
-                RequiresManualReview
+                RequiresManualReview ||
+                HasManualOverride
                     ? "Aprobado por el usuario"
                     : "Preseleccionado automáticamente";
 
@@ -278,6 +403,86 @@ public sealed class SimulationProposalViewModel
             RequiresManualReview
                 ? "Pendiente de revisión"
                 : "No seleccionado";
+    }
+
+    private void NotifyManualValueProperties()
+    {
+        OnPropertyChanged(
+            nameof(HasManualOverride));
+
+        OnPropertyChanged(
+            nameof(EffectiveProposedValue));
+
+        OnPropertyChanged(
+            nameof(EffectiveDecisionDisplay));
+
+        OnPropertyChanged(
+            nameof(ConfidenceDisplay));
+
+        OnPropertyChanged(
+            nameof(SourcesDisplay));
+
+        OnPropertyChanged(
+            nameof(EffectiveSupportingSources));
+
+        OnPropertyChanged(
+            nameof(HasSelectableChange));
+
+        OnPropertyChanged(
+            nameof(CanSelect));
+
+        OnPropertyChanged(
+            nameof(CanSelectForProductiveApplication));
+
+        OnPropertyChanged(
+            nameof(IsManuallyApproved));
+
+        OnPropertyChanged(
+            nameof(IsApprovedForSimulation));
+
+        OnPropertyChanged(
+            nameof(ManualValueActionDisplay));
+    }
+
+    private static bool HasValueChange(
+        string? currentValue,
+        string? proposedValue)
+    {
+        string current =
+            NormalizeStoredValue(
+                currentValue);
+
+        string proposed =
+            NormalizeStoredValue(
+                proposedValue);
+
+        return
+            !string.IsNullOrWhiteSpace(
+                proposed) &&
+            !string.Equals(
+                current,
+                proposed,
+                StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeStoredValue(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(
+                value))
+        {
+            return string.Empty;
+        }
+
+        string normalizedValue =
+            value.Trim();
+
+        return string.Equals(
+                normalizedValue,
+                "(sin información)",
+                StringComparison.OrdinalIgnoreCase)
+            ? string.Empty
+            : normalizedValue;
     }
 
     private void OnPropertyChanged(

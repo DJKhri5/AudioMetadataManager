@@ -83,6 +83,46 @@ public class AudioFile
     public string ProposedFileNameDisplay =>
         Simulation?.ProposedFileName ?? string.Empty;
 
+    public string RenameStatusDisplay =>
+        Simulation == null
+            ? "Sin simulación"
+            : string.IsNullOrWhiteSpace(
+                Simulation.ProposedFileName)
+                ? "Sin propuesta"
+                : string.Equals(
+                    FileName,
+                    Simulation.ProposedFileName,
+                    StringComparison.Ordinal)
+                    ? "Sin cambios"
+                    : "Cambio propuesto";
+
+    public string RenameConfidenceDisplay =>
+        Simulation == null
+            ? "—"
+            : $"{Simulation.ConfidenceScore}%";
+
+    public string RenameReviewDisplay =>
+        Simulation == null
+            ? "—"
+            : Simulation.RequiresManualReview
+                ? "Revisión manual requerida"
+                : "Lista para revisión";
+
+    public string RenameSummaryDisplay =>
+        Simulation == null
+            ? "Todavía no se calculó una propuesta de nombre."
+            : string.IsNullOrWhiteSpace(
+                Simulation.ProposedFileName)
+                ? "No existe una propuesta de nombre utilizable."
+                : string.Equals(
+                    FileName,
+                    Simulation.ProposedFileName,
+                    StringComparison.Ordinal)
+                    ? "El nombre calculado coincide con el archivo actual."
+                    : Simulation.RequiresManualReview
+                        ? "Se propone un nombre nuevo, pero requiere revisión manual."
+                        : "Se propone un nombre nuevo listo para revisión.";
+
     public string CanApplyAutomaticallyDisplay =>
         Simulation == null
             ? "—"

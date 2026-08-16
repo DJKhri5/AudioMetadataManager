@@ -1,0 +1,72 @@
+<Window x:Class="AudioMetadataManager.UI.Views.Controls.ManualMetadataValueDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ingresar valor manual"
+        Width="520"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="18">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="FieldTextBlock"
+                   FontSize="18"
+                   FontWeight="SemiBold" />
+
+        <TextBlock x:Name="CurrentValueTextBlock"
+                   Grid.Row="1"
+                   Margin="0,8,0,0"
+                   Foreground="#666666"
+                   TextWrapping="Wrap" />
+
+        <TextBlock Grid.Row="2"
+                   Margin="0,16,0,5"
+                   Text="Nuevo valor:" />
+
+        <TextBox x:Name="ProposedValueTextBox"
+                 Grid.Row="3"
+                 MinHeight="30"
+                 Padding="6,4"
+                 VerticalContentAlignment="Center" />
+
+        <Grid Grid.Row="4"
+              Margin="0,18,0,0">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock VerticalAlignment="Center"
+                       Foreground="#666666"
+                       Text="El valor requerirá aprobación antes de aplicarse." />
+
+            <Button Grid.Column="1"
+                    Width="90"
+                    Margin="12,0,8,0"
+                    Padding="8,5"
+                    Content="Cancelar"
+                    IsCancel="True" />
+
+            <Button Grid.Column="2"
+                    Width="90"
+                    Padding="8,5"
+                    Content="Aceptar"
+                    IsDefault="True"
+                    Click="AcceptButton_Click" />
+
+        </Grid>
+
+    </Grid>
+
+</Window>

@@ -3,6 +3,10 @@ using AudioMetadataManager.UI.Services.MetadataSources.Models;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Models;
 using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.FieldMapping;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Writing.TagLibIntegration.FieldMapping.Models;
+using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Models;
 
 namespace AudioMetadataManager.UI.Services.Simulation
@@ -95,6 +99,9 @@ public sealed class TagLibMp3ChangePreparer
             int pictureCountBefore;
             int pictureCountAfter;
 
+            TagLibFieldMapper fieldMapper =
+                new();
+
             using (TagLib.File tagFile =
                 TagLib.File.Create(normalizedPath))
             {
@@ -108,7 +115,7 @@ public sealed class TagLibMp3ChangePreparer
                     in validChanges)
                 {
                     string originalValue =
-                        ReadValue(
+                        fieldMapper.ReadValue(
                             tag,
                             change.Field);
 
@@ -117,9 +124,9 @@ public sealed class TagLibMp3ChangePreparer
 
                     TagLibMp3FieldPreparationResult result =
                         PrepareField(
-                            tag,
+                            tagFile,
                             change,
-                            originalValue);
+                            fieldMapper);
 
                     fieldResults.Add(
                         result);
@@ -138,7 +145,8 @@ public sealed class TagLibMp3ChangePreparer
             bool physicalFileRemainedUnchanged =
                 VerifyPersistedValuesUnchanged(
                     normalizedPath,
-                    persistedValuesBefore);
+                    persistedValuesBefore,
+                    fieldMapper);
 
             messages.Add(
                 "TagLibSharp abrió correctamente el MP3.");
@@ -228,176 +236,50 @@ public sealed class TagLibMp3ChangePreparer
     }
 
     private static TagLibMp3FieldPreparationResult PrepareField(
-        TagLib.Tag tag,
+        TagLib.File tagFile,
         MetadataFieldChange change,
-        string originalValue)
+        TagLibFieldMapper fieldMapper)
     {
-        string requestedValue =
-            NormalizeValue(
-                change.NewValue);
-
-        bool isSupported =
-            IsSupportedField(
-                change.Field);
-
-        if (!isSupported)
-        {
-            return new TagLibMp3FieldPreparationResult
-            {
-                Field =
-                    change.Field,
-
-                OriginalValue =
-                    originalValue,
-
-                RequestedValue =
-                    requestedValue,
-
-                PreparedValue =
-                    originalValue,
-
-                IsSupported =
-                    false,
-
-                WasPrepared =
-                    false,
-
-                MatchesRequestedValue =
-                    false,
-
-                Message =
-                    "El campo todavía no dispone de un mapeo " +
-                    "seguro en TagLibSharp."
-            };
-        }
-
-        WriteValue(
-            tag,
-            change.Field,
-            requestedValue);
-
-        string preparedValue =
-            ReadValue(
-                tag,
-                change.Field);
-
-        bool matches =
-            ValuesEqual(
-                preparedValue,
-                requestedValue);
+        TagLibFieldMappingResult mappingResult =
+            fieldMapper.PrepareChange(
+                tagFile,
+                change);
 
         return new TagLibMp3FieldPreparationResult
         {
             Field =
-                change.Field,
+                mappingResult.Field,
 
             OriginalValue =
-                originalValue,
+                mappingResult.OriginalValue,
 
             RequestedValue =
-                requestedValue,
+                mappingResult.RequestedValue,
 
             PreparedValue =
-                preparedValue,
+                mappingResult.PreparedValue,
 
             IsSupported =
-                true,
+                mappingResult.IsSupported,
 
             WasPrepared =
-                true,
+                mappingResult.ValuePrepared,
 
             MatchesRequestedValue =
-                matches,
+                ValuesEqual(
+                    mappingResult.PreparedValue,
+                    mappingResult.RequestedValue),
 
             Message =
-                matches
-                    ? "El valor fue asignado correctamente en " +
-                      "memoria. No se ejecutó Save()."
-                    : "El valor leído después de la asignación " +
-                      "no coincide con el solicitado."
-        };
-    }
-
-    private static bool IsSupportedField(
-        MetadataField field)
-    {
-        return field is
-            MetadataField.Artist or
-            MetadataField.Title or
-            MetadataField.Album or
-            MetadataField.Genre;
-    }
-
-    private static void WriteValue(
-        TagLib.Tag tag,
-        MetadataField field,
-        string value)
-    {
-        switch (field)
-        {
-            case MetadataField.Artist:
-                tag.Performers =
-                    string.IsNullOrWhiteSpace(value)
-                        ? Array.Empty<string>()
-                        : new[]
-                        {
-                            value
-                        };
-                break;
-
-            case MetadataField.Title:
-                tag.Title =
-                    value;
-                break;
-
-            case MetadataField.Album:
-                tag.Album =
-                    value;
-                break;
-
-            case MetadataField.Genre:
-                tag.Genres =
-                    string.IsNullOrWhiteSpace(value)
-                        ? Array.Empty<string>()
-                        : new[]
-                        {
-                            value
-                        };
-                break;
-        }
-    }
-
-    private static string ReadValue(
-        TagLib.Tag tag,
-        MetadataField field)
-    {
-        return field switch
-        {
-            MetadataField.Artist =>
-                JoinValues(
-                    tag.Performers),
-
-            MetadataField.Title =>
-                NormalizeValue(
-                    tag.Title),
-
-            MetadataField.Album =>
-                NormalizeValue(
-                    tag.Album),
-
-            MetadataField.Genre =>
-                JoinValues(
-                    tag.Genres),
-
-            _ =>
-                string.Empty
+                mappingResult.Message
         };
     }
 
     private static bool VerifyPersistedValuesUnchanged(
         string filePath,
         IReadOnlyDictionary<MetadataField, string>
-            expectedValues)
+            expectedValues,
+        TagLibFieldMapper fieldMapper)
     {
         using TagLib.File reopenedFile =
             TagLib.File.Create(
@@ -409,7 +291,7 @@ public sealed class TagLibMp3ChangePreparer
         return expectedValues.All(
             pair =>
                 ValuesEqual(
-                    ReadValue(
+                    fieldMapper.ReadValue(
                         reopenedTag,
                         pair.Key),
                     pair.Value));
@@ -463,23 +345,6 @@ public sealed class TagLibMp3ChangePreparer
         return string.IsNullOrWhiteSpace(value)
             ? string.Empty
             : value.Trim();
-    }
-
-    private static string JoinValues(
-        IEnumerable<string>? values)
-    {
-        if (values is null)
-        {
-            return string.Empty;
-        }
-
-        return string.Join(
-            ", ",
-            values
-                .Where(value =>
-                    !string.IsNullOrWhiteSpace(value))
-                .Select(value =>
-                    value.Trim()));
     }
 
     private static bool ValuesEqual(

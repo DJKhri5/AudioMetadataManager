@@ -28,7 +28,7 @@
 
                     <StackPanel>
 
-                        <TextBlock Text="Vista previa de simulación"
+                        <TextBlock Text="Metadatos: simulación y revisión"
                                    FontSize="22"
                                    FontWeight="SemiBold" />
 
@@ -92,6 +92,9 @@
                       HeadersVisibility="Column"
                       GridLinesVisibility="Horizontal"
                       RowHeaderWidth="0"
+                      RowHeight="34"
+                      ColumnHeaderHeight="32"
+                      FrozenColumnCount="2"
                       AlternatingRowBackground="#F7F7F7"
                       HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto">
@@ -99,7 +102,7 @@
                 <DataGrid.Columns>
 
                     <DataGridTemplateColumn Header="Aplicar"
-                                            Width="70">
+                                            Width="64">
 
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
@@ -118,42 +121,71 @@
                     </DataGridTemplateColumn>
 
                     <DataGridTextColumn Header="Campo"
-                                        Width="150"
+                                        Width="130"
                                         Binding="{Binding FieldDisplay}"
                                         IsReadOnly="True" />
 
                     <DataGridTextColumn Header="Valor actual"
-                                        Width="220"
+                                        Width="190"
                                         Binding="{Binding CurrentValue}"
                                         IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Valor propuesto"
-                                        Width="220"
-                                        Binding="{Binding ProposedValue}"
-                                        IsReadOnly="True" />
+                    <DataGridTemplateColumn Header="Valor propuesto / manual"
+                                            Width="285">
+
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+
+                                <Grid Margin="4,0">
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock VerticalAlignment="Center"
+                                               Margin="0,0,6,0"
+                                               Text="{Binding EffectiveProposedValue}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding EffectiveProposedValue}" />
+
+                                    <Button Grid.Column="1"
+                                            Width="105"
+                                            Margin="0,2"
+                                            Padding="6,3"
+                                            Content="{Binding ManualValueActionDisplay}"
+                                            IsEnabled="{Binding CanProvideManualValue}"
+                                            Click="ManualValueButton_Click" />
+
+                                </Grid>
+
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+
+                    </DataGridTemplateColumn>
 
                     <DataGridTextColumn Header="Decisión"
-                                        Width="210"
-                                        Binding="{Binding DecisionDisplay}"
+                                        Width="185"
+                                        Binding="{Binding EffectiveDecisionDisplay}"
                                         IsReadOnly="True" />
 
                     <DataGridTextColumn Header="Confianza"
-                                        Width="95"
+                                        Width="85"
                                         Binding="{Binding ConfidenceDisplay}"
                                         IsReadOnly="True" />
 
                     <DataGridTextColumn Header="Fuentes"
-                                        Width="150"
+                                        Width="105"
                                         Binding="{Binding SourcesDisplay}"
                                         IsReadOnly="True" />
 
                     <DataGridTextColumn Header="Aplicación productiva"
-                                        Width="165"
+                                        Width="135"
                                         Binding="{Binding ProductiveApplicationStatus}"
                                         IsReadOnly="True" />
 
                     <DataGridTextColumn Header="Estado de revisión"
-                                        Width="180"
+                                        Width="150"
                                         Binding="{Binding ReviewState}"
                                         IsReadOnly="True" />
 
@@ -171,7 +203,7 @@
 
                 <TextBlock VerticalAlignment="Center"
                            Foreground="#666666"
-                           Text="Modo simulación: ningún archivo será modificado." />
+                           Text="Metadatos seguros: editar o seleccionar propuestas no modifica archivos." />
 
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal">

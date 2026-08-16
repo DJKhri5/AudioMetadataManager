@@ -56,9 +56,7 @@ namespace AudioMetadataManager.UI.Services
                 // En una aplicación real, se registraría el error.
                 // Por ahora, ignoramos el error para no romper el inicio de la aplicación.
                 // Pero al menos podemos escribir a la consola de depuración si estamos en modo debug.
-#if DEBUG
                 System.Diagnostics.Debug.WriteLine($"Error al cargar la configuración: {ex.Message}");
-#endif
             }
         }
 

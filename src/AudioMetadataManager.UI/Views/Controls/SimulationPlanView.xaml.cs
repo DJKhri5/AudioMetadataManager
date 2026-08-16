@@ -41,6 +41,60 @@ public partial class SimulationPlanView : UserControl
     }
 
     /// <summary>
+    /// Solicita un valor explícito cuando la evidencia externa no
+    /// es suficiente o el usuario desea corregir la propuesta.
+    /// </summary>
+    private void ManualValueButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (sender is not Button button ||
+            button.DataContext is not
+                SimulationProposalViewModel proposal ||
+            !proposal.CanProvideManualValue)
+        {
+            return;
+        }
+
+        ManualMetadataValueDialog dialog =
+            new(
+                proposal.FieldDisplay,
+                proposal.CurrentValue,
+                proposal.HasManualOverride
+                    ? proposal.EffectiveProposedValue
+                    : string.Empty)
+            {
+                Owner =
+                    Window.GetWindow(
+                        this)
+            };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        if (!proposal.TryApplyManualValue(
+                dialog.EnteredValue,
+                out string validationError))
+        {
+            MessageBox.Show(
+                validationError,
+                "Valor manual no válido",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
+            return;
+        }
+
+        if (DataContext is
+            SimulationPlanViewModel viewModel)
+        {
+            viewModel.RefreshSummary();
+        }
+    }
+
+    /// <summary>
     /// Selecciona únicamente las propuestas consideradas
     /// elegibles para aplicación automática y que además cuentan
     /// con soporte de escritura productiva.

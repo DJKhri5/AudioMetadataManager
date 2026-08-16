@@ -357,20 +357,161 @@
                 </TabItem>
 
                 <!-- ================================================== -->
-                <!-- PESTAÑA DE SIMULACIÓN                              -->
+                <!-- PESTAÑA DE METADATOS                               -->
                 <!-- ================================================== -->
-                <TabItem Header="Simulación">
+                <TabItem Header="Metadatos"
+                         Visibility="Collapsed">
 
                     <controls:SimulationPlanView
                         x:Name="SimulationPlanViewControl" />
 
                 </TabItem>
 
+                <!-- ================================================== -->
+                <!-- PESTAÑA DE RENOMBRADO                              -->
+                <!-- ================================================== -->
+                <TabItem Header="Renombrado"
+                         Visibility="Collapsed">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Padding="8">
+
+                        <StackPanel>
+
+                            <Border Padding="12"
+                                    Background="#F3F7FB"
+                                    BorderBrush="#B8C9D9"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+
+                                <StackPanel>
+                                    <TextBlock Text="Vista previa del nombre de archivo"
+                                               FontSize="16"
+                                               FontWeight="SemiBold" />
+
+                                    <TextBlock Margin="0,5,0,0"
+                                               Foreground="#4F5F6F"
+                                               TextWrapping="Wrap"
+                                               Text="El renombrado se revisa por separado de los cambios de metadatos internos." />
+                                </StackPanel>
+
+                            </Border>
+
+                            <GroupBox Header="Comparación de nombres"
+                                      Margin="0,10,0,0"
+                                      Padding="10">
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0"
+                                               Text="Nombre actual:"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,12,8" />
+
+                                    <TextBlock Grid.Row="0"
+                                               Grid.Column="1"
+                                               Text="{Binding FileName, Mode=OneWay}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding FileName, Mode=OneWay}"
+                                               Margin="0,0,0,8" />
+
+                                    <TextBlock Grid.Row="1"
+                                               Text="Nombre propuesto:"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,12,8" />
+
+                                    <TextBlock Grid.Row="1"
+                                               Grid.Column="1"
+                                               Text="{Binding ProposedFileNameDisplay, Mode=OneWay}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding ProposedFileNameDisplay, Mode=OneWay}"
+                                               Margin="0,0,0,8" />
+
+                                    <TextBlock Grid.Row="2"
+                                               Text="Resultado:"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,12,8" />
+
+                                    <TextBlock Grid.Row="2"
+                                               Grid.Column="1"
+                                               Text="{Binding RenameStatusDisplay, Mode=OneWay}"
+                                               Margin="0,0,0,8" />
+
+                                    <TextBlock Grid.Row="3"
+                                               Text="Confianza:"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,12,8" />
+
+                                    <TextBlock Grid.Row="3"
+                                               Grid.Column="1"
+                                               Text="{Binding RenameConfidenceDisplay, Mode=OneWay}"
+                                               Margin="0,0,0,8" />
+
+                                    <TextBlock Grid.Row="4"
+                                               Text="Revisión:"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,12,8" />
+
+                                    <TextBlock Grid.Row="4"
+                                               Grid.Column="1"
+                                               Text="{Binding RenameReviewDisplay, Mode=OneWay}"
+                                               Margin="0,0,0,8" />
+
+                                    <TextBlock Grid.Row="5"
+                                               Text="Resumen:"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,12,0" />
+
+                                    <TextBlock Grid.Row="5"
+                                               Grid.Column="1"
+                                               Text="{Binding RenameSummaryDisplay, Mode=OneWay}"
+                                               TextWrapping="Wrap" />
+
+                                </Grid>
+
+                            </GroupBox>
+
+                            <Border Margin="0,10,0,0"
+                                    Padding="10"
+                                    Background="#FFF8E1"
+                                    BorderBrush="#D6B95F"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+
+                                <TextBlock TextWrapping="Wrap"
+                                           Foreground="#5F4A00"
+                                           Text="Solo vista previa: esta sección todavía no renombra archivos. La aplicación productiva se habilitará cuando incluya validación de nombres, detección de colisiones, respaldo y confirmación independiente." />
+
+                            </Border>
+
+                        </StackPanel>
+
+                    </ScrollViewer>
+
+                </TabItem>
+
                 <!-- Pestañas reservadas para fases posteriores -->
                 <TabItem Header="Duplicados"
+                         Visibility="Collapsed"
                          IsEnabled="False"/>
 
                 <TabItem Header="Etiquetas"
+                         Visibility="Collapsed"
                          IsEnabled="False"/>
 
             </TabControl>

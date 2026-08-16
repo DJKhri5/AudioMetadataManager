@@ -153,7 +153,7 @@ public sealed class SimulationPlanViewModel
     public int ActualChangeCount =>
         Proposals.Count(
             proposal =>
-                proposal.HasActualChange);
+                proposal.HasSelectableChange);
 
     /// <summary>
     /// Propuestas seleccionadas.
@@ -169,7 +169,11 @@ public sealed class SimulationPlanViewModel
     public int ManualReviewCount =>
         Proposals.Count(
             proposal =>
-                proposal.RequiresManualReview);
+                proposal.HasSelectableChange &&
+                (
+                    proposal.RequiresManualReview ||
+                    proposal.HasManualOverride
+                ));
 
     /// <summary>
     /// Conflictos.
@@ -177,6 +181,7 @@ public sealed class SimulationPlanViewModel
     public int ConflictCount =>
         Proposals.Count(
             proposal =>
+                !proposal.HasManualOverride &&
                 proposal.Decision ==
                 MetadataChangeDecision.Conflict);
 

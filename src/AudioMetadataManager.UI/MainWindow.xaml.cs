@@ -27,13 +27,9 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Mapping;
 using AudioMetadataManager.UI.Services.Simulation.Application.Models;
 using AudioMetadataManager.UI.Services.Simulation
-    .Application.Pipeline;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Pipeline.Diagnostics;
-using AudioMetadataManager.UI.Services.Simulation
-    .Application.Pipeline.Models;
-using AudioMetadataManager.UI.Services.Simulation
     .Application.Testing.Coordination;
+using AudioMetadataManager.UI.Services.Simulation
+    .Application.Validation;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Diagnostics;
 using AudioMetadataManager.UI.Services.Simulation
@@ -115,14 +111,18 @@ public partial class MainWindow : Window
     /// de las acciones productivas de la interfaz.
     /// </summary>
     private void SetCurrentSimulationPlan(
-        SimulationPlanViewModel? simulationPlan)
+        SimulationPlanViewModel? simulationPlan,
+        bool synchronizeOutgoingPlan = true)
     {
         /*
          * Antes de abandonar el plan actual conservamos su estado
          * aprobado dentro de la selección productiva por lote.
          */
-        SynchronizePlanWithProductiveBatchSelection(
-            _currentSimulationPlan);
+        if (synchronizeOutgoingPlan)
+        {
+            SynchronizePlanWithProductiveBatchSelection(
+                _currentSimulationPlan);
+        }
 
         if (_currentSimulationPlan is not null)
         {
@@ -147,7 +147,7 @@ public partial class MainWindow : Window
         SynchronizePlanWithProductiveBatchSelection(
             _currentSimulationPlan);
 
-        AudioFileDetailsViewControl.SimulationPlan =
+        SimulationPlanViewControl.DataContext =
             _currentSimulationPlan;
 
         UpdateApplyChangesButtonState();
@@ -439,8 +439,17 @@ public partial class MainWindow : Window
                     "La aplicación productiva por lote finalizó " +
                     "correctamente.");
 
-                FinalizeProductiveBatchUiState(
-                    productiveFilesWereModified: true);
+                IReadOnlyList<string> refreshedFilePaths =
+                    RefreshSuccessfullyPromotedBatchFiles(
+                        batchRequest,
+                        completionResult);
+
+                RemoveSuccessfullyPromotedBatchItems(
+                    batchRequest,
+                    completionResult);
+
+                await RefreshCurrentSimulationPlanAfterBatchAsync(
+                    refreshedFilePaths);
             }
             else if (decision ==
                      MetadataPromotionDecision.Declined)
@@ -527,11 +536,11 @@ public partial class MainWindow : Window
     /// TagLibSharp exclusivamente en memoria y verifica que el
     /// archivo físico permanezca intacto.
     ///
-    /// Después ejecuta el pipeline seguro, que crea el respaldo
-    /// obligatorio y utiliza todavía un escritor de diagnóstico.
+    /// Después ejecuta exclusivamente la validación previa. Este
+    /// evento nunca crea respaldos ni invoca escritores.
     /// </summary>
     private async void
-        AudioFileDetailsViewControl_ValidateApprovedChangesRequested(
+        SimulationPlanViewControl_ValidateApprovedChangesRequested(
             object? sender,
             EventArgs e)
     {
@@ -621,40 +630,24 @@ public partial class MainWindow : Window
                     "omitió porque el archivo seleccionado no es MP3.");
             }
 
-            /*
-             * Después de superar la preparación en memoria,
-             * ejecutamos el pipeline seguro existente.
-             */
-            MetadataApplicationPipeline pipeline =
+            MetadataApplyRequestValidator validator =
                 new();
 
-            Progress<MetadataApplicationProgress> progress =
-                new(
-                    progressUpdate =>
-                    {
-                        AppendLog(
-                            $"Aplicación segura: " +
-                            $"{progressUpdate.Summary}");
-                    });
+            MetadataApplyValidationResult validationResult =
+                validator.Validate(
+                    request);
 
-            MetadataApplicationPipelineResult result =
-                await pipeline.ExecuteAsync(
-                    request,
-                    progress);
+            AppendLog(
+                validationResult.Summary);
 
-            string report =
-                MetadataApplicationPipelineDiagnostics
-                    .BuildReport(
-                        result);
+            foreach (MetadataApplyValidationIssue issue
+                in validationResult.Issues)
+            {
+                AppendLog(
+                    $"Validación: {issue.Summary}");
+            }
 
-            LogTextBox.AppendText(
-                Environment.NewLine +
-                report +
-                Environment.NewLine);
-
-            LogTextBox.ScrollToEnd();
-
-            if (result.ValidationResult?.IsValid != true)
+            if (!validationResult.IsValid)
             {
                 AppendLog(
                     "La solicitud fue rechazada por la " +
@@ -663,23 +656,9 @@ public partial class MainWindow : Window
                 return;
             }
 
-            if (result.BackupResult?.WasSuccessful == true)
-            {
-                AppendLog(
-                    "La solicitud fue validada y el respaldo se " +
-                    "creó correctamente. Ningún metadato fue " +
-                    "modificado.");
-
-                AppendLog(
-                    $"Ruta del respaldo: " +
-                    $"{result.BackupResult.BackupFilePath}");
-
-                return;
-            }
-
             AppendLog(
-                "La solicitud fue validada, pero el respaldo no " +
-                "pudo completarse. Ningún metadato fue modificado.");
+                "La solicitud fue validada sin ejecutar respaldo " +
+                "ni escritura. Ningún metadato fue modificado.");
         }
         catch (Exception exception)
         {
@@ -710,9 +689,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        AudioFileDetailsViewControl
+        SimulationPlanViewControl
             .ValidateApprovedChangesRequested +=
-                AudioFileDetailsViewControl_ValidateApprovedChangesRequested;
+                SimulationPlanViewControl_ValidateApprovedChangesRequested;
 
         _audioAnalysisEngine =
             new AudioAnalysisEngine();
@@ -855,7 +834,7 @@ public partial class MainWindow : Window
     /// Vuelve a leer un archivo aplicado productivamente y actualiza
     /// solamente su fila, su selección y su panel de detalles.
     /// </summary>
-    private bool RefreshAppliedAudioFile(
+    private bool RefreshAudioFileFromDisk(
         string filePath)
     {
         AudioFile? refreshedAudioFile =
@@ -865,7 +844,7 @@ public partial class MainWindow : Window
         if (refreshedAudioFile is null)
         {
             AppendLog(
-                "No fue posible volver a leer el archivo aplicado.");
+                "No fue posible volver a leer el archivo desde disco.");
 
             return false;
         }
@@ -890,7 +869,7 @@ public partial class MainWindow : Window
         if (existingIndex < 0)
         {
             AppendLog(
-                "El archivo aplicado no fue encontrado en la tabla.");
+                "El archivo actualizado no fue encontrado en la tabla.");
 
             return false;
         }
@@ -914,7 +893,7 @@ public partial class MainWindow : Window
             refreshedAudioFile);
 
         AppendLog(
-            "La fila aplicada fue actualizada desde el archivo real.");
+            "La fila seleccionada fue actualizada desde el archivo real.");
 
         return true;
     }
@@ -1469,7 +1448,7 @@ public partial class MainWindow : Window
                 if (completedResult.WasSuccessfullyPromoted)
                 {
                     bool interfaceWasRefreshed =
-                        RefreshAppliedAudioFile(
+                        RefreshAudioFileFromDisk(
                             request.FilePath);
 
                     AppendLog(
@@ -1605,6 +1584,29 @@ public partial class MainWindow : Window
                 out string filePath))
         {
             return;
+        }
+
+        if (!isPostApplicationRefresh)
+        {
+            bool fileWasRefreshed =
+                RefreshAudioFileFromDisk(
+                    filePath);
+
+            if (!fileWasRefreshed)
+            {
+                AppendLog(
+                    "El análisis continuará con la información " +
+                    "visible porque no fue posible refrescar la fila.");
+            }
+            else
+            {
+                audioFile =
+                    GetSelectedAudioFile() ??
+                    audioFile;
+
+                filePath =
+                    audioFile.FullPath;
+            }
         }
 
         SetAudioAnalysisControlsEnabled(
@@ -1777,7 +1779,9 @@ public partial class MainWindow : Window
 
             SetCurrentSimulationPlan(
                 simulationPlanFactory.Create(
-                    changePlan));
+                    changePlan),
+                synchronizeOutgoingPlan:
+                    !isPostApplicationRefresh);
 
             string changePlanReport =
                 MetadataChangePlanDiagnostics.BuildReport(

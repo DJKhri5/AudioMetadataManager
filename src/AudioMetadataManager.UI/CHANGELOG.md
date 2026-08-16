@@ -7,7 +7,29 @@ Semantic Versioning where applicable.
 
 ## [Unreleased]
 
+### Changed
+
+- Compacted the simulation grid and integrated the manual-value action beside
+  the effective proposed value, keeping the principal decision columns visible
+  at the default window width.
+- Reworded the simulation and status-bar notices to distinguish safe proposal
+  editing from the separately prepared and confirmed productive workflow.
+- Separated metadata review and file-renaming preview into dedicated tabs.
+- Added an explicit renaming comparison with current name, proposed name,
+  confidence state, and a notice that productive renaming remains disabled
+  until collision detection and independent safeguards are implemented.
+- Promoted library, information, metadata, renaming, duplicate detection, and
+  activity into main workspace tabs so each workflow uses the complete central
+  area instead of a constrained nested details panel.
+
 ### Added
+
+- Added explicit manual metadata values for productively supported fields.
+- Added a guarded manual-value dialog for proposals with insufficient
+  evidence or unresolved external conflicts.
+- Added auditable `Usuario` provenance for manually supplied values.
+- Added automated coverage for manual selection, productive request mapping,
+  no-op prevention, and empty-value rejection.
 
 - Added productive metadata support for `Version` and `Label` through the
   centralized field-support policy.
@@ -389,6 +411,24 @@ Semantic Versioning where applicable.
   unsupported fields before they reach the batch workflow.
 
 ### Fixed
+
+- Restored automatic row refresh and simulation-plan reconstruction after a
+  successful productive batch promotion.
+- Updated user-requested file analysis to re-read metadata from disk instead
+  of reusing the stale model created by the initial library scan.
+- Prevented the outgoing pre-promotion plan from being re-added to the batch
+  while rebuilding the post-application plan.
+- Prevented the `Validar cambios aprobados` action from executing the real
+  metadata application pipeline against the selected file.
+- Corrected the validation log so it no longer claims that metadata remained
+  unchanged after a real writer had run.
+- Aligned the legacy MP3 in-memory preparation check with the centralized
+  productive field mapper so `Version` and `Label` no longer fail validation
+  before entering the protected pipeline.
+- Allowed a user-supplied value to resolve an `InsufficientEvidence` proposal
+  without weakening backup, verification, promotion, or confirmation rules.
+- Prevented a manual value equal to the current metadata from becoming a
+  selectable productive change.
 
 - Fixed MP3 label persistence by writing the ID3v2 `TPUB` frame explicitly.
 - Prevented a persisted label from being displayed as missing and proposed

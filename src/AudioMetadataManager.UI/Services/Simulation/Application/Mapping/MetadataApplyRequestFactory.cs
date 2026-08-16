@@ -65,7 +65,7 @@ public sealed class MetadataApplyRequestFactory
         return
             proposal is not null &&
             proposal.IsApprovedForSimulation &&
-            proposal.HasActualChange &&
+            proposal.HasSelectableChange &&
             proposal.CanSelect &&
             MetadataProductiveFieldSupport.IsSupported(
                 proposal.Field);
@@ -85,16 +85,18 @@ public sealed class MetadataApplyRequestFactory
 
             NewValue =
                 NormalizeStoredValue(
-                    proposal.ProposedValue),
+                    proposal.EffectiveProposedValue),
 
             WasManuallyApproved =
                 proposal.IsManuallyApproved,
 
             Confidence =
-                proposal.Confidence,
+                proposal.HasManualOverride
+                    ? 0
+                    : proposal.Confidence,
 
             SupportingSources =
-                proposal.SupportingSources
+                proposal.EffectiveSupportingSources
         };
     }
 
