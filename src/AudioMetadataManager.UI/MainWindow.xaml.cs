@@ -55,6 +55,10 @@ using System.Windows.Data;
 using AudioMetadataManager.UI.Services.Duplicates;
 using AudioMetadataManager.UI.Services.Filtering;
 using AudioMetadataManager.UI.Services.Filtering.Models;
+using AudioMetadataManager.UI.Services.MetadataSources.Batch;
+using AudioMetadataManager.UI.Services.MetadataSources.Batch.Models;
+using AudioMetadataManager.UI.Services.MetadataSources.Configuration;
+using System.Threading;
 using ConsensusResult =
     AudioMetadataManager.UI.Services.MetadataSources
         .Consensus.Models.MetadataConsensusResult;
@@ -93,6 +97,13 @@ public partial class MainWindow : Window
     private readonly SimulationPlanToRenamingSynchronizer
         _simulationToRenamingSynchronizer =
             new();
+
+    private readonly BatchMetadataEnrichmentService
+        _batchEnrichmentService =
+            new();
+
+    private CancellationTokenSource?
+        _batchEnrichmentCts;
 
     private readonly AudioAnalysisEngine 
         _audioAnalysisEngine;
@@ -719,13 +730,125 @@ public partial class MainWindow : Window
         object sender,
         RoutedEventArgs e)
     {
-        MetadataSourcesSettingsWindow settingsWindow =
+        ExternalProvidersSettingsWindow settingsWindow =
             new()
             {
                 Owner = this
             };
 
         settingsWindow.ShowDialog();
+    }
+
+    private void OpenProvidersSettingsButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        ExternalProvidersSettingsWindow settingsWindow =
+            new()
+            {
+                Owner = this
+            };
+
+        settingsWindow.ShowDialog();
+    }
+
+    private async void EnrichBatchMetadataButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (AudioFilesDataGrid.ItemsSource is not List<AudioFile> audioFiles || audioFiles.Count == 0)
+        {
+            MessageBox.Show(
+                "No hay archivos en la biblioteca para enriquecer.",
+                "Enriquecimiento en lote",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            $"¿Deseas analizar y enriquecer los metadatos de {audioFiles.Count} archivo(s) consultando proveedores externos (MusicBrainz, Beatport, Spotify, SoundCloud, Discogs)?\n\n" +
+            "Este proceso se ejecutará en segundo plano y actualizará las propuestas canónicas y el renombrado seguro.",
+            "Enriquecer metadatos en lote",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        _batchEnrichmentCts = new CancellationTokenSource();
+        SetBatchEnrichmentUiState(isEnriching: true);
+
+        AppendLog(
+            $"{Environment.NewLine}" +
+            $"Iniciando enriquecimiento en lote de {audioFiles.Count} archivo(s)...");
+
+        var progress = new Progress<BatchMetadataEnrichmentProgress>(p =>
+        {
+            BatchEnrichmentProgressBar.Value = p.Percentage;
+            BatchEnrichmentPercentTextBlock.Text = $"{p.Percentage:0}%";
+            BatchEnrichmentStatusTextBlock.Text = $"Enriqueciendo metadatos online ({p.CurrentIndex}/{p.TotalCount})...";
+            BatchEnrichmentCurrentFileTextBlock.Text = p.CurrentFileName;
+        });
+
+        try
+        {
+            var result = await _batchEnrichmentService.EnrichBatchAsync(
+                audioFiles,
+                progress,
+                _batchEnrichmentCts.Token);
+
+            AppendLog(result.Summary);
+
+            RenamePreviewViewControl.SetLibraryContext(audioFiles);
+            ApplyLibraryFilter();
+            UpdateSelectedFileButtons();
+
+            MessageBox.Show(
+                result.Summary,
+                "Enriquecimiento en lote",
+                MessageBoxButton.OK,
+                result.WasCancelled ? MessageBoxImage.Warning : MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"Error durante el enriquecimiento en lote: {ex.Message}");
+        }
+        finally
+        {
+            SetBatchEnrichmentUiState(isEnriching: false);
+            _batchEnrichmentCts?.Dispose();
+            _batchEnrichmentCts = null;
+        }
+    }
+
+    private void CancelBatchEnrichmentButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_batchEnrichmentCts != null && !_batchEnrichmentCts.IsCancellationRequested)
+        {
+            AppendLog("Cancelando enriquecimiento en lote...");
+            _batchEnrichmentCts.Cancel();
+        }
+    }
+
+    private void SetBatchEnrichmentUiState(bool isEnriching)
+    {
+        BatchEnrichmentProgressPanel.Visibility = isEnriching
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        EnrichBatchMetadataButton.IsEnabled = !isEnriching &&
+            (AudioFilesDataGrid.ItemsSource is IEnumerable<AudioFile> files && files.Any());
+
+        ScanButton.IsEnabled = !isEnriching;
+        BrowseButton.IsEnabled = !isEnriching;
+        AnalyzeSelectedFileButton.IsEnabled = !isEnriching;
+        RunAudioDiagnosticButton.IsEnabled = !isEnriching;
+        OpenProvidersSettingsButton.IsEnabled = !isEnriching;
     }
 
     public MainWindow()
@@ -969,6 +1092,9 @@ public partial class MainWindow : Window
 
         ExportButton.IsEnabled =
             audioFiles.Count > 0;
+
+        EnrichBatchMetadataButton.IsEnabled =
+            audioFiles.Count > 0;
     }
 
     private void SearchFilterTextBox_TextChanged(
@@ -1161,6 +1287,9 @@ public partial class MainWindow : Window
             false;
 
         ExportButton.IsEnabled =
+            false;
+
+        EnrichBatchMetadataButton.IsEnabled =
             false;
 
         LogTextBox.AppendText(

@@ -231,6 +231,10 @@ Semantic Versioning where applicable.
 - Added `BeatportMetadataProvider`, `SoundCloudMetadataProvider`, and `SpotifyMetadataProvider` providing specialized electronic mix versioning, bootleg handling with manual review safety, and streaming track metadata.
 - Added `SimulationPlanToRenamingSynchronizer` to automatically bridge external metadata consensus proposals and manual simulation overrides directly into `AudioFile.Simulation.ProposedFileName`.
 - Added automated unit and integration tests covering MusicBrainz, Beatport, SoundCloud, and simulation-to-renaming synchronization.
+- Added `MusicBrainzConfigurationService`, `BeatportConfigurationService`, `SpotifyConfigurationService`, `SoundCloudConfigurationService`, and `MetadataSourceConfigurationRegistry` for external provider diagnostics and secure Windows Credential Manager storage.
+- Added `ExternalProvidersSettingsWindow` modal dialog to inspect connection states, enter/delete API keys, and test connectivity and latency in real time.
+- Added `BatchMetadataEnrichmentModels`, `IBatchMetadataEnrichmentService`, and `BatchMetadataEnrichmentService` to coordinate asynchronous multi-provider searches, consensus evaluation, and safe renaming synchronization across entire libraries.
+- Added automated unit and integration tests in `BatchMetadataEnrichmentServiceTests` and `MetadataSourceConfigurationTests`.
 
 ### Changed
 
@@ -435,6 +439,8 @@ Semantic Versioning where applicable.
 - Updated `MainWindow` with a real-time search bar, quick clear action, format/status/quality filter dropdowns, and live item count indicators in the main library view.
 - Updated `MetadataSourceFactory` to register `MusicBrainzMetadataSource` as primary available external provider along with Beatport, SoundCloud, Spotify, and Discogs.
 - Updated `MainWindow` to reactively synchronize proposed canonical file names across the simulation workspace and safe renaming views upon external search completion.
+- Updated `MainWindow` with a batch online metadata enrichment action, progress monitoring panel with live status, and responsive cancellation support.
+- Updated `MainWindow` with top toolbar and tools menu integration for opening the external metadata providers configuration center.
 
 ### Fixed
 
