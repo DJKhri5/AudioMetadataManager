@@ -1,18 +1,18 @@
 using AudioMetadataManager.UI.Services.MetadataSources.Interfaces;
 using AudioMetadataManager.UI.Services.MetadataSources.Models;
-using AudioMetadataManager.UI.Services.MetadataSources.Providers.Beatport;
 
-namespace AudioMetadataManager.UI.Services.MetadataSources.Providers;
+namespace AudioMetadataManager.UI.Services.MetadataSources.Providers.MusicBrainz;
 
 /// <summary>
-/// Proveedor de metadatos para Beatport especializado en música electrónica.
+/// Fuente de metadatos oficial basada en la base de datos abierta de MusicBrainz.
+/// Está disponible inmediatamente sin requerir configuración de API key.
 /// </summary>
-public sealed class BeatportMetadataSource : IMetadataSource, IDisposable
+public sealed class MusicBrainzMetadataSource : IMetadataSource, IDisposable
 {
-    private readonly BeatportMetadataProvider _provider;
+    private readonly MusicBrainzMetadataProvider _provider;
     private readonly bool _ownsProvider;
 
-    public BeatportMetadataSource(BeatportMetadataProvider? provider = null)
+    public MusicBrainzMetadataSource(MusicBrainzMetadataProvider? provider = null)
     {
         if (provider != null)
         {
@@ -21,14 +21,14 @@ public sealed class BeatportMetadataSource : IMetadataSource, IDisposable
         }
         else
         {
-            _provider = new BeatportMetadataProvider();
+            _provider = new MusicBrainzMetadataProvider();
             _ownsProvider = true;
         }
     }
 
-    public string Name => "Beatport";
+    public string Name => "MusicBrainz";
 
-    public int Priority => 2;
+    public int Priority => 1;
 
     public bool IsAvailable => true;
 
@@ -48,7 +48,7 @@ public sealed class BeatportMetadataSource : IMetadataSource, IDisposable
             ? request.ParsedTitle
             : request.TaggedTitle;
 
-        var candidates = await _provider.SearchTracksAsync(artist, title, cancellationToken).ConfigureAwait(false);
+        var candidates = await _provider.SearchRecordingsAsync(artist, title, cancellationToken).ConfigureAwait(false);
 
         return new MetadataSearchResult
         {
@@ -56,7 +56,7 @@ public sealed class BeatportMetadataSource : IMetadataSource, IDisposable
             QueryUsed = request.PrimaryQuery,
             WasSuccessful = candidates.Count > 0,
             Candidates = candidates.ToList(),
-            ErrorMessage = candidates.Count == 0 ? "No se encontraron coincidencias en Beatport." : string.Empty
+            ErrorMessage = candidates.Count == 0 ? "No se encontraron coincidencias en MusicBrainz." : string.Empty
         };
     }
 

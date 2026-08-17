@@ -1,5 +1,6 @@
-﻿using AudioMetadataManager.UI.Services.MetadataSources.Interfaces;
+using AudioMetadataManager.UI.Services.MetadataSources.Interfaces;
 using AudioMetadataManager.UI.Services.MetadataSources.Providers;
+using AudioMetadataManager.UI.Services.MetadataSources.Providers.MusicBrainz;
 using AudioMetadataManager.UI.Services.MetadataSources
     .Providers.Discogs.Configuration;
 
@@ -14,10 +15,6 @@ public static class MetadataSourceFactory
     /// <summary>
     /// Construye el administrador con todas las plataformas
     /// conocidas por la aplicación.
-    ///
-    /// Discogs utilizará una configuración predeterminada
-    /// sin credenciales cuando no se proporcione una
-    /// configuración externa.
     /// </summary>
     public static MetadataSourceManager CreateDefault(
         DiscogsOptions? discogsOptions = null)
@@ -29,6 +26,8 @@ public static class MetadataSourceFactory
         IReadOnlyList<IMetadataSource> sources =
             new List<IMetadataSource>
             {
+                new MusicBrainzMetadataSource(),
+
                 new DiscogsMetadataSource(
                     effectiveDiscogsOptions),
 

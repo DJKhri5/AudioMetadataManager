@@ -32,6 +32,7 @@ using AudioMetadataManager.UI.Services.Simulation
     .Application.Validation;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Diagnostics;
+using AudioMetadataManager.UI.Services.Simulation;
 using AudioMetadataManager.UI.Services.Simulation
     .Application.Writing.TagLibIntegration.Models;
 using AudioMetadataManager.UI.Services.Simulation
@@ -87,6 +88,10 @@ public partial class MainWindow : Window
 
     private readonly LibraryFilterCriteria
         _filterCriteria =
+            new();
+
+    private readonly SimulationPlanToRenamingSynchronizer
+        _simulationToRenamingSynchronizer =
             new();
 
     private readonly AudioAnalysisEngine 
@@ -233,6 +238,20 @@ public partial class MainWindow : Window
 
             SynchronizePlanWithProductiveBatchSelection(
                 _currentSimulationPlan);
+
+            if (_currentSimulationPlan != null)
+            {
+                var selectedFile = GetSelectedAudioFile();
+                if (selectedFile != null)
+                {
+                    _simulationToRenamingSynchronizer.Synchronize(
+                        selectedFile,
+                        _currentSimulationPlan);
+
+                    RenamePreviewViewControl.SetLibraryContext(
+                        AudioFilesDataGrid.ItemsSource as IEnumerable<AudioFile>);
+                }
+            }
         }
     }
 
@@ -2104,6 +2123,16 @@ public partial class MainWindow : Window
                     changePlan),
                 synchronizeOutgoingPlan:
                     !isPostApplicationRefresh);
+
+            _simulationToRenamingSynchronizer.Synchronize(
+                audioFile,
+                changePlan);
+
+            RenamePreviewViewControl.SetLibraryContext(
+                AudioFilesDataGrid.ItemsSource as IEnumerable<AudioFile>);
+
+            UpdateSelectedFileButtons();
+            ApplyLibraryFilter();
 
             string changePlanReport =
                 MetadataChangePlanDiagnostics.BuildReport(

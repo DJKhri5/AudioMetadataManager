@@ -227,6 +227,10 @@ Semantic Versioning where applicable.
 - Added `LibraryFilterCriteria` model encapsulating multi-term search queries and format, status, and quality filters.
 - Added `ILibraryFilterService` and `LibraryFilterService` supporting accent-insensitive and case-insensitive search across artist, title, album, genre, label, and file path.
 - Added automated unit tests in `LibraryFilterServiceTests` covering accent normalization, multi-field search, and combined filter criteria.
+- Added `MusicBrainzMetadataProvider` and `MusicBrainzMetadataSource` to query the open MusicBrainz API for canonical artist, title, album, release year, and record label without requiring API keys.
+- Added `BeatportMetadataProvider`, `SoundCloudMetadataProvider`, and `SpotifyMetadataProvider` providing specialized electronic mix versioning, bootleg handling with manual review safety, and streaming track metadata.
+- Added `SimulationPlanToRenamingSynchronizer` to automatically bridge external metadata consensus proposals and manual simulation overrides directly into `AudioFile.Simulation.ProposedFileName`.
+- Added automated unit and integration tests covering MusicBrainz, Beatport, SoundCloud, and simulation-to-renaming synchronization.
 
 ### Changed
 
@@ -429,6 +433,8 @@ Semantic Versioning where applicable.
 - Updated `RenamePreviewView` with a multi-tab interface supporting both individual file inspection and full-library batch renaming with live KPI cards, interactive checkbox selection, and bulk execution.
 - Updated `MainWindow` to coordinate safe batch renaming requests, show detailed confirmation dialogs, update library views in-place, and log transactional move progress.
 - Updated `MainWindow` with a real-time search bar, quick clear action, format/status/quality filter dropdowns, and live item count indicators in the main library view.
+- Updated `MetadataSourceFactory` to register `MusicBrainzMetadataSource` as primary available external provider along with Beatport, SoundCloud, Spotify, and Discogs.
+- Updated `MainWindow` to reactively synchronize proposed canonical file names across the simulation workspace and safe renaming views upon external search completion.
 
 ### Fixed
 
