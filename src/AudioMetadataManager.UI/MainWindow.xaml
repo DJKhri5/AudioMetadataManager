@@ -164,65 +164,180 @@
 
                 <TabItem Header="Biblioteca">
 
-                    <GroupBox Header="Archivos encontrados"
-                              Padding="8"
-                              Margin="6">
+                    <Grid Margin="6">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                        <DataGrid x:Name="AudioFilesDataGrid"
-                                  AutoGenerateColumns="False"
-                                  IsReadOnly="True"
-                                  CanUserAddRows="False"
-                                  CanUserResizeColumns="True"
-                                  CanUserReorderColumns="True"
-                                  SelectionMode="Single"
-                                  SelectionUnit="FullRow"
-                                  SelectionChanged="AudioFilesDataGrid_SelectionChanged"
-                                  GridLinesVisibility="Horizontal"
-                                  HorizontalScrollBarVisibility="Auto"
-                                  VerticalScrollBarVisibility="Auto">
+                        <!-- Barra de Búsqueda y Filtros en Tiempo Real -->
+                        <Border Grid.Row="0"
+                                Background="#F8FAFC"
+                                BorderBrush="#CBD5E1"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <DataGrid.Columns>
+                                <!-- Cuadro de Búsqueda Rápida -->
+                                <Grid Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBox x:Name="SearchFilterTextBox"
+                                             Padding="26,5,26,5"
+                                             VerticalContentAlignment="Center"
+                                             TextChanged="SearchFilterTextBox_TextChanged"/>
+                                    <TextBlock Text="🔍"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Left"
+                                               Margin="8,0,0,0"
+                                               Foreground="#94A3B8"
+                                               IsHitTestVisible="False"/>
+                                    <TextBlock x:Name="SearchPlaceholderTextBlock"
+                                               Text="Buscar por artista, título, álbum, sello o archivo..."
+                                               Foreground="#94A3B8"
+                                               VerticalAlignment="Center"
+                                               Margin="28,0,0,0"
+                                               IsHitTestVisible="False"/>
+                                    <Button x:Name="ClearSearchButton"
+                                            Content="✕"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Width="20"
+                                            Height="20"
+                                            Margin="0,0,4,0"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Foreground="#64748B"
+                                            FontWeight="Bold"
+                                            Cursor="Hand"
+                                            Visibility="Collapsed"
+                                            Click="ClearSearchButton_Click"/>
+                                </Grid>
 
-                                <DataGridCheckBoxColumn Header="Aplicar"
-                                                        Width="65"/>
+                                <!-- Filtro por Formato -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <TextBlock Text="Formato:" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#475569" FontWeight="Medium"/>
+                                    <ComboBox x:Name="FormatFilterComboBox" Width="100" SelectionChanged="FilterComboBox_SelectionChanged">
+                                        <ComboBoxItem Content="Todos" IsSelected="True"/>
+                                        <ComboBoxItem Content="MP3"/>
+                                        <ComboBoxItem Content="FLAC"/>
+                                        <ComboBoxItem Content="WAV"/>
+                                        <ComboBoxItem Content="AIFF"/>
+                                        <ComboBoxItem Content="M4A / AAC"/>
+                                    </ComboBox>
+                                </StackPanel>
 
-                                <DataGridTextColumn Header="Archivo"
-                                                    Binding="{Binding FileName}"
-                                                    Width="SizeToCells"
-                                                    MinWidth="240"/>
+                                <!-- Filtro por Estado -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <TextBlock Text="Estado:" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#475569" FontWeight="Medium"/>
+                                    <ComboBox x:Name="StatusFilterComboBox" Width="150" SelectionChanged="FilterComboBox_SelectionChanged">
+                                        <ComboBoxItem Content="Todos" IsSelected="True"/>
+                                        <ComboBoxItem Content="Con propuesta de cambio"/>
+                                        <ComboBoxItem Content="Sin cambios"/>
+                                        <ComboBoxItem Content="Sin analizar"/>
+                                        <ComboBoxItem Content="Requiere revisión"/>
+                                    </ComboBox>
+                                </StackPanel>
 
-                                <DataGridTextColumn Header="Artista"
-                                                    Binding="{Binding ParsedArtistDisplay}"
-                                                    Width="SizeToCells"
-                                                    MinWidth="170"/>
+                                <!-- Filtro por Calidad -->
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <TextBlock Text="Calidad:" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#475569" FontWeight="Medium"/>
+                                    <ComboBox x:Name="QualityFilterComboBox" Width="110" SelectionChanged="FilterComboBox_SelectionChanged">
+                                        <ComboBoxItem Content="Todos" IsSelected="True"/>
+                                        <ComboBoxItem Content="Lossless"/>
+                                        <ComboBoxItem Content="≥ 320 kbps"/>
+                                        <ComboBoxItem Content="&lt; 320 kbps"/>
+                                    </ComboBox>
+                                </StackPanel>
 
-                                <DataGridTextColumn Header="Título"
-                                                    Binding="{Binding ParsedTitleDisplay}"
-                                                    Width="SizeToCells"
-                                                    MinWidth="220"/>
+                                <!-- Botón Restablecer Filtros -->
+                                <Button Grid.Column="4"
+                                        x:Name="ResetFiltersButton"
+                                        Content="Limpiar filtros"
+                                        Padding="10,4"
+                                        Click="ResetFiltersButton_Click"/>
+                            </Grid>
+                        </Border>
 
-                                <DataGridTextColumn Header="Versión"
-                                                    Binding="{Binding ParsedVersionDisplay}"
-                                                    Width="SizeToCells"
-                                                    MinWidth="160"/>
+                        <!-- Tabla de Archivos -->
+                        <GroupBox Grid.Row="1"
+                                  Header="Archivos encontrados"
+                                  Padding="8">
 
-                                <DataGridTextColumn Header="Confianza"
-                                                    Binding="{Binding ConfidenceScoreDisplay}"
-                                                    Width="90"/>
+                            <DataGrid x:Name="AudioFilesDataGrid"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      CanUserResizeColumns="True"
+                                      CanUserReorderColumns="True"
+                                      SelectionMode="Single"
+                                      SelectionUnit="FullRow"
+                                      SelectionChanged="AudioFilesDataGrid_SelectionChanged"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto">
 
-                                <DataGridTextColumn Header="Calidad"
-                                                    Binding="{Binding QualityScoreDisplay}"
-                                                    Width="85"/>
+                                <DataGrid.Columns>
 
-                                <DataGridTextColumn Header="Estado"
-                                                    Binding="{Binding Status}"
-                                                    Width="110"/>
+                                    <DataGridCheckBoxColumn Header="Aplicar"
+                                                            Width="65"/>
 
-                            </DataGrid.Columns>
+                                    <DataGridTextColumn Header="Archivo"
+                                                        Binding="{Binding FileName}"
+                                                        Width="SizeToCells"
+                                                        MinWidth="240"/>
 
-                        </DataGrid>
+                                    <DataGridTextColumn Header="Artista"
+                                                        Binding="{Binding ParsedArtistDisplay}"
+                                                        Width="SizeToCells"
+                                                        MinWidth="170"/>
 
-                    </GroupBox>
+                                    <DataGridTextColumn Header="Título"
+                                                        Binding="{Binding ParsedTitleDisplay}"
+                                                        Width="SizeToCells"
+                                                        MinWidth="220"/>
+
+                                    <DataGridTextColumn Header="Versión"
+                                                        Binding="{Binding ParsedVersionDisplay}"
+                                                        Width="SizeToCells"
+                                                        MinWidth="160"/>
+
+                                    <DataGridTextColumn Header="Confianza"
+                                                        Binding="{Binding ConfidenceScoreDisplay}"
+                                                        Width="90"/>
+
+                                    <DataGridTextColumn Header="Calidad"
+                                                        Binding="{Binding QualityScoreDisplay}"
+                                                        Width="85"/>
+
+                                    <DataGridTextColumn Header="Estado"
+                                                        Binding="{Binding Status}"
+                                                        Width="110"/>
+
+                                </DataGrid.Columns>
+
+                            </DataGrid>
+
+                        </GroupBox>
+
+                        <!-- Resumen y Conteo de Filtrado -->
+                        <Border Grid.Row="2"
+                                Margin="0,4,0,0"
+                                Padding="4,2">
+                            <TextBlock x:Name="FilterStatusSummaryTextBlock"
+                                       Text="Mostrando 0 archivos compatibles."
+                                       Foreground="#64748B"
+                                       FontSize="12"/>
+                        </Border>
+                    </Grid>
 
                 </TabItem>
 

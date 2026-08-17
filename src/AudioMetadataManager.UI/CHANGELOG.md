@@ -224,6 +224,9 @@ Semantic Versioning where applicable.
 - Added `FileRenameBatchItemValidation`, `FileRenameBatchPreparationResult`, and `FileRenameBatchExecutionResult` models to support batch renaming diagnostics, interactive file selection, and consolidated reporting.
 - Added `IFileRenameBatchService` and `FileRenameBatchService` to evaluate batch collisions, execute sequential atomic moves, compute SHA-256 pre-move hashes, and perform transactional batch rollback.
 - Added automated unit and integration tests in `FileRenameBatchServiceTests` covering batch preparation, intra-batch collisions, physical batch moves, skipped unselected files, and batch rollback.
+- Added `LibraryFilterCriteria` model encapsulating multi-term search queries and format, status, and quality filters.
+- Added `ILibraryFilterService` and `LibraryFilterService` supporting accent-insensitive and case-insensitive search across artist, title, album, genre, label, and file path.
+- Added automated unit tests in `LibraryFilterServiceTests` covering accent normalization, multi-field search, and combined filter criteria.
 
 ### Changed
 
@@ -425,6 +428,7 @@ Semantic Versioning where applicable.
 - Enabled the dedicated `Duplicados` tab in `MainWindow` with live integration of `DuplicateDetectionView` and automated duplicate analysis upon library scanning.
 - Updated `RenamePreviewView` with a multi-tab interface supporting both individual file inspection and full-library batch renaming with live KPI cards, interactive checkbox selection, and bulk execution.
 - Updated `MainWindow` to coordinate safe batch renaming requests, show detailed confirmation dialogs, update library views in-place, and log transactional move progress.
+- Updated `MainWindow` with a real-time search bar, quick clear action, format/status/quality filter dropdowns, and live item count indicators in the main library view.
 
 ### Fixed
 

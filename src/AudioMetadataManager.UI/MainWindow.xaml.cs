@@ -50,7 +50,10 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using AudioMetadataManager.UI.Services.Duplicates;
+using AudioMetadataManager.UI.Services.Filtering;
+using AudioMetadataManager.UI.Services.Filtering.Models;
 using ConsensusResult =
     AudioMetadataManager.UI.Services.MetadataSources
         .Consensus.Models.MetadataConsensusResult;
@@ -76,6 +79,14 @@ public partial class MainWindow : Window
 
     private readonly AudioDuplicateDetector
         _duplicateDetector =
+            new();
+
+    private readonly LibraryFilterService
+        _libraryFilterService =
+            new();
+
+    private readonly LibraryFilterCriteria
+        _filterCriteria =
             new();
 
     private readonly AudioAnalysisEngine 
@@ -923,6 +934,8 @@ public partial class MainWindow : Window
 
         RenamePreviewViewControl.SetLibraryContext(audioFiles);
 
+        ApplyLibraryFilter();
+
         UpdateSelectedFileButtons();
 
         LogTextBox.AppendText(
@@ -937,6 +950,143 @@ public partial class MainWindow : Window
 
         ExportButton.IsEnabled =
             audioFiles.Count > 0;
+    }
+
+    private void SearchFilterTextBox_TextChanged(
+        object sender,
+        TextChangedEventArgs e)
+    {
+        if (SearchPlaceholderTextBlock == null ||
+            ClearSearchButton == null)
+        {
+            return;
+        }
+
+        SearchPlaceholderTextBlock.Visibility =
+            string.IsNullOrEmpty(SearchFilterTextBox.Text)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
+        ClearSearchButton.Visibility =
+            string.IsNullOrEmpty(SearchFilterTextBox.Text)
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+
+        _filterCriteria.SearchText =
+            SearchFilterTextBox.Text;
+
+        ApplyLibraryFilter();
+    }
+
+    private void ClearSearchButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        SearchFilterTextBox.Text =
+            string.Empty;
+    }
+
+    private void FilterComboBox_SelectionChanged(
+        object sender,
+        SelectionChangedEventArgs e)
+    {
+        if (FormatFilterComboBox == null ||
+            StatusFilterComboBox == null ||
+            QualityFilterComboBox == null ||
+            AudioFilesDataGrid == null)
+        {
+            return;
+        }
+
+        _filterCriteria.FormatFilter =
+            (FormatFilterComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Todos";
+
+        _filterCriteria.StatusFilter =
+            (StatusFilterComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Todos";
+
+        _filterCriteria.QualityFilter =
+            (QualityFilterComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Todos";
+
+        ApplyLibraryFilter();
+    }
+
+    private void ResetFiltersButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (SearchFilterTextBox == null ||
+            FormatFilterComboBox == null ||
+            StatusFilterComboBox == null ||
+            QualityFilterComboBox == null)
+        {
+            return;
+        }
+
+        SearchFilterTextBox.Text =
+            string.Empty;
+
+        FormatFilterComboBox.SelectedIndex = 0;
+        StatusFilterComboBox.SelectedIndex = 0;
+        QualityFilterComboBox.SelectedIndex = 0;
+
+        _filterCriteria.Reset();
+        ApplyLibraryFilter();
+    }
+
+    private void ApplyLibraryFilter()
+    {
+        if (AudioFilesDataGrid == null || AudioFilesDataGrid.ItemsSource is null)
+        {
+            UpdateFilterSummary();
+            return;
+        }
+
+        var view = CollectionViewSource.GetDefaultView(
+            AudioFilesDataGrid.ItemsSource);
+
+        if (view != null)
+        {
+            view.Filter = item =>
+                item is AudioFile audioFile &&
+                _libraryFilterService.Matches(audioFile, _filterCriteria);
+
+            view.Refresh();
+        }
+
+        UpdateFilterSummary();
+    }
+
+    private void UpdateFilterSummary()
+    {
+        if (FilterStatusSummaryTextBlock == null || AudioFilesDataGrid == null)
+        {
+            return;
+        }
+
+        var allFiles = AudioFilesDataGrid.ItemsSource as IEnumerable<AudioFile>;
+        if (allFiles == null || !allFiles.Any())
+        {
+            FilterStatusSummaryTextBlock.Text =
+                "Mostrando 0 archivos compatibles.";
+            return;
+        }
+
+        var view = CollectionViewSource.GetDefaultView(
+            AudioFilesDataGrid.ItemsSource);
+
+        int visibleCount = view?.Cast<object>().Count() ?? 0;
+        int totalCount = allFiles.Count();
+
+        if (_filterCriteria.HasActiveFilters)
+        {
+            FilterStatusSummaryTextBlock.Text =
+                $"Mostrando {visibleCount} de {totalCount} archivo(s) compatible(s) (Filtro activo).";
+        }
+        else
+        {
+            FilterStatusSummaryTextBlock.Text =
+                $"Mostrando {totalCount} archivo(s) compatible(s) en la biblioteca.";
+        }
     }
 
     /// <summary>
