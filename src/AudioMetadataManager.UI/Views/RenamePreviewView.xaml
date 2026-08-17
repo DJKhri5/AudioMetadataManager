@@ -1,7 +1,7 @@
 <UserControl x:Class="AudioMetadataManager.UI.Views.RenamePreviewView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             MinHeight="260">
+             MinHeight="300">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
@@ -16,14 +16,14 @@
                     CornerRadius="6">
 
                 <StackPanel>
-                    <TextBlock Text="Renombrado de archivos"
-                               FontSize="22"
+                    <TextBlock Text="Renombrado Reversible de Archivos"
+                               FontSize="20"
                                FontWeight="SemiBold" />
 
                     <TextBlock Margin="0,6,0,0"
                                Foreground="#4F5F6F"
                                TextWrapping="Wrap"
-                               Text="Vista previa independiente de los cambios de metadatos internos." />
+                               Text="Saneamiento automático de caracteres Windows, prevención estricta de colisiones y bitácora transaccional con reversión." />
                 </StackPanel>
 
             </Border>
@@ -39,6 +39,7 @@
                     </Grid.ColumnDefinitions>
 
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -72,45 +73,67 @@
                                Margin="0,0,0,10" />
 
                     <TextBlock Grid.Row="2"
-                               Text="Resultado:"
+                               Text="Nombre saneado (Windows):"
                                FontWeight="SemiBold"
                                Margin="0,0,16,10" />
 
                     <TextBlock Grid.Row="2"
                                Grid.Column="1"
-                               Text="{Binding RenameStatusDisplay, Mode=OneWay}"
+                               Text="{Binding SanitizedProposedFileName, Mode=OneWay}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding SanitizedProposedFileName, Mode=OneWay}"
+                               Foreground="#0D47A1"
+                               FontWeight="Medium"
                                Margin="0,0,0,10" />
 
                     <TextBlock Grid.Row="3"
+                               Text="Resultado:"
+                               FontWeight="SemiBold"
+                               Margin="0,0,16,10" />
+
+                    <TextBlock Grid.Row="3"
+                               Grid.Column="1"
+                               Text="{Binding RenameStatusDisplay, Mode=OneWay}"
+                               Margin="0,0,0,10" />
+
+                    <TextBlock Grid.Row="4"
                                Text="Confianza:"
                                FontWeight="SemiBold"
                                Margin="0,0,16,10" />
 
-                    <TextBlock Grid.Row="3"
+                    <TextBlock Grid.Row="4"
                                Grid.Column="1"
                                Text="{Binding RenameConfidenceDisplay, Mode=OneWay}"
-                               Margin="0,0,0,10" />
-
-                    <TextBlock Grid.Row="4"
-                               Text="Revisión:"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,10" />
-
-                    <TextBlock Grid.Row="4"
-                               Grid.Column="1"
-                               Text="{Binding RenameReviewDisplay, Mode=OneWay}"
                                Margin="0,0,0,10" />
 
                     <TextBlock Grid.Row="5"
                                Text="Resumen:"
                                FontWeight="SemiBold"
                                VerticalAlignment="Top"
-                               Margin="0,0,16,0" />
+                               Margin="0,0,16,10" />
 
                     <TextBlock Grid.Row="5"
                                Grid.Column="1"
                                Text="{Binding RenameSummaryDisplay, Mode=OneWay}"
-                               TextWrapping="Wrap" />
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10" />
+
+                    <!-- Acciones de renombrado -->
+                    <StackPanel Grid.Row="6"
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                Margin="0,6,0,0">
+
+                        <Button x:Name="RenameSingleFileButton"
+                                Content="Renombrar archivo físico"
+                                Padding="16,8"
+                                FontWeight="SemiBold"
+                                Background="#1976D2"
+                                Foreground="White"
+                                IsEnabled="{Binding CanRenameSafely, Mode=OneWay}"
+                                Click="RenameSingleFileButton_Click" />
+
+                    </StackPanel>
 
                 </Grid>
 
@@ -118,14 +141,14 @@
 
             <Border Margin="0,12,0,0"
                     Padding="12"
-                    Background="#FFF8E1"
-                    BorderBrush="#D6B95F"
+                    Background="#E8F5E9"
+                    BorderBrush="#81C784"
                     BorderThickness="1"
                     CornerRadius="4">
 
                 <TextBlock TextWrapping="Wrap"
-                           Foreground="#5F4A00"
-                           Text="Solo vista previa: esta sección todavía no renombra archivos. La aplicación productiva se habilitará cuando incluya validación de nombres, detección de colisiones, respaldo y confirmación independiente." />
+                           Foreground="#1B5E20"
+                           Text="Seguridad de renombrado activa: Se validan colisiones en disco antes de mover el archivo y se registra una bitácora con hash SHA-256 para permitir reversión en caso de discrepancias." />
 
             </Border>
 

@@ -1,4 +1,4 @@
-﻿using AudioMetadataManager.UI.Models;
+using AudioMetadataManager.UI.Models;
 using AudioMetadataManager.UI.Services;
 using AudioMetadataManager.UI.Services.AudioAnalysis;
 using AudioMetadataManager.UI.Services.AudioAnalysis.Diagnostics;
@@ -63,6 +63,10 @@ public partial class MainWindow : Window
 
     private readonly FileNameParserService
         _fileNameParserService =
+            new();
+
+    private readonly AudioMetadataManager.UI.Services.Renaming.FileRenameService
+        _fileRenameService =
             new();
 
     private readonly AudioAnalysisEngine 
@@ -693,6 +697,10 @@ public partial class MainWindow : Window
             .ValidateApprovedChangesRequested +=
                 SimulationPlanViewControl_ValidateApprovedChangesRequested;
 
+        RenamePreviewViewControl
+            .RenameRequested +=
+                RenamePreviewViewControl_RenameRequested;
+
         _audioAnalysisEngine =
             new AudioAnalysisEngine();
 
@@ -711,6 +719,68 @@ public partial class MainWindow : Window
             new ProductiveBatchWorkflowService();
 
         UpdateProductiveBatchUiState();
+    }
+
+    /// <summary>
+    /// Ejecuta la operación de renombrado físico de forma segura, previa validación y confirmación.
+    /// </summary>
+    private void RenamePreviewViewControl_RenameRequested(
+        object? sender,
+        AudioFile audioFile)
+    {
+        if (audioFile == null)
+        {
+            return;
+        }
+
+        var batchContext = AudioFilesDataGrid.ItemsSource as IEnumerable<AudioFile>;
+        var validation = new AudioMetadataManager.UI.Services.Renaming.FileRenameCollisionDetector().Validate(audioFile, batchContext);
+
+        if (!validation.CanProceed)
+        {
+            MessageBox.Show(
+                $"No es posible renombrar el archivo:{Environment.NewLine}{Environment.NewLine}{validation.Message}",
+                "Validación de renombrado",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            $"¿Deseas renombrar este archivo físico en disco?{Environment.NewLine}{Environment.NewLine}" +
+            $"Nombre actual: {audioFile.FileName}{Environment.NewLine}" +
+            $"Nombre nuevo:  {validation.SanitizedFileName}{Environment.NewLine}{Environment.NewLine}" +
+            "Esta operación modificará el nombre físico del archivo y registrará una entrada en la bitácora transaccional.",
+            "Confirmación de renombrado seguro",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            AppendLog("El usuario canceló la operación de renombrado.");
+            return;
+        }
+
+        AppendLog($"Ejecutando renombrado físico seguro: '{audioFile.FileName}' -> '{validation.SanitizedFileName}'...");
+
+        var result = _fileRenameService.Rename(audioFile, batchContext);
+
+        if (result.WasSuccessful)
+        {
+            AppendLog($"Renombrado completado exitosamente.{Environment.NewLine}Nueva ruta: {result.NewFilePath}");
+            AudioFilesDataGrid.Items.Refresh();
+            RenamePreviewViewControl.DataContext = null;
+            RenamePreviewViewControl.DataContext = audioFile;
+        }
+        else
+        {
+            AppendLog($"Error al renombrar el archivo: {result.ErrorMessage}");
+            MessageBox.Show(
+                $"Ocurrió un error al renombrar el archivo:{Environment.NewLine}{Environment.NewLine}{result.ErrorMessage}",
+                "Error de renombrado",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     /// <summary>

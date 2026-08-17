@@ -1,4 +1,4 @@
-﻿namespace AudioMetadataManager.UI.Models;
+namespace AudioMetadataManager.UI.Models;
 
 public class AudioFile
 {
@@ -82,6 +82,15 @@ public class AudioFile
 
     public string ProposedFileNameDisplay =>
         Simulation?.ProposedFileName ?? string.Empty;
+
+    public string SanitizedProposedFileName =>
+        Simulation == null || string.IsNullOrWhiteSpace(Simulation.ProposedFileName)
+            ? string.Empty
+            : new Services.Renaming.SafeFileNameSanitizer().Sanitize(Simulation.ProposedFileName, Extension);
+
+    public bool CanRenameSafely =>
+        !string.IsNullOrWhiteSpace(SanitizedProposedFileName) &&
+        !string.Equals(FileName, SanitizedProposedFileName, StringComparison.OrdinalIgnoreCase);
 
     public string RenameStatusDisplay =>
         Simulation == null

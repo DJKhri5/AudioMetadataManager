@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -6,21 +6,6 @@ The format is based on Keep a Changelog and the project follows
 Semantic Versioning where applicable.
 
 ## [Unreleased]
-
-### Changed
-
-- Compacted the simulation grid and integrated the manual-value action beside
-  the effective proposed value, keeping the principal decision columns visible
-  at the default window width.
-- Reworded the simulation and status-bar notices to distinguish safe proposal
-  editing from the separately prepared and confirmed productive workflow.
-- Separated metadata review and file-renaming preview into dedicated tabs.
-- Added an explicit renaming comparison with current name, proposed name,
-  confidence state, and a notice that productive renaming remains disabled
-  until collision detection and independent safeguards are implemented.
-- Promoted library, information, metadata, renaming, duplicate detection, and
-  activity into main workspace tabs so each workflow uses the complete central
-  area instead of a constrained nested details panel.
 
 ### Added
 
@@ -226,6 +211,11 @@ Semantic Versioning where applicable.
   fields.
 - Added detailed isolated-execution and pipeline failure diagnostics for
   productive batch preparation.
+- Added `SafeFileNameSanitizer` to enforce Windows file naming constraints, illegal character removal, trailing period/space trimming, and reserved device name protection (`CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9`).
+- Added `FileRenameCollisionDetector` for multi-level collision prevention against existing disk files and intra-batch collisions.
+- Added `FileRenameService` with SHA-256 pre-move verification and transactional journal (`RenameJournalEntry`) supporting atomic rollback.
+- Added interactive safe renaming execution in `RenamePreviewView` with explicit two-phase user confirmation and live diagnostic status.
+- Added 20 automated unit and integration tests covering character sanitization, Windows reserved names, collision detection, physical rename with SHA-256 preservation, and rollback.
 
 ### Changed
 
@@ -409,6 +399,20 @@ Semantic Versioning where applicable.
   selected for application.
 - Updated the simulation UI to display productive availability and disable
   unsupported fields before they reach the batch workflow.
+- Compacted the simulation grid and integrated the manual-value action beside
+  the effective proposed value, keeping the principal decision columns visible
+  at the default window width.
+- Reworded the simulation and status-bar notices to distinguish safe proposal
+  editing from the separately prepared and confirmed productive workflow.
+- Separated metadata review and file-renaming preview into dedicated tabs.
+- Added an explicit renaming comparison with current name, proposed name,
+  confidence state, and a notice that productive renaming remains disabled
+  until collision detection and independent safeguards are implemented.
+- Promoted library, information, metadata, renaming, duplicate detection, and
+  activity into main workspace tabs so each workflow uses the complete central
+  area instead of a constrained nested details panel.
+- Updated `RenamePreviewView` to display sanitized Windows file names alongside proposed names, with an active "Renombrar archivo físico" action.
+- Updated `MainWindow` to coordinate safe renaming, update active audio file models and notify user in the activity journal without resetting the entire library state.
 
 ### Fixed
 

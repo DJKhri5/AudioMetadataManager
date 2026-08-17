@@ -1,4 +1,4 @@
-﻿<Window x:Class="AudioMetadataManager.UI.MainWindow"
+<Window x:Class="AudioMetadataManager.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:controls="clr-namespace:AudioMetadataManager.UI.Views.Controls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -246,6 +246,7 @@
                 <TabItem Header="Renombrado">
 
                     <views:RenamePreviewView
+                        x:Name="RenamePreviewViewControl"
                         DataContext="{Binding ElementName=AudioFilesDataGrid,
                                               Path=SelectedItem}"
                         Margin="6" />
