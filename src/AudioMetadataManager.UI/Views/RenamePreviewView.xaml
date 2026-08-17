@@ -1,159 +1,323 @@
 <UserControl x:Class="AudioMetadataManager.UI.Views.RenamePreviewView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             MinHeight="300">
+             MinHeight="350">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  Padding="14">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <StackPanel>
+        <!-- Cabecera descriptiva -->
+        <Border Grid.Row="0"
+                Padding="14"
+                Background="#F3F7FB"
+                BorderBrush="#B8C9D9"
+                BorderThickness="1"
+                CornerRadius="6">
+            <StackPanel>
+                <TextBlock Text="Renombrado Reversible de Archivos"
+                           FontSize="20"
+                           FontWeight="SemiBold" />
+                <TextBlock Margin="0,6,0,0"
+                           Foreground="#4F5F6F"
+                           TextWrapping="Wrap"
+                           Text="Saneamiento automático de caracteres Windows, prevención estricta de colisiones individuales y en lote, con bitácora transaccional y reversión." />
+            </StackPanel>
+        </Border>
 
-            <Border Padding="14"
-                    Background="#F3F7FB"
-                    BorderBrush="#B8C9D9"
-                    BorderThickness="1"
-                    CornerRadius="6">
+        <!-- Pestañas de Modo: Individual vs Lote -->
+        <TabControl Grid.Row="1"
+                    Margin="0,10,0,0">
 
-                <StackPanel>
-                    <TextBlock Text="Renombrado Reversible de Archivos"
-                               FontSize="20"
-                               FontWeight="SemiBold" />
+            <!-- Pestaña 1: Archivo seleccionado -->
+            <TabItem Header="Archivo individual">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="8">
+                    <GroupBox Header="Archivo seleccionado"
+                              Padding="14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                    <TextBlock Margin="0,6,0,0"
-                               Foreground="#4F5F6F"
-                               TextWrapping="Wrap"
-                               Text="Saneamiento automático de caracteres Windows, prevención estricta de colisiones y bitácora transaccional con reversión." />
-                </StackPanel>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-            </Border>
+                            <TextBlock Grid.Row="0"
+                                       Text="Nombre actual:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,16,10" />
 
-            <GroupBox Header="Archivo seleccionado"
-                      Margin="0,12,0,0"
-                      Padding="14">
+                            <TextBlock Grid.Row="0"
+                                       Grid.Column="1"
+                                       Text="{Binding FileName, Mode=OneWay}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding FileName, Mode=OneWay}"
+                                       Margin="0,0,0,10" />
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Row="1"
+                                       Text="Nombre propuesto:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,16,10" />
 
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="1"
+                                       Text="{Binding ProposedFileNameDisplay, Mode=OneWay}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding ProposedFileNameDisplay, Mode=OneWay}"
+                                       Margin="0,0,0,10" />
+
+                            <TextBlock Grid.Row="2"
+                                       Text="Nombre saneado (Windows):"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,16,10" />
+
+                            <TextBlock Grid.Row="2"
+                                       Grid.Column="1"
+                                       Text="{Binding SanitizedProposedFileName, Mode=OneWay}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding SanitizedProposedFileName, Mode=OneWay}"
+                                       Foreground="#0D47A1"
+                                       FontWeight="Medium"
+                                       Margin="0,0,0,10" />
+
+                            <TextBlock Grid.Row="3"
+                                       Text="Resultado:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,16,10" />
+
+                            <TextBlock Grid.Row="3"
+                                       Grid.Column="1"
+                                       Text="{Binding RenameStatusDisplay, Mode=OneWay}"
+                                       Margin="0,0,0,10" />
+
+                            <TextBlock Grid.Row="4"
+                                       Text="Confianza:"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,16,10" />
+
+                            <TextBlock Grid.Row="4"
+                                       Grid.Column="1"
+                                       Text="{Binding RenameConfidenceDisplay, Mode=OneWay}"
+                                       Margin="0,0,0,10" />
+
+                            <TextBlock Grid.Row="5"
+                                       Text="Resumen:"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Top"
+                                       Margin="0,0,16,10" />
+
+                            <TextBlock Grid.Row="5"
+                                       Grid.Column="1"
+                                       Text="{Binding RenameSummaryDisplay, Mode=OneWay}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,10" />
+
+                            <!-- Botón de acción individual -->
+                            <StackPanel Grid.Row="6"
+                                        Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Margin="0,6,0,0">
+                                <Button x:Name="RenameSingleFileButton"
+                                        Content="Renombrar archivo físico"
+                                        Padding="16,8"
+                                        FontWeight="SemiBold"
+                                        Background="#1976D2"
+                                        Foreground="White"
+                                        IsEnabled="{Binding CanRenameSafely, Mode=OneWay}"
+                                        Click="RenameSingleFileButton_Click" />
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Pestaña 2: Renombrado por lote -->
+            <TabItem Header="Renombrado por lote (Biblioteca)">
+                <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                               Text="Nombre actual:"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,10" />
+                    <!-- Barra de métricas de lote -->
+                    <Grid Grid.Row="0"
+                          Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                               Grid.Column="1"
-                               Text="{Binding FileName, Mode=OneWay}"
-                               TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding FileName, Mode=OneWay}"
-                               Margin="0,0,0,10" />
+                        <Border Grid.Column="0"
+                                Margin="0,0,4,0"
+                                Padding="8"
+                                Background="#FAFAFA"
+                                BorderBrush="#D0D7DE"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <StackPanel>
+                                <TextBlock Text="Listos para renombrar"
+                                           FontSize="11"
+                                           Foreground="#57606A" />
+                                <TextBlock x:Name="BatchReadyCountTextBlock"
+                                           Text="0"
+                                           FontSize="16"
+                                           FontWeight="Bold"
+                                           Foreground="#166534" />
+                            </StackPanel>
+                        </Border>
 
-                    <TextBlock Grid.Row="1"
-                               Text="Nombre propuesto:"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,10" />
+                        <Border Grid.Column="1"
+                                Margin="2,0,2,0"
+                                Padding="8"
+                                Background="#FAFAFA"
+                                BorderBrush="#D0D7DE"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <StackPanel>
+                                <TextBlock Text="Sin cambios necesarios"
+                                           FontSize="11"
+                                           Foreground="#57606A" />
+                                <TextBlock x:Name="BatchUnchangedCountTextBlock"
+                                           Text="0"
+                                           FontSize="16"
+                                           FontWeight="Bold"
+                                           Foreground="#6B7280" />
+                            </StackPanel>
+                        </Border>
 
-                    <TextBlock Grid.Row="1"
-                               Grid.Column="1"
-                               Text="{Binding ProposedFileNameDisplay, Mode=OneWay}"
-                               TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding ProposedFileNameDisplay, Mode=OneWay}"
-                               Margin="0,0,0,10" />
+                        <Border Grid.Column="2"
+                                Margin="4,0,0,0"
+                                Padding="8"
+                                Background="#FAFAFA"
+                                BorderBrush="#D0D7DE"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <StackPanel>
+                                <TextBlock Text="Conflictos / Colisiones"
+                                           FontSize="11"
+                                           Foreground="#57606A" />
+                                <TextBlock x:Name="BatchCollisionCountTextBlock"
+                                           Text="0"
+                                           FontSize="16"
+                                           FontWeight="Bold"
+                                           Foreground="#DC2626" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
 
-                    <TextBlock Grid.Row="2"
-                               Text="Nombre saneado (Windows):"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,10" />
-
-                    <TextBlock Grid.Row="2"
-                               Grid.Column="1"
-                               Text="{Binding SanitizedProposedFileName, Mode=OneWay}"
-                               TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding SanitizedProposedFileName, Mode=OneWay}"
-                               Foreground="#0D47A1"
-                               FontWeight="Medium"
-                               Margin="0,0,0,10" />
-
-                    <TextBlock Grid.Row="3"
-                               Text="Resultado:"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,10" />
-
-                    <TextBlock Grid.Row="3"
-                               Grid.Column="1"
-                               Text="{Binding RenameStatusDisplay, Mode=OneWay}"
-                               Margin="0,0,0,10" />
-
-                    <TextBlock Grid.Row="4"
-                               Text="Confianza:"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,10" />
-
-                    <TextBlock Grid.Row="4"
-                               Grid.Column="1"
-                               Text="{Binding RenameConfidenceDisplay, Mode=OneWay}"
-                               Margin="0,0,0,10" />
-
-                    <TextBlock Grid.Row="5"
-                               Text="Resumen:"
-                               FontWeight="SemiBold"
-                               VerticalAlignment="Top"
-                               Margin="0,0,16,10" />
-
-                    <TextBlock Grid.Row="5"
-                               Grid.Column="1"
-                               Text="{Binding RenameSummaryDisplay, Mode=OneWay}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,10" />
-
-                    <!-- Acciones de renombrado -->
-                    <StackPanel Grid.Row="6"
-                                Grid.Column="1"
+                    <!-- Barra de herramientas de selección -->
+                    <StackPanel Grid.Row="1"
                                 Orientation="Horizontal"
-                                Margin="0,6,0,0">
-
-                        <Button x:Name="RenameSingleFileButton"
-                                Content="Renombrar archivo físico"
-                                Padding="16,8"
-                                FontWeight="SemiBold"
-                                Background="#1976D2"
-                                Foreground="White"
-                                IsEnabled="{Binding CanRenameSafely, Mode=OneWay}"
-                                Click="RenameSingleFileButton_Click" />
-
+                                Margin="0,0,0,8">
+                        <Button Content="Seleccionar todos los listos"
+                                Padding="10,4"
+                                Margin="0,0,6,0"
+                                Click="SelectAllReadyButton_Click" />
+                        <Button Content="Deseleccionar todos"
+                                Padding="10,4"
+                                Margin="0,0,6,0"
+                                Click="DeselectAllButton_Click" />
+                        <Button Content="Actualizar análisis de lote"
+                                Padding="10,4"
+                                Click="RefreshBatchAnalysisButton_Click" />
                     </StackPanel>
 
+                    <!-- Tabla de candidatos del lote -->
+                    <DataGrid Grid.Row="2"
+                              x:Name="BatchCandidatesDataGrid"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column"
+                              Background="White"
+                              BorderThickness="1"
+                              BorderBrush="#D0D7DE">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="[x]"
+                                                    Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    Width="35" />
+
+                            <DataGridTemplateColumn Header="Estado" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="6,2"
+                                                CornerRadius="3"
+                                                HorizontalAlignment="Left"
+                                                Background="{Binding StatusBadgeBackground}">
+                                            <TextBlock Text="{Binding StatusDisplay}"
+                                                       Foreground="{Binding StatusBadgeColor}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Nombre actual"
+                                                Binding="{Binding FileName}"
+                                                IsReadOnly="True"
+                                                Width="240" />
+
+                            <DataGridTextColumn Header="Nombre saneado (Windows)"
+                                                Binding="{Binding SanitizedFileName}"
+                                                IsReadOnly="True"
+                                                Width="260" />
+
+                            <DataGridTextColumn Header="Diagnóstico / Mensaje"
+                                                Binding="{Binding StatusMessage}"
+                                                IsReadOnly="True"
+                                                Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Botón de ejecución en lote -->
+                    <StackPanel Grid.Row="3"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="0,8,0,0">
+                        <Button x:Name="ExecuteBatchRenameButton"
+                                Content="Renombrar lote seleccionado"
+                                Padding="16,8"
+                                FontWeight="Bold"
+                                Background="#166534"
+                                Foreground="White"
+                                IsEnabled="False"
+                                Click="ExecuteBatchRenameButton_Click" />
+                    </StackPanel>
                 </Grid>
+            </TabItem>
 
-            </GroupBox>
+        </TabControl>
 
-            <Border Margin="0,12,0,0"
-                    Padding="12"
-                    Background="#E8F5E9"
-                    BorderBrush="#81C784"
-                    BorderThickness="1"
-                    CornerRadius="4">
-
-                <TextBlock TextWrapping="Wrap"
-                           Foreground="#1B5E20"
-                           Text="Seguridad de renombrado activa: Se validan colisiones en disco antes de mover el archivo y se registra una bitácora con hash SHA-256 para permitir reversión en caso de discrepancias." />
-
-            </Border>
-
-        </StackPanel>
-
-    </ScrollViewer>
+        <!-- Aviso de seguridad al pie -->
+        <Border Grid.Row="2"
+                Margin="0,10,0,0"
+                Padding="10,8"
+                Background="#E8F5E9"
+                BorderBrush="#81C784"
+                BorderThickness="1"
+                CornerRadius="4">
+            <TextBlock Foreground="#1B5E20"
+                       FontSize="12"
+                       Text="Seguridad de renombrado activa: Se validan colisiones en disco e intra-lote antes de mover cualquier archivo y se registra una bitácora con hash SHA-256 para permitir reversión." />
+        </Border>
+    </Grid>
 
 </UserControl>

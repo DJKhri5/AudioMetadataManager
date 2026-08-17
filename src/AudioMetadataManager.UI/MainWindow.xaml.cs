@@ -70,6 +70,10 @@ public partial class MainWindow : Window
         _fileRenameService =
             new();
 
+    private readonly AudioMetadataManager.UI.Services.Renaming.FileRenameBatchService
+        _fileRenameBatchService =
+            new();
+
     private readonly AudioDuplicateDetector
         _duplicateDetector =
             new();
@@ -706,6 +710,10 @@ public partial class MainWindow : Window
             .RenameRequested +=
                 RenamePreviewViewControl_RenameRequested;
 
+        RenamePreviewViewControl
+            .BatchRenameRequested +=
+                RenamePreviewViewControl_BatchRenameRequested;
+
         _audioAnalysisEngine =
             new AudioAnalysisEngine();
 
@@ -779,6 +787,7 @@ public partial class MainWindow : Window
             AudioFilesDataGrid.Items.Refresh();
             RenamePreviewViewControl.DataContext = null;
             RenamePreviewViewControl.DataContext = audioFile;
+            RenamePreviewViewControl.SetLibraryContext(batchContext);
         }
         else
         {
@@ -789,6 +798,69 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
+    }
+
+    /// <summary>
+    /// Ejecuta la operación de renombrado físico en lote tras confirmación explícita del usuario.
+    /// </summary>
+    private void RenamePreviewViewControl_BatchRenameRequested(
+        object? sender,
+        AudioMetadataManager.UI.Services.Renaming.Models.FileRenameBatchPreparationResult preparation)
+    {
+        if (preparation == null || preparation.SelectedReadyCount == 0)
+        {
+            MessageBox.Show(
+                "No hay archivos seleccionados listos para renombrar.",
+                "Renombrado por lote",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            $"¿Deseas renombrar los {preparation.SelectedReadyCount} archivo(s) seleccionado(s) en disco?{Environment.NewLine}{Environment.NewLine}" +
+            "Esta operación modificará los nombres físicos de los archivos y registrará una bitácora transaccional para cada uno.",
+            "Confirmación de renombrado en lote",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            AppendLog("El usuario canceló la operación de renombrado en lote.");
+            return;
+        }
+
+        AppendLog($"Iniciando ejecución de renombrado en lote para {preparation.SelectedReadyCount} archivo(s)...");
+
+        var executionResult = _fileRenameBatchService.ExecuteBatch(preparation, onlySelected: true);
+
+        AppendLog(executionResult.Summary);
+
+        foreach (var itemResult in executionResult.ItemResults)
+        {
+            if (itemResult.WasSuccessful)
+            {
+                AppendLog($"✓ '{itemResult.OriginalFileName}' -> '{itemResult.NewFileName}'");
+            }
+            else
+            {
+                AppendLog($"✗ Error al renombrar '{itemResult.OriginalFileName}': {itemResult.ErrorMessage}");
+            }
+        }
+
+        AudioFilesDataGrid.Items.Refresh();
+
+        var libraryFiles = AudioFilesDataGrid.ItemsSource as IEnumerable<AudioFile>;
+        RenamePreviewViewControl.SetLibraryContext(libraryFiles);
+
+        MessageBox.Show(
+            $"Renombrado en lote finalizado.{Environment.NewLine}{Environment.NewLine}" +
+            $"Exitosos: {executionResult.SucceededCount}{Environment.NewLine}" +
+            $"Con error: {executionResult.FailedCount}{Environment.NewLine}" +
+            $"Omitidos: {executionResult.SkippedCount}",
+            "Renombrado en lote",
+            MessageBoxButton.OK,
+            executionResult.FailedCount > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
     }
 
     /// <summary>
@@ -848,6 +920,8 @@ public partial class MainWindow : Window
             AppendLog(
                 "Detección de duplicados: no se identificaron pistas duplicadas en la biblioteca.");
         }
+
+        RenamePreviewViewControl.SetLibraryContext(audioFiles);
 
         UpdateSelectedFileButtons();
 

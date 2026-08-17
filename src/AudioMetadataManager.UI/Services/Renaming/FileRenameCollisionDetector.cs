@@ -25,10 +25,28 @@ public class FileRenameCollisionDetector
         IEnumerable<AudioFile>? batchContext = null)
     {
         string currentPath = audioFile.FullPath ?? string.Empty;
-        string currentName = audioFile.FileName ?? string.Empty;
-        string rawProposed = audioFile.Simulation?.ProposedFileName ?? string.Empty;
+        string rawProposed = GetEffectiveProposedName(audioFile);
 
         return Validate(currentPath, rawProposed, audioFile.Extension, batchContext);
+    }
+
+    /// <summary>
+    /// Obtiene el nombre propuesto efectivo a partir de la simulación o de los metadatos de la pista.
+    /// </summary>
+    public static string GetEffectiveProposedName(AudioFile audioFile)
+    {
+        if (audioFile == null) return string.Empty;
+
+        string proposed = audioFile.Simulation?.ProposedFileName ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(proposed)) return proposed;
+
+        if (!string.IsNullOrWhiteSpace(audioFile.Artist) && !string.IsNullOrWhiteSpace(audioFile.Title))
+        {
+            return $"{audioFile.Artist} - {audioFile.Title}{audioFile.Extension}";
+        }
+
+        var sim = new Simulation.FileSimulationService().Build(audioFile);
+        return sim.ProposedFileName;
     }
 
     /// <summary>
@@ -129,7 +147,7 @@ public class FileRenameCollisionDetector
                     continue; // Mismo archivo
                 }
 
-                string otherProposed = other.Simulation?.ProposedFileName ?? string.Empty;
+                string otherProposed = GetEffectiveProposedName(other);
                 if (!string.IsNullOrWhiteSpace(otherProposed))
                 {
                     string otherSanitized = _sanitizer.Sanitize(otherProposed, other.Extension);
