@@ -50,6 +50,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using AudioMetadataManager.UI.Services.Duplicates;
 using ConsensusResult =
     AudioMetadataManager.UI.Services.MetadataSources
         .Consensus.Models.MetadataConsensusResult;
@@ -67,6 +68,10 @@ public partial class MainWindow : Window
 
     private readonly AudioMetadataManager.UI.Services.Renaming.FileRenameService
         _fileRenameService =
+            new();
+
+    private readonly AudioDuplicateDetector
+        _duplicateDetector =
             new();
 
     private readonly AudioAnalysisEngine 
@@ -718,6 +723,9 @@ public partial class MainWindow : Window
         _productiveBatchWorkflowService =
             new ProductiveBatchWorkflowService();
 
+        DuplicateDetectionViewControl
+            .SetDuplicateResult(null);
+
         UpdateProductiveBatchUiState();
     }
 
@@ -807,6 +815,14 @@ public partial class MainWindow : Window
         AudioFilesDataGrid.ItemsSource =
             audioFiles;
 
+        var duplicateResult =
+            _duplicateDetector.DetectDuplicates(
+                audioFiles);
+
+        DuplicateDetectionViewControl
+            .SetDuplicateResult(
+                duplicateResult);
+
         AudioFilesDataGrid.SelectedItem =
             null;
 
@@ -820,6 +836,18 @@ public partial class MainWindow : Window
         AppendLog(
             "La selección productiva por lote fue limpiada " +
             "al volver a escanear la biblioteca.");
+
+        if (duplicateResult.TotalDuplicateGroups > 0)
+        {
+            AppendLog(
+                $"Detección de duplicados: se identificaron {duplicateResult.TotalDuplicateGroups} grupo(s) de pistas duplicadas " +
+                $"({duplicateResult.TotalDuplicateFiles} archivos, espacio redundante estimado: {duplicateResult.TotalPotentialReclaimableDisplay}).");
+        }
+        else
+        {
+            AppendLog(
+                "Detección de duplicados: no se identificaron pistas duplicadas en la biblioteca.");
+        }
 
         UpdateSelectedFileButtons();
 

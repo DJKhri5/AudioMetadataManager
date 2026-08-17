@@ -253,12 +253,11 @@
 
                 </TabItem>
 
-                <TabItem Header="Duplicados"
-                         IsEnabled="False">
+                <TabItem Header="Duplicados">
 
-                    <TextBlock Margin="20"
-                               TextWrapping="Wrap"
-                               Text="La detección segura de duplicados se incorporará en un próximo hito." />
+                    <views:DuplicateDetectionView
+                        x:Name="DuplicateDetectionViewControl"
+                        Margin="6" />
 
                 </TabItem>
 

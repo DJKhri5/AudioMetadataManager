@@ -1,8 +1,9 @@
-﻿using AudioMetadataManager.UI.Models;
+using AudioMetadataManager.UI.Models;
 using System.IO;
 using System.Reflection.Metadata;
 using AudioMetadataManager.UI.Services.Quality;
 using AudioMetadataManager.UI.Services.Simulation;
+using AudioMetadataManager.UI.Services.Scanning;
 
 namespace AudioMetadataManager.UI.Services;
 
@@ -28,6 +29,17 @@ public class FileScannerService
     private readonly MusicAnalysisEngine _analysisEngine = new();
     private readonly AudioQualityAnalyzerService _qualityAnalyzer = new();
     private readonly FileSimulationService _simulationService = new();
+    private readonly FileScannerExclusionPolicy _exclusionPolicy;
+
+    public FileScannerService()
+        : this(new FileScannerExclusionPolicy())
+    {
+    }
+
+    public FileScannerService(FileScannerExclusionPolicy exclusionPolicy)
+    {
+        _exclusionPolicy = exclusionPolicy ?? new FileScannerExclusionPolicy();
+    }
 
     /// <summary>
     /// Lee un archivo compatible y construye su modelo completo
@@ -124,33 +136,51 @@ public class FileScannerService
     {
         List<AudioFile> result = new();
 
-        if (!Directory.Exists(folderPath))
+        if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
             return result;
 
-        foreach (string file in Directory.EnumerateFiles(
-                     folderPath,
-                     "*.*",
-                     SearchOption.AllDirectories))
+        Queue<string> pendingDirectories = new();
+        pendingDirectories.Enqueue(folderPath);
+
+        while (pendingDirectories.Count > 0)
         {
-            string extension =
-                Path.GetExtension(
-                        file)
-                    .ToLowerInvariant();
+            string currentDirectory = pendingDirectories.Dequeue();
 
-            if (!SupportedExtensions.Contains(
-                    extension))
+            try
             {
-                continue;
+                // Encolar subdirectorios no excluidos
+                foreach (string subDirectory in Directory.EnumerateDirectories(currentDirectory))
+                {
+                    if (!_exclusionPolicy.ShouldExcludeDirectory(subDirectory))
+                    {
+                        pendingDirectories.Enqueue(subDirectory);
+                    }
+                }
+
+                // Enumerar archivos compatibles del directorio actual
+                foreach (string file in Directory.EnumerateFiles(currentDirectory))
+                {
+                    string extension = Path.GetExtension(file).ToLowerInvariant();
+
+                    if (!SupportedExtensions.Contains(extension))
+                    {
+                        continue;
+                    }
+
+                    AudioFile? audioFile = ScanFile(file);
+                    if (audioFile is not null)
+                    {
+                        result.Add(audioFile);
+                    }
+                }
             }
-
-            AudioFile? audioFile =
-                ScanFile(
-                    file);
-
-            if (audioFile is not null)
+            catch (UnauthorizedAccessException)
             {
-                result.Add(
-                    audioFile);
+                // Ignorar carpetas protegidas sin permisos
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // Ignorar carpetas movidas o eliminadas durante el escaneo
             }
         }
 

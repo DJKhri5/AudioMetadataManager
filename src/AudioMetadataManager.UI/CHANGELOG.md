@@ -216,6 +216,11 @@ Semantic Versioning where applicable.
 - Added `FileRenameService` with SHA-256 pre-move verification and transactional journal (`RenameJournalEntry`) supporting atomic rollback.
 - Added interactive safe renaming execution in `RenamePreviewView` with explicit two-phase user confirmation and live diagnostic status.
 - Added 20 automated unit and integration tests covering character sanitization, Windows reserved names, collision detection, physical rename with SHA-256 preservation, and rollback.
+- Added `FileScannerExclusionPolicy` to exclude backup directories (`AudioMetadataManager_Backup`, `AMM_Backups`, `AMM_Staging`, `Backups`, `Backup`, `.backup`, `_backups`) and VCS/system folders (`.git`, `.vs`, `$RECYCLE.BIN`) during recursive library scanning.
+- Added `DuplicateMatchKind`, `DuplicateGroupItem`, `DuplicateGroup`, and `DuplicateDetectionResult` models for binary exact and metadata-based probable duplicate grouping.
+- Added `IAudioDuplicateDetector` and `AudioDuplicateDetector` to perform two-phase duplicate detection with quality ranking (Lossless > High Bitrate > Sample Rate) and redundant copy identification.
+- Added `DuplicateDetectionView` to provide an interactive, non-destructive master-detail comparison view with folder navigation and clipboard path copying.
+- Added automated unit and integration coverage for scanner exclusion policies and duplicate detection across multiple audio formats.
 
 ### Changed
 
@@ -413,6 +418,8 @@ Semantic Versioning where applicable.
   area instead of a constrained nested details panel.
 - Updated `RenamePreviewView` to display sanitized Windows file names alongside proposed names, with an active "Renombrar archivo físico" action.
 - Updated `MainWindow` to coordinate safe renaming, update active audio file models and notify user in the activity journal without resetting the entire library state.
+- Updated `FileScannerService` to traverse directories using queue-based traversal and evaluate `FileScannerExclusionPolicy` before listing subdirectories and audio files.
+- Enabled the dedicated `Duplicados` tab in `MainWindow` with live integration of `DuplicateDetectionView` and automated duplicate analysis upon library scanning.
 
 ### Fixed
 

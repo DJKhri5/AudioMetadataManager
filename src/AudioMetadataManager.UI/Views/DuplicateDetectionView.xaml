@@ -1,0 +1,307 @@
+<UserControl x:Class="AudioMetadataManager.UI.Views.DuplicateDetectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinHeight="350">
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Cabecera descriptiva -->
+        <Border Grid.Row="0"
+                Padding="14"
+                Background="#F3F7FB"
+                BorderBrush="#B8C9D9"
+                BorderThickness="1"
+                CornerRadius="6">
+            <StackPanel>
+                <TextBlock Text="Detección Segura de Duplicados"
+                           FontSize="20"
+                           FontWeight="SemiBold" />
+                <TextBlock Margin="0,6,0,0"
+                           Foreground="#4F5F6F"
+                           TextWrapping="Wrap"
+                           Text="Identificación de pistas idénticas y probables con comparativa técnica de calidad (formato, bitrate y resolución)." />
+            </StackPanel>
+        </Border>
+
+        <!-- Barra de métricas y resumen -->
+        <Grid Grid.Row="1"
+              Margin="0,10,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Margin="0,0,6,0"
+                    Padding="10"
+                    Background="#FAFAFA"
+                    BorderBrush="#D0D7DE"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <StackPanel>
+                    <TextBlock Text="Grupos detectados"
+                               FontSize="12"
+                               Foreground="#57606A" />
+                    <TextBlock x:Name="GroupsCountTextBlock"
+                               Text="0"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Margin="3,0,3,0"
+                    Padding="10"
+                    Background="#FAFAFA"
+                    BorderBrush="#D0D7DE"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <StackPanel>
+                    <TextBlock Text="Archivos duplicados"
+                               FontSize="12"
+                               Foreground="#57606A" />
+                    <TextBlock x:Name="DuplicateFilesCountTextBlock"
+                               Text="0"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Margin="6,0,0,0"
+                    Padding="10"
+                    Background="#FAFAFA"
+                    BorderBrush="#D0D7DE"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <StackPanel>
+                    <TextBlock Text="Espacio potencial recuperable"
+                               FontSize="12"
+                               Foreground="#57606A" />
+                    <TextBlock x:Name="ReclaimableSpaceTextBlock"
+                               Text="0.00 MB"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="#0969DA"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Área principal: Maestro - Detalle -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Lista de Grupos de Duplicados -->
+            <GroupBox Grid.Column="0"
+                      Header="Grupos de coincidencia"
+                      Padding="6">
+                <ListBox x:Name="DuplicateGroupsListBox"
+                         SelectionChanged="DuplicateGroupsListBox_SelectionChanged"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="6,4"
+                                    BorderBrush="#E1E4E8"
+                                    BorderThickness="0,0,0,1"
+                                    Margin="0,2">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding DisplayTitle}"
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding DisplayTitle}" />
+                                    <Grid Margin="0,4,0,0">
+                                        <TextBlock Text="{Binding MatchKindDisplay}"
+                                                   FontSize="11"
+                                                   Foreground="#57606A"
+                                                   HorizontalAlignment="Left" />
+                                        <TextBlock Text="{Binding FileCount, StringFormat='{}{0} archivos'}"
+                                                   FontSize="11"
+                                                   FontWeight="Bold"
+                                                   Foreground="#0969DA"
+                                                   HorizontalAlignment="Right" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+
+            <GridSplitter Grid.Column="1"
+                          Width="4"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Stretch"
+                          Background="#D0D7DE" />
+
+            <!-- Detalle comparativo del grupo seleccionado -->
+            <GroupBox Grid.Column="2"
+                      x:Name="GroupDetailGroupBox"
+                      Header="Comparativa técnica del grupo"
+                      Padding="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            x:Name="SelectedGroupHeaderBorder"
+                            Visibility="Collapsed"
+                            Padding="8,6"
+                            Background="#F6F8FA"
+                            BorderBrush="#D0D7DE"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Margin="0,0,0,8">
+                        <Grid>
+                            <TextBlock x:Name="SelectedGroupTitleTextBlock"
+                                       FontWeight="SemiBold"
+                                       FontSize="14"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center" />
+                            <TextBlock x:Name="SelectedGroupReclaimableTextBlock"
+                                       Foreground="#57606A"
+                                       FontSize="12"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Mensaje si no hay selección -->
+                    <TextBlock x:Name="NoSelectionTextBlock"
+                               Grid.Row="1"
+                               Text="Selecciona un grupo a la izquierda para comparar sus versiones."
+                               Foreground="#6E7781"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               FontSize="13" />
+
+                    <!-- Tabla comparativa de archivos -->
+                    <DataGrid x:Name="GroupItemsDataGrid"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              SelectionMode="Single"
+                              GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column"
+                              Background="White"
+                              BorderThickness="1"
+                              BorderBrush="#D0D7DE">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Evaluación" Width="190">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="6,2"
+                                                CornerRadius="3"
+                                                HorizontalAlignment="Left">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsBestQualityCandidate}" Value="True">
+                                                            <Setter Property="Background" Value="#DCFCE7" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsBestQualityCandidate}" Value="False">
+                                                            <Setter Property="Background" Value="#F3F4F6" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding QualityBadge}"
+                                                       FontSize="11">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsBestQualityCandidate}" Value="True">
+                                                                <Setter Property="Foreground" Value="#166534" />
+                                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsBestQualityCandidate}" Value="False">
+                                                                <Setter Property="Foreground" Value="#4B5563" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Archivo"
+                                                Binding="{Binding FileName}"
+                                                Width="220" />
+
+                            <DataGridTextColumn Header="Formato"
+                                                Binding="{Binding Extension}"
+                                                Width="70" />
+
+                            <DataGridTextColumn Header="Bitrate"
+                                                Binding="{Binding BitrateDisplay}"
+                                                Width="85" />
+
+                            <DataGridTextColumn Header="Frecuencia"
+                                                Binding="{Binding SampleRateDisplay}"
+                                                Width="90" />
+
+                            <DataGridTextColumn Header="Duración"
+                                                Binding="{Binding DurationDisplay}"
+                                                Width="70" />
+
+                            <DataGridTextColumn Header="Tamaño"
+                                                Binding="{Binding FileSizeDisplay}"
+                                                Width="80" />
+
+                            <DataGridTemplateColumn Header="Acciones" Width="170">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Abrir carpeta"
+                                                    Padding="6,2"
+                                                    Margin="0,0,4,0"
+                                                    Click="OpenContainingFolderButton_Click"
+                                                    Tag="{Binding FullPath}" />
+                                            <Button Content="Copiar ruta"
+                                                    Padding="6,2"
+                                                    Click="CopyPathButton_Click"
+                                                    Tag="{Binding FullPath}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- Aviso de seguridad al pie -->
+        <Border Grid.Row="3"
+                Margin="0,10,0,0"
+                Padding="10,8"
+                Background="#EBF7EE"
+                BorderBrush="#A7D7B1"
+                BorderThickness="1"
+                CornerRadius="4">
+            <TextBlock Foreground="#1E4620"
+                       FontSize="12"
+                       Text="Seguridad de duplicados: Ningún archivo se elimina automáticamente. La gestión de duplicados es estrictamente informativa para respaldar decisiones manuales seguras." />
+        </Border>
+    </Grid>
+
+</UserControl>
